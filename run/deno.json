@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@hazae41/binary": "jsr:@hazae41/binary@^2.0.2",
+    "@hazae41/cursor": "jsr:@hazae41/cursor@^2.1.3"
+  }
+}

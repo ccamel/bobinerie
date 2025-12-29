@@ -1,0 +1,25 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@hazae41/binary@^2.0.2": "2.0.2",
+    "jsr:@hazae41/cursor@^2.1.2": "2.1.3",
+    "jsr:@hazae41/cursor@^2.1.3": "2.1.3"
+  },
+  "jsr": {
+    "@hazae41/binary@2.0.2": {
+      "integrity": "abc4cb55cb369ef65cd1a485c8c682bcb13aaa4215add5cdea7dbea5b61dfb3b",
+      "dependencies": [
+        "jsr:@hazae41/cursor@^2.1.2"
+      ]
+    },
+    "@hazae41/cursor@2.1.3": {
+      "integrity": "2150ce228e488df80fd6c3d1b706ddb38728bc2f9ad87cd98c903499520eeaf0"
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@hazae41/binary@^2.0.2",
+      "jsr:@hazae41/cursor@^2.1.3"
+    ]
+  }
+}

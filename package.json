@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "scripts": {
+    "prepack": "rm -rf ./out && npm run prepack:asc && npm run prepack:tsc",
+    "prepack:asc": "deno x asc ./src/mod.ts -o ./out/mod.wasm --runtime stub --enable reference-types",
+    "prepack:tsc": "deno x tsc ./src/mod.ts --outFile ./out/mod.d.ts --noCheck --declaration --emitDeclarationOnly",
+    "produce": "deno run -A ./run/src/mods/produce/mod.ts ./out/mod.wasm",
+    "execute": "deno run -A ./run/src/mods/execute/mod.ts"
+  },
+  "devDependencies": {
+    "@hazae41/stdbob": "^0.0.18",
+    "assemblyscript": "^0.28.9",
+    "deno": "^2.6.3",
+    "typescript": "^5.9.3"
+  }
+}
