@@ -1,12 +1,12 @@
+# Bobinerie
+
 ![Bobinerie Banner](banner.webp)
 
-# Bobinerie
+> _Le_ Bobine smart contracts store. Useful, serious, weird experiments, or pure fun contracts. Ship, deploy on [Bobine](https://github.com/hazae41/bobine), remix, play.
 
 [![AssemblyScript](https://img.shields.io/badge/AssemblyScript-%23007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white)](https://www.assemblyscript.org/)
 [![Commit Convention: DAFT](https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge)](https://x.com/hazae41/status/2001986156834267231)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-
-> _Le_ Bobine smart contracts store. Useful, serious, weird experiments, or pure fun contracts. Ship, deploy on [Bobine](https://github.com/hazae41/bobine), remix, play.
 
 ## _Le_ Shop
 
