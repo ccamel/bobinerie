@@ -1,10 +1,4 @@
-import {
-  console,
-  type packref,
-  storage,
-  type textref,
-  texts,
-} from "@hazae41/stdbob"
+import { console, packref, storage, textref, texts } from "@hazae41/stdbob"
 
 /**
  * Say your name and the contract will remember it.
