@@ -12,7 +12,7 @@
 
 Browse the contracts:
 
-- **[say-my-name](contracts/say-my-name/)** - A simple name storage contract. Say your name, it remembers.
+- **[say-my-name](contracts/say-my-name/README.md)** - A simple name storage contract. Say your name, it remembers.
 
 ## _Le_ developer guide
 
