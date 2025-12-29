@@ -42,7 +42,12 @@ const contracts = readdirSync(contractsDir)
 let list = "";
 
 for (const contract of contracts) {
-  list += `- **[${contract.name}](contracts/${contract.name}/README.md)** - ${contract.description}\n`;
+  list += `- **[${contract.name}](contracts/${contract.name}/README.md)**\n`;
+  if (contract.description)
+    list += `  > ${contract.description}`;
+  else
+    list += `  > Surprise contract!`;
+  list += `\n\n`;
 }
 
 const readme = readFileSync(readmePath, "utf-8");
@@ -55,6 +60,6 @@ if (!readme.includes(startMarker) || !readme.includes(endMarker))
 const before = readme.substring(0, readme.indexOf(startMarker) + startMarker.length);
 const after = readme.substring(readme.indexOf(endMarker));
 
-writeFileSync(readmePath, before + "\n" + list + after, "utf-8");
+writeFileSync(readmePath, before + "\n\n" + list + after, "utf-8");
 
 console.log(`✓ Generated list of ${contracts.length} contracts`);

@@ -10,10 +10,13 @@
 
 ## _Le_ Shop
 
-Browse the contracts:
+Available now:
 
 <!-- CONTRACTS:START -->
-- **[say-my-name](contracts/say-my-name/README.md)** - A simple name storage contract that remembers who you are.
+
+- **[say-my-name](contracts/say-my-name/README.md)**
+  > A simple name storage contract that remembers who you are.
+
 <!-- CONTRACTS:END -->
 
 ## _Le_ developer guide
