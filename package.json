@@ -15,9 +15,11 @@
     "docs": "npm run docs:contracts && npm run docs:catalog",
     "docs:contract": "test -n \"$CONTRACT\" || (echo '❌ Error: CONTRACT environment variable is required. Usage: CONTRACT=mycontract npm run docs:contract' && exit 1) && deno run -A ./run/src/mods/docs/contract/mod.ts",
     "docs:contracts": "for dir in contracts/*/; do CONTRACT=$(basename $dir) npm run docs:contract || exit 1; done",
-    "docs:catalog": "deno run -A ./run/src/mods/docs/catalog/mod.ts"
+    "docs:catalog": "deno run -A ./run/src/mods/docs/catalog/mod.ts",
+    "lint:commits": "commitlint --from origin/main --to HEAD --verbose"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
     "@hazae41/stdbob": "^0.0.18",
     "assemblyscript": "^0.28.9",
     "deno": "^2.6.3",
