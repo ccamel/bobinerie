@@ -1,16 +1,16 @@
 /// <reference types="../../libs/bytes/lib.d.ts"/>
 
-import { Writable } from "@hazae41/binary";
-import { readFileSync } from "node:fs";
-import process from "node:process";
-import { generate } from "../../libs/effort/mod.ts";
-import { Packable, Packed } from "../../libs/packed/mod.ts";
+import { readFileSync } from "node:fs"
+import process from "node:process"
+import { Writable } from "@hazae41/binary"
+import { generate } from "../../libs/effort/mod.ts"
+import { type Packable, Packed } from "../../libs/packed/mod.ts"
 
 process.loadEnvFile(".env.local")
 process.loadEnvFile(".env")
 
 function parse(texts: string[]): Array<Packable> {
-  const values = new Array<Packable>()
+  const values: Packable[] = []
 
   for (const text of texts) {
     if (text === "null") {
@@ -58,9 +58,11 @@ const effortAsBytes = await generate(codeAsBytes.length + saltAsBytes.length)
 
 body.append("effort", new Blob([effortAsBytes]))
 
-const response = await fetch(new URL("/api/create", process.env.SERVER), { method: "POST", body });
+const response = await fetch(new URL("/api/create", process.env.SERVER), {
+  method: "POST",
+  body,
+})
 
-if (!response.ok)
-  throw new Error("Failed", { cause: response })
+if (!response.ok) throw new Error("Failed", { cause: response })
 
 console.log(await response.json())

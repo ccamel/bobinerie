@@ -2,15 +2,18 @@
 
 /// <reference types="../bytes/lib.d.ts"/>
 
-import type { Cursor } from "@hazae41/cursor";
+import type { Cursor } from "@hazae41/cursor"
 
-export type Packable = null | number | Uint8Array | string | bigint | Array<Packable>
+export type Packable =
+  | null
+  | number
+  | Uint8Array
+  | string
+  | bigint
+  | Array<Packable>
 
 export class Packed {
-
-  constructor(
-    readonly value: Packable
-  ) { }
+  constructor(readonly value: Packable) {}
 
   sizeOrThrow() {
     return Packed.sizeOrThrow(this.value)
@@ -19,22 +22,17 @@ export class Packed {
   writeOrThrow(cursor: Cursor) {
     Packed.writeOrThrow(this.value, cursor)
   }
-
 }
 
 export namespace Packed {
-
   export function readOrThrow(cursor: Cursor): Packable {
     const type = cursor.readUint8OrThrow()
 
-    if (type === 0)
-      return null
+    if (type === 0) return null
 
-    if (type === 1)
-      return cursor.readFloat64OrThrow(true)
+    if (type === 1) return cursor.readFloat64OrThrow(true)
 
-    if (type === 2)
-      return cursor.readOrThrow(cursor.readUint32OrThrow(true))
+    if (type === 2) return cursor.readOrThrow(cursor.readUint32OrThrow(true))
 
     if (type === 3) {
       const size = cursor.readUint32OrThrow(true)
@@ -49,7 +47,7 @@ export namespace Packed {
       const size = cursor.readUint32OrThrow(true)
       const data = cursor.readOrThrow(size)
 
-      const absolute = BigInt("0x" + data.toHex())
+      const absolute = BigInt(`0x${data.toHex()}`)
 
       return negative ? -absolute : absolute
     }
@@ -58,8 +56,7 @@ export namespace Packed {
       const length = cursor.readUint32OrThrow(true)
       const values = new Array<Packable>(length)
 
-      for (let i = 0; i < length; i++)
-        values[i] = readOrThrow(cursor)
+      for (let i = 0; i < length; i++) values[i] = readOrThrow(cursor)
 
       return values
     }
@@ -68,14 +65,11 @@ export namespace Packed {
   }
 
   export function sizeOrThrow(value: Packable) {
-    if (value == null)
-      return 1
+    if (value == null) return 1
 
-    if (typeof value === "number")
-      return 1 + 4
+    if (typeof value === "number") return 1 + 4
 
-    if (value instanceof Uint8Array)
-      return 1 + 4 + value.length
+    if (value instanceof Uint8Array) return 1 + 4 + value.length
 
     if (typeof value === "string")
       return 1 + 4 + new TextEncoder().encode(value).length
@@ -84,7 +78,7 @@ export namespace Packed {
       const absolute = value < 0n ? -value : value
 
       const text = absolute.toString(16)
-      const data = Uint8Array.fromHex(text.length % 2 === 1 ? "0" + text : text)
+      const data = Uint8Array.fromHex(text.length % 2 === 1 ? `0${text}` : text)
 
       return 1 + 1 + 4 + data.length
     }
@@ -96,8 +90,7 @@ export namespace Packed {
 
       size += 4
 
-      for (const subvalue of value)
-        size += sizeOrThrow(subvalue)
+      for (const subvalue of value) size += sizeOrThrow(subvalue)
 
       return size
     }
@@ -146,7 +139,7 @@ export namespace Packed {
       const [negative, absolute] = value < 0n ? [1, -value] : [0, value]
 
       const text = absolute.toString(16)
-      const data = Uint8Array.fromHex(text.length % 2 === 1 ? "0" + text : text)
+      const data = Uint8Array.fromHex(text.length % 2 === 1 ? `0${text}` : text)
 
       cursor.writeUint8OrThrow(negative)
 
@@ -161,13 +154,11 @@ export namespace Packed {
 
       cursor.writeUint32OrThrow(value.length, true)
 
-      for (const subvalue of value)
-        writeOrThrow(subvalue, cursor)
+      for (const subvalue of value) writeOrThrow(subvalue, cursor)
 
       return
     }
 
     throw new Error("Unknown pack value")
   }
-
 }

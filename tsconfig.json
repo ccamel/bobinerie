@@ -4,7 +4,5 @@
     "module": "preserve",
     "moduleResolution": "bundler"
   },
-  "include": [
-    "./**/*.ts"
-  ]
+  "include": ["./**/*.ts"]
 }

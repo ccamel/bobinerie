@@ -17,7 +17,7 @@
     "docs:contracts": "for dir in contracts/*/; do CONTRACT=$(basename $dir) npm run docs:contract || exit 1; done",
     "docs:catalog": "deno run -A ./run/src/mods/docs/catalog/mod.ts",
     "lint:code": "biome check .",
-    "lint:code:fix": "biome check --write .",
+    "lint:code:fix": "biome check --write --unsafe .",
     "fmt": "biome format --write .",
     "fmt:check": "biome format .",
     "lint:commits": "commitlint --from origin/main --to HEAD --verbose"

@@ -7,14 +7,14 @@ module.exports = {
     {
       rules: {
         "header-is-single-letter": (parsed) => {
-          const header = (parsed.header || "").trim();
+          const header = (parsed.header || "").trim()
 
-          if (/^Merge /.test(header)) return [true];
+          if (/^Merge /.test(header)) return [true]
 
-          const ok = /^[dfartpvub]$/.test(header);
-          
-          if (ok) return [true];
-          
+          const ok = /^[dfartpvub]$/.test(header)
+
+          if (ok) return [true]
+
           return [
             false,
             [
@@ -37,11 +37,11 @@ module.exports = {
               "  f",
               "  r",
               "",
-              "see: https://x.com/hazae41/status/2001986156834267231"
+              "see: https://x.com/hazae41/status/2001986156834267231",
             ].join("\n"),
-          ];
+          ]
         },
       },
     },
   ],
-};
+}
