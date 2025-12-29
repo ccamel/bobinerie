@@ -1,4 +1,8 @@
 {
+  "name": "bobinerie",
+  "version": "1.0.0",
+  "description": "Le Bobine smart contracts store",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "prepack": "npm run prepack:all",
