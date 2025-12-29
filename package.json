@@ -1,10 +1,12 @@
 {
   "type": "module",
   "scripts": {
-    "prepack": "rm -rf ./out && npm run prepack:asc && npm run prepack:tsc",
-    "prepack:asc": "deno x asc ./src/mod.ts -o ./out/mod.wasm --runtime stub --enable reference-types",
-    "prepack:tsc": "deno x tsc ./src/mod.ts --outFile ./out/mod.d.ts --noCheck --declaration --emitDeclarationOnly",
-    "produce": "deno run -A ./run/src/mods/produce/mod.ts ./out/mod.wasm",
+    "prepack": "npm run prepack:all",
+    "prepack:all": "for dir in contracts/*/; do CONTRACT=$(basename $dir) npm run prepack:contract || exit 1; done",
+    "prepack:contract": "test -n \"$CONTRACT\" || (echo '❌ Error: CONTRACT environment variable is required. Usage: CONTRACT=mycontract npm run prepack:contract' && exit 1) && rm -rf ./contracts/$CONTRACT/out && npm run prepack:asc && npm run prepack:tsc",
+    "prepack:asc": "deno x asc ./contracts/$CONTRACT/src/mod.ts -o ./contracts/$CONTRACT/out/mod.wasm --runtime stub --enable reference-types",
+    "prepack:tsc": "deno x tsc ./contracts/$CONTRACT/src/mod.ts --outFile ./contracts/$CONTRACT/out/mod.d.ts --noCheck --declaration --emitDeclarationOnly",
+    "produce": "test -n \"$CONTRACT\" || (echo '❌ Error: CONTRACT environment variable is required. Usage: CONTRACT=mycontract npm run produce' && exit 1) && deno run -A ./run/src/mods/produce/mod.ts ./contracts/$CONTRACT/out/mod.wasm",
     "execute": "deno run -A ./run/src/mods/execute/mod.ts"
   },
   "devDependencies": {
