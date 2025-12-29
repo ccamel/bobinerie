@@ -7,7 +7,9 @@
     "prepack:asc": "deno x asc ./contracts/$CONTRACT/src/mod.ts -o ./contracts/$CONTRACT/out/mod.wasm --runtime stub --enable reference-types",
     "prepack:tsc": "deno x tsc ./contracts/$CONTRACT/src/mod.ts --outFile ./contracts/$CONTRACT/out/mod.d.ts --noCheck --declaration --emitDeclarationOnly",
     "produce": "test -n \"$CONTRACT\" || (echo '❌ Error: CONTRACT environment variable is required. Usage: CONTRACT=mycontract npm run produce' && exit 1) && deno run -A ./run/src/mods/produce/mod.ts ./contracts/$CONTRACT/out/mod.wasm",
-    "execute": "deno run -A ./run/src/mods/execute/mod.ts"
+    "execute": "deno run -A ./run/src/mods/execute/mod.ts",
+    "gendoc": "test -n \"$CONTRACT\" || (echo '❌ Error: CONTRACT environment variable is required. Usage: CONTRACT=mycontract npm run gendoc' && exit 1) && deno run -A ./run/src/mods/gendoc/mod.ts",
+    "gendoc:all": "for dir in contracts/*/; do CONTRACT=$(basename $dir) npm run gendoc || exit 1; done"
   },
   "devDependencies": {
     "@hazae41/stdbob": "^0.0.18",

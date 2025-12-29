@@ -12,7 +12,9 @@ This contract stores a name in its persistent storage. Each time you call it:
 
 ## Methods
 
-### `sayMyName(name: string) -> string | null`
+<!-- METHODS:START -->
+
+### `sayMyName(name)`
 
 Say your name and the contract will remember it.
 
@@ -22,9 +24,11 @@ Say your name and the contract will remember it.
 
 **Returns:**
 
-- The previously stored name, or `null` if this is the first call
+The previously stored name, or `null` if this is the first call
 
-**Example:**
+<!-- METHODS:END -->
+
+## Examples
 
 ```bash
 # First call
