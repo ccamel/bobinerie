@@ -14,6 +14,9 @@ Available now:
 
 <!-- CONTRACTS:START -->
 
+- **[counter](contracts/counter/README.md)**
+  > A simple counter contract that increments on each call.
+
 - **[say-my-name](contracts/say-my-name/README.md)**
   > A simple name storage contract that remembers who you are.
 
