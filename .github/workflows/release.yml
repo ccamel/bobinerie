@@ -8,7 +8,14 @@ permissions:
   pull-requests: read
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint-code.yml
+
+  check-docs:
+    uses: ./.github/workflows/check-docs.yml
+
   release:
+    needs: [lint, check-docs]
     runs-on: ubuntu-22.04
     if: github.ref == 'refs/heads/main'
     steps:
@@ -20,12 +27,12 @@ jobs:
           git_config_global: true
           git_user_signingkey: true
           git_commit_gpgsign: true
+          git_tag_gpgsign: true
 
       - name: Check out repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
@@ -35,7 +42,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Release
+      - name: Build contracts
+        run: npm run prepack:all
+
+      - name: Prepare release assets
+        run: deno run -A ./run/src/mods/release/mod.ts
+
+      - name: Calculate next version
+        id: version
+        run: |
+          latest=$(git tag -l | grep -E '^[0-9]+$' | sort -V | tail -n1)
+          if [ -z "$latest" ]; then
+            next=1
+          else
+            next=$((latest + 1))
+          fi
+          echo "next=$next" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run release
+        run: |
+          gh release create ${{ steps.version.outputs.next }} \
+            out/*.wasm out/*.d.ts \
+            --title "Release ${{ steps.version.outputs.next }}" \
+            --generate-notes
