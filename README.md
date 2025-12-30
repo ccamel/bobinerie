@@ -1,14 +1,14 @@
-# Bobinerie
+# La Bobinerie
 
 ![Bobinerie Banner](banner.webp)
 
-> _Le_ Bobine smart contracts store. Useful, serious, weird experiments, or pure fun contracts. Ship, deploy on [Bobine](https://bobine.tech), remix, play.
+> 🧵 *La Bobinerie* - Haberdashery of [Bobine](https://bobine.tech) modules: from useful, serious pieces to educational gems and esoteric oddities. Grab, deploy, fork at will.
 
 [![AssemblyScript](https://img.shields.io/badge/AssemblyScript-%23007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white)](https://www.assemblyscript.org/)
 [![Commit Convention: DAFT](https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge)](https://x.com/hazae41/status/2001986156834267231)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-## _Le_ Shop
+## Le Comptoir
 
 Available now:
 
@@ -19,7 +19,7 @@ Available now:
 
 <!-- CONTRACTS:END -->
 
-## _Le_ developer guide
+## Le Manuel de l’Artisan
 
 ### Project Structure
 
@@ -67,13 +67,13 @@ Execute a contract method:
 npm run execute 3ca2c27f... sayMyName text:"Alice"
 ```
 
-## 🎯 Contributing
+## Avis aux artisans
 
-Got a useful contract? A weird experiment? Add it to the bazaar!
+Got a useful contract? A intriguing experiment? Put it on the shelves.
 
 1. Create your contract in `contracts/your-contract-name/`
 2. Test it thoroughly
 3. Add a brief description in the shop section
 4. Submit a PR
 
-All contributions welcome - from serious DeFi primitives to silly meme contracts.
+All contributions welcome, from serious primitives to silly meme contracts.
