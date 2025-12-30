@@ -2,7 +2,7 @@
 
 ![Bobinerie Banner](banner.webp)
 
-> _Le_ Bobine smart contracts store. Useful, serious, weird experiments, or pure fun contracts. Ship, deploy on [Bobine](https://github.com/hazae41/bobine), remix, play.
+> _Le_ Bobine smart contracts store. Useful, serious, weird experiments, or pure fun contracts. Ship, deploy on [Bobine](https://bobine.tech), remix, play.
 
 [![AssemblyScript](https://img.shields.io/badge/AssemblyScript-%23007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white)](https://www.assemblyscript.org/)
 [![Commit Convention: DAFT](https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge)](https://x.com/hazae41/status/2001986156834267231)
