@@ -14,6 +14,9 @@ Available now:
 
 <!-- CONTRACTS:START -->
 
+- **[counter](contracts/counter/README.md)**
+  > Per-account counter with Ed25519 session authentication.
+
 - **[say-my-name](contracts/say-my-name/README.md)**
   > A simple name storage contract that remembers who you are.
 
