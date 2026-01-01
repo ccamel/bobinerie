@@ -317,10 +317,10 @@ namespace avatars {
 }
 
 /**
- * Compute the address for a given session capability.
+ * Derive the address for a given session capability.
  *
  * @param session Session packref [ed25519_module_address, pubkey]
- * @returns Computed address as textref
+ * @returns Derived address as textref
  */
 export function address(session: packref): textref {
   return addresses.verify(session)
@@ -341,7 +341,7 @@ export function get(address: textref): textref {
 /**
  * Mint an avatar for the authenticated session with a custom tag.
  *
- * @param session Session capability [module_address, pubkey]
+ * @param session Session packref [ed25519_module_address, pubkey]
  * @param tag Custom tag/label to store with the avatar
  * @returns SVG string as textref
  */
