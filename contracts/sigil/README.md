@@ -76,6 +76,30 @@ Burn then mint a fresh sigil (increments the burn counter once).
 
 SVG string as textref
 
+### `bless(target)`
+
+Bless a target sigil (increments count and updates rolling mix).
+
+**Parameters:**
+
+- `target` - The address to bless
+
+**Returns:**
+
+"blessed" if the roll hits, otherwise "ok"
+
+### `vibes(target)`
+
+Read the collective blessing progress for a target sigil.
+
+**Parameters:**
+
+- `target` - The address to inspect
+
+**Returns:**
+
+[count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
+
 <!-- METHODS:END -->
 
 ## Sample sigils
@@ -132,6 +156,10 @@ npm run execute <sigil_module_address> get text:"<address>"
 - Trait mashup: backgrounds, faces, eyes, mouths, hair, accessories + palettes.
 - Taggable: stash a short label on-chain next to your sigil.
 - Rare drop: golden halo (1/65536).
+- Permissionless blessing: anyone can spend gas to push a sigil toward a blessed state.
+- Vibes check: public progress tuple [count, blessed, k].
+
+Blessing is a tiny on-chain ritual: each `bless(address)` costs gas, increments a counter, and rolls a deterministic lottery (difficulty `k`). When it hits, the sigil flips to **blessed** and gets the "light-beam" overlay + metadata... Nice.
 
 ## Use cases
 
