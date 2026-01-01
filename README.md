@@ -20,6 +20,9 @@ Available now:
 - **[say-my-name](contracts/say-my-name/README.md)**
   > A simple name storage contract that remembers who you are.
 
+- **[sigil](contracts/sigil/README.md)**
+  > Account-bound on-chain sigil (SVG avatar): mint one per derived address, optional on-chain tag.
+
 <!-- CONTRACTS:END -->
 
 ## Le Manuel de l’Artisan
