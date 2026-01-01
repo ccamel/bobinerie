@@ -41,7 +41,7 @@ jobs:
           for dir in contracts/*/; do
             CONTRACT=$(basename $dir)
             echo "🚀 Producing $CONTRACT..."
-            CONTRACT=$CONTRACT npm run produce
+            CONTRACT=$CONTRACT npm run produce || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
           done
         env:
           SERVER: ${{ vars.BOBINE_SERVER }}
