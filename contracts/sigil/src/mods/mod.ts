@@ -11,6 +11,8 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
+const XMLNS_SIGIL = "https://bobine.tech#sigil"
+
 namespace addresses {
   export function compute(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
@@ -133,7 +135,7 @@ namespace render {
   ]
 
   const FACE: string[] = [
-    `<circle cx="32" cy="34" r="18" fill="$S"/><path d="M18 34 Q32 52 46 34" fill="none" stroke="#000" opacity="0.08" stroke-width="6"/>`,
+    `<circle cx="32" cy="34" r="18" fill="$S"/>`,
     `<rect x="14" y="18" width="36" height="36" rx="16" fill="$S"/>`,
     `<path d="M32 16 C44 16 52 26 52 36 C52 48 44 56 32 56 C20 56 12 48 12 36 C12 26 20 16 32 16 Z" fill="$S"/>`,
     `<circle cx="32" cy="34" r="18" fill="$S"/><circle cx="24" cy="40" r="3" fill="#000" opacity="0.06"/><circle cx="40" cy="40" r="3" fill="#000" opacity="0.06"/>`,
@@ -263,7 +265,7 @@ namespace render {
     const desc = `<desc>${esc(tag)}</desc>`
     const metadata =
       `<metadata>` +
-      `<sigil:data xmlns:sigil="https://bobine.app/sigil">` +
+      `<sigil:data xmlns:sigil="${XMLNS_SIGIL}">` +
       `<sigil:seed>${seed32hex}</sigil:seed>` +
       `<sigil:traits env="${env}" face="${face}" eyes="${eyes}" mouth="${mouth}" top="${top}" acc="${acc}" pal="${pal}"/>` +
       `</sigil:data>` +
