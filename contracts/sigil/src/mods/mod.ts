@@ -44,13 +44,17 @@ namespace state {
 
   function getText(k: textref): textref {
     const v = storage.get(k)
-    if (!v) return texts.fromString("")
+    if (!v) return null
     return packs.get<textref>(v, 0)
   }
 
   function getBigint(k: textref): bigintref {
     const t = getText(k)
     if (!t) return bigints.zero()
+
+    const s = texts.toString(t)
+    if (s.length === 0) return bigints.zero()
+
     return bigints.fromBase10(t)
   }
 
@@ -230,7 +234,11 @@ namespace render {
     "#3b2f2f",
   ]
 
-  export function svg(seed32hex: string, tag: string): string {
+  export function svg(
+    seed32hex: string,
+    tag: string,
+    burnsText: string,
+  ): string {
     const b0 = byteAt(seed32hex, 0)
     const b1 = byteAt(seed32hex, 1)
     const b2 = byteAt(seed32hex, 2)
@@ -267,6 +275,7 @@ namespace render {
       `<metadata>` +
       `<sigil:data xmlns:sigil="${XMLNS_SIGIL}">` +
       `<sigil:seed>${seed32hex}</sigil:seed>` +
+      `<sigil:burns>${burnsText}</sigil:burns>` +
       `<sigil:traits env="${env}" face="${face}" eyes="${eyes}" mouth="${mouth}" top="${top}" acc="${acc}" pal="${pal}"/>` +
       `</sigil:data>` +
       `</metadata>`
@@ -307,8 +316,11 @@ namespace avatars {
 
   export function retrieve(address: textref): textref {
     const stored = state.getSeed(address)
-    const storedStr = texts.toString(stored)
-    if (storedStr.length > 0) return stored
+
+    if (stored) {
+      const storedStr = texts.toString(stored)
+      if (storedStr.length > 0) return stored
+    }
 
     const seed = generateSeed(address)
     state.setSeed(address, seed)
@@ -333,9 +345,18 @@ export function address(session: packref): textref {
  * @returns SVG string as textref
  */
 export function get(address: textref): textref {
-  const seed = avatars.retrieve(address)
+  const seed = state.getSeed(address)
+  if (!seed) return texts.fromString("")
+
+  const seedText = texts.toString(seed)
+  if (seedText.length === 0) return texts.fromString("")
+
   const tag = state.getTag(address)
-  return texts.fromString(render.svg(texts.toString(seed), texts.toString(tag)))
+  const tagText = tag ? texts.toString(tag) : ""
+
+  const burns = state.getBurns(address)
+  const burnsText = texts.toString(bigints.toBase10(burns))
+  return texts.fromString(render.svg(seedText, tagText, burnsText))
 }
 
 /**
@@ -347,7 +368,23 @@ export function get(address: textref): textref {
  */
 export function mint(session: packref, tag: textref): textref {
   const address = addresses.verify(session)
-  const seed = avatars.retrieve(address)
+  avatars.retrieve(address)
   state.setTag(address, tag)
-  return texts.fromString(render.svg(texts.toString(seed), texts.toString(tag)))
+  return get(address)
+}
+
+/**
+ * Burn the caller's sigil and increment the burn counter.
+ *
+ * @param session Session packref [ed25519_module_address, pubkey]
+ * @returns Updated burn count
+ */
+export function burn(session: packref): bigintref {
+  const address = addresses.verify(session)
+  const burns = state.getBurns(address)
+  const next = bigints.inc(burns)
+  state.setBurns(address, next)
+  state.setSeed(address, texts.fromString(""))
+  state.setTag(address, texts.fromString(""))
+  return next
 }

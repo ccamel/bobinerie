@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
-import { Project, SyntaxKind, VariableDeclarationKind, ts } from "ts-morph"
+import { Project, SyntaxKind, ts, VariableDeclarationKind } from "ts-morph"
 
 const readmePath = "./contracts/sigil/README.md"
 const examplesDir = "./contracts/sigil/examples"
@@ -107,7 +107,7 @@ async function main() {
     const seed = await seedForIndex(i)
     const tag = `sigil example ${i}`
     const name = `sigil-${i}.svg`
-    const svg = render.svg(seed, tag)
+    const svg = render.svg(seed, tag, "0")
     writeFileSync(join(examplesDir, name), svg, "utf-8")
     examples.push({ name, seed, tag })
   }
