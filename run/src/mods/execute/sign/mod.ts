@@ -43,7 +43,7 @@ async function execute<T extends Packable = Packable>(
   const [logs, _reads, _writes, returned, _sparks] =
     Readable.readFromBytesOrThrow(Packed, await response.bytes()) as Proof
 
-  for (const log of logs) console.log(log)
+  for (const log of logs) console.error(log)
 
   return returned as T
 }
@@ -143,14 +143,12 @@ const signature = new Uint8Array(
   await crypto.subtle.sign("Ed25519", sigkey, message),
 )
 
-console.log(
-  jsonify(
-    await execute(ed25519, "call", [
-      module,
-      method,
-      parse(params),
-      pubkeyAsBytes,
-      signature,
-    ]),
-  ),
-)
+const returned = await execute(ed25519, "call", [
+  module,
+  method,
+  parse(params),
+  pubkeyAsBytes,
+  signature,
+])
+
+process.stdout.write(`${JSON.stringify(jsonify(returned))}\n`)
