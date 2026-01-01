@@ -486,6 +486,18 @@ export function burn(session: packref): bigintref {
 }
 
 /**
+ * Burn then mint a fresh sigil (increments the burn counter once).
+ *
+ * @param session Session packref [ed25519_module_address, pubkey]
+ * @param tag Custom tag/label to store with the avatar
+ * @returns SVG string as textref
+ */
+export function reroll(session: packref, tag: textref): textref {
+  burn(session)
+  return mint(session, tag)
+}
+
+/**
  * Bless a target sigil (increments count and updates rolling mix).
  *
  * @param target The address to bless
@@ -497,29 +509,38 @@ export function bless(target: textref): textref {
   const seedText = texts.toString(seed)
   if (seedText.length === 0) throw new Error("Sigil not minted")
 
+  const already = state.getBlessed(target)
+  if (already) return texts.fromString("blessed")
+
   const count = state.getBlessCount(target)
   const next = bigints.inc(count)
   state.setBlessCount(target, next)
-  const nextText = texts.toString(bigints.toBase10(next))
+
+  const nextRef = bigints.toBase10(next)
 
   const mix = state.getBlessMix(target)
-  const mixText = mix ? texts.toString(mix) : ""
-  const mixPack = packs.create3(
-    seed,
-    texts.fromString(nextText),
-    texts.fromString(mixText),
-  )
-  const digest = sha256.digest(blobs.encode(mixPack))
-  const digestHex = texts.toString(blobs.toBase16(digest))
-  state.setBlessMix(target, texts.fromString(digestHex))
+  const mixRef = mix ? mix : texts.fromString("")
 
+  const mixPack = packs.create4(
+    texts.fromString("bless:v1"),
+    seed,
+    nextRef,
+    mixRef,
+  )
+
+  const digest = sha256.digest(blobs.encode(mixPack))
+  const digestHexRef = blobs.toBase16(digest) // textref
+  state.setBlessMix(target, digestHexRef)
+
+  const digestHex = texts.toString(digestHexRef)
   const k = blessings.difficulty(seedText)
   const hit = blessings.hit(digestHex, k)
-  const already = state.getBlessed(target)
 
-  if (hit && !already) state.setBlessed(target, true)
+  if (hit) {
+    state.setBlessed(target, true)
+    return texts.fromString("blessed")
+  }
 
-  if (already || hit) return texts.fromString("blessed")
   return texts.fromString("ok")
 }
 
@@ -527,28 +548,24 @@ export function bless(target: textref): textref {
  * Read the collective blessing progress for a target sigil.
  *
  * @param target The address to inspect
- * @returns [count, is_blessed, difficulty_bits]
+ * @returns [count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
  */
 export function vibes(target: textref): packref {
   const count = state.getBlessCount(target)
+  const countText = bigints.toBase10(count)
+
   const blessed = state.getBlessed(target)
+  const blessedText = texts.fromString(blessed ? "1" : "0")
+
   const seed = state.getSeed(target)
   let k: i32 = 0
+
   if (seed) {
     const seedText = texts.toString(seed)
     if (seedText.length > 0) k = blessings.difficulty(seedText)
   }
-  return packs.create3(count, blessed, k)
-}
 
-/**
- * Burn then mint a fresh sigil (increments the burn counter once).
- *
- * @param session Session packref [ed25519_module_address, pubkey]
- * @param tag Custom tag/label to store with the avatar
- * @returns SVG string as textref
- */
-export function reroll(session: packref, tag: textref): textref {
-  burn(session)
-  return mint(session, tag)
+  const kText = texts.fromString(k.toString())
+
+  return packs.create3(countText, blessedText, kText)
 }
