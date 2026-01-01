@@ -330,6 +330,27 @@ namespace render {
     const mou = MOUTH[mouth]
     const hair = TOP[top].replace("$H", H)
     const accessory = ACC[acc]
+
+    const bgLayer = `<g id="sigil-bg">${bg}</g>`
+
+    const avatarLayer =
+      `<g id="sigil-avatar">` +
+      `<g id="sigil-face">` +
+      head +
+      `</g>` +
+      `<g id="sigil-eyes">` +
+      eye +
+      `</g>` +
+      `<g id="sigil-mouth">` +
+      mou +
+      `</g>` +
+      `<g id="sigil-top">` +
+      hair +
+      `</g>` +
+      `<g id="sigil-accessory">` +
+      accessory +
+      `</g>` +
+      `</g>`
     const desc = `<desc>${esc(tag)}</desc>`
     const metadata =
       `<metadata>` +
@@ -371,13 +392,9 @@ namespace render {
       blessedDefs +
       desc +
       metadata +
-      bg +
-      head +
-      eye +
-      mou +
-      hair +
-      accessory +
-      blessedOverlay +
+      bgLayer +
+      avatarLayer +
+      (blessed ? `<g id="sigil-bless">${blessedOverlay}</g>` : "") +
       `</svg>`
     )
   }
