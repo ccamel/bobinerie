@@ -51,6 +51,18 @@ Mint an avatar for the authenticated session with a custom tag.
 
 SVG string as textref
 
+### `burn(session)`
+
+Burn the caller's sigil and increment the burn counter.
+
+**Parameters:**
+
+- `session` - Session packref [ed25519_module_address, pubkey]
+
+**Returns:**
+
+Updated burn count
+
 <!-- METHODS:END -->
 
 ## Sample sigils
