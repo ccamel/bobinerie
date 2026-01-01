@@ -1,48 +1,72 @@
 # Counter
 
-A simple counter contract that increments on each call.
+Per-account counter with Ed25519 session authentication.
 
-## What it does
+## Overview
 
-This contract maintains a persistent counter. Each time you call it:
-
-- It increments the counter by 1
-- It returns the new counter value
-- It stores the updated value for the next call
+Maintains isolated counters keyed by account address. Requires an Ed25519 session module for authentication and nonce management.
 
 ## Methods
 
 <!-- METHODS:START -->
 
-### `add()`
+### `add(session)`
 
-Increment and return the counter value.
+Atomically increments the counter for the caller.
+
+**Parameters:**
+
+- `session` - Session packref [ed25519_module_address, pubkey]
 
 **Returns:**
 
-The new counter value after incrementing
+Incremented counter value
 
 <!-- METHODS:END -->
 
 ## Examples
 
+### Setup
+
+Deploy an Ed25519 authentication module:
+
+```bash
+git clone https://github.com/hazae41/bobine-ed25519.git && cd bobine-ed25519
+npm install
+npm run prepack && npm run produce
+# Note the deployed module address
+```
+
+Generate Ed25519 keypair:
+
+```bash
+npm run keygen
+```
+
+Store the keypair in `.env.local`:
+
+```env
+SIGKEY=302e020100300506032b657004220420...
+PUBKEY=302a300506032b65700321003307db3f...
+SERVER=http://localhost:8080 # address of your Bobine node in your garage
+```
+
+The private key (`SIGKEY`) signs transactions. The public key (`PUBKEY`) identifies your account. The keypair enables cryptographic authentication without relying on external wallet infrastructure.
+
+### Usage
+
 ```bash
 # First call
-npm run execute <address> add
-# Returns: 1
+npm run execute:sign <ed25519_module_address> <counter_module_address> add
+# → 1
 
 # Second call
-npm run execute <address> add
-# Returns: 2
-
-# Third call
-npm run execute <address> add
-# Returns: 3
+npm run execute:sign <ed25519_module_address> <counter_module_address> add
+# → 2
 ```
 
 ## Use cases
 
-- Learning [Bobine](https://bobine.tech) basics
-- Testing persistent storage
-- Tracking invocation counts
-- Simple state management example
+- Session-based authentication with Ed25519
+- Per-account state management
+- Composable authentication modules
