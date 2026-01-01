@@ -1,0 +1,47 @@
+name: Deploy Contracts
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "contracts/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy.yml"
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    environment: garage-hazae41-bob0
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile contracts
+        run: npm run prepack:all
+
+      - name: Deploy all contracts
+        run: |
+          for dir in contracts/*/; do
+            CONTRACT=$(basename $dir)
+            echo "🚀 Producing $CONTRACT..."
+            CONTRACT=$CONTRACT npm run produce || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
+          done
+        env:
+          SERVER: ${{ vars.BOBINE_SERVER }}
