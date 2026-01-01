@@ -107,7 +107,7 @@ async function main() {
     const seed = await seedForIndex(i)
     const tag = `sigil example ${i}`
     const name = `sigil-${i}.svg`
-    const svg = render.svg(seed, tag, "0")
+    const svg = render.svg(seed, tag, "0", "0", false)
     writeFileSync(join(examplesDir, name), svg, "utf-8")
     examples.push({ name, seed, tag })
   }

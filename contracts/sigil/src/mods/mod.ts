@@ -62,6 +62,16 @@ namespace state {
     storage.set(k, bigints.toBase10(v))
   }
 
+  function getBool(k: textref): bool {
+    const t = getText(k)
+    if (!t) return false
+    return texts.toString(t) === "1"
+  }
+
+  function setBool(k: textref, v: bool): void {
+    storage.set(k, texts.fromString(v ? "1" : "0"))
+  }
+
   export function getNonce(): bigintref {
     return getBigint(texts.fromString("nonce"))
   }
@@ -96,6 +106,55 @@ namespace state {
 
   export function setTag(address: textref, tag: textref): void {
     storage.set(key("tag:", address), tag)
+  }
+
+  export function getBlessCount(address: textref): bigintref {
+    return getBigint(key("bless_count:", address))
+  }
+
+  export function setBlessCount(address: textref, count: bigintref): void {
+    setBigint(key("bless_count:", address), count)
+  }
+
+  export function getBlessMix(address: textref): textref {
+    return getText(key("bless_mix:", address))
+  }
+
+  export function setBlessMix(address: textref, mix: textref): void {
+    storage.set(key("bless_mix:", address), mix)
+  }
+
+  export function getBlessed(address: textref): bool {
+    return getBool(key("blessed:", address))
+  }
+
+  export function setBlessed(address: textref, blessed: bool): void {
+    setBool(key("blessed:", address), blessed)
+  }
+}
+
+namespace blessings {
+  function hexNibble(code: i32): i32 {
+    if (code >= 48 && code <= 57) return code - 48
+    if (code >= 97 && code <= 102) return 10 + (code - 97)
+    if (code >= 65 && code <= 70) return 10 + (code - 65)
+    return 0
+  }
+
+  function byteAt(hex: string, i: i32): i32 {
+    const a = hexNibble(hex.charCodeAt(i * 2))
+    const b = hexNibble(hex.charCodeAt(i * 2 + 1))
+    return (a << 4) | b
+  }
+
+  export function difficulty(seed32hex: string): i32 {
+    return 4 + (byteAt(seed32hex, 0) % 3)
+  }
+
+  export function hit(digestHex: string, k: i32): bool {
+    const first = byteAt(digestHex, 0)
+    const threshold = 1 << (8 - k)
+    return first < threshold
   }
 }
 
@@ -238,6 +297,8 @@ namespace render {
     seed32hex: string,
     tag: string,
     burnsText: string,
+    blessCountText: string,
+    blessed: bool,
   ): string {
     const b0 = byteAt(seed32hex, 0)
     const b1 = byteAt(seed32hex, 1)
@@ -269,19 +330,45 @@ namespace render {
     const mou = MOUTH[mouth]
     const hair = TOP[top].replace("$H", H)
     const accessory = ACC[acc]
-
     const desc = `<desc>${esc(tag)}</desc>`
     const metadata =
       `<metadata>` +
       `<sigil:data xmlns:sigil="${XMLNS_SIGIL}">` +
       `<sigil:seed>${seed32hex}</sigil:seed>` +
       `<sigil:burns>${burnsText}</sigil:burns>` +
+      `<sigil:bless_count>${blessCountText}</sigil:bless_count>` +
       `<sigil:traits env="${env}" face="${face}" eyes="${eyes}" mouth="${mouth}" top="${top}" acc="${acc}" pal="${pal}"/>` +
       `</sigil:data>` +
       `</metadata>`
+    const blessedDefs = blessed
+      ? `<defs>
+      <linearGradient id="sigil_bless_beam" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fef08a" stop-opacity="0.70"/>
+        <stop offset="55%" stop-color="#fef08a" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="#fef08a" stop-opacity="0"/>
+      </linearGradient>
+
+      <filter id="sigil_bless_glow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="1.8"/>
+      </filter>
+    </defs>`
+      : ""
+    const blessedOverlay = blessed
+      ? `<g opacity="0.75">
+      <path d="M26 0
+               Q32 0 38 0
+               L54 22
+               L10 22
+               Z"
+            fill="url(#sigil_bless_beam)"
+            opacity="0.55"
+            filter="url(#sigil_bless_glow)"/>
+    </g>`
+      : ""
 
     return (
       `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64">` +
+      blessedDefs +
       desc +
       metadata +
       bg +
@@ -290,6 +377,7 @@ namespace render {
       mou +
       hair +
       accessory +
+      blessedOverlay +
       `</svg>`
     )
   }
@@ -356,7 +444,12 @@ export function get(address: textref): textref {
 
   const burns = state.getBurns(address)
   const burnsText = texts.toString(bigints.toBase10(burns))
-  return texts.fromString(render.svg(seedText, tagText, burnsText))
+  const blessCount = state.getBlessCount(address)
+  const blessCountText = texts.toString(bigints.toBase10(blessCount))
+  const blessed = state.getBlessed(address)
+  return texts.fromString(
+    render.svg(seedText, tagText, burnsText, blessCountText, blessed),
+  )
 }
 
 /**
@@ -386,7 +479,66 @@ export function burn(session: packref): bigintref {
   state.setBurns(address, next)
   state.setSeed(address, texts.fromString(""))
   state.setTag(address, texts.fromString(""))
+  state.setBlessCount(address, bigints.zero())
+  state.setBlessMix(address, texts.fromString(""))
+  state.setBlessed(address, false)
   return next
+}
+
+/**
+ * Bless a target sigil (increments count and updates rolling mix).
+ *
+ * @param target The address to bless
+ * @returns "blessed" if the roll hits, otherwise "ok"
+ */
+export function bless(target: textref): textref {
+  const seed = state.getSeed(target)
+  if (!seed) throw new Error("Sigil not minted")
+  const seedText = texts.toString(seed)
+  if (seedText.length === 0) throw new Error("Sigil not minted")
+
+  const count = state.getBlessCount(target)
+  const next = bigints.inc(count)
+  state.setBlessCount(target, next)
+  const nextText = texts.toString(bigints.toBase10(next))
+
+  const mix = state.getBlessMix(target)
+  const mixText = mix ? texts.toString(mix) : ""
+  const mixPack = packs.create3(
+    seed,
+    texts.fromString(nextText),
+    texts.fromString(mixText),
+  )
+  const digest = sha256.digest(blobs.encode(mixPack))
+  const digestHex = texts.toString(blobs.toBase16(digest))
+  state.setBlessMix(target, texts.fromString(digestHex))
+
+  const k = blessings.difficulty(seedText)
+  const hit = blessings.hit(digestHex, k)
+  const already = state.getBlessed(target)
+
+  if (hit && !already) state.setBlessed(target, true)
+
+  if (already || hit) return texts.fromString("blessed")
+  return texts.fromString("ok")
+}
+
+/**
+ * Read the collective blessing progress for a target sigil.
+ *
+ * @param target The address to inspect
+ * @returns [count, is_blessed, difficulty_bits]
+ */
+export function vibes(target: textref): packref {
+  const count = state.getBlessCount(target)
+  const blessed = state.getBlessed(target)
+  const seed = state.getSeed(target)
+  let k: i32 = 0
+  if (seed) {
+    const seedText = texts.toString(seed)
+    if (seedText.length > 0) k = blessings.difficulty(seedText)
+  }
+  return packs.create3(count, blessed, k)
 }
 
 /**
