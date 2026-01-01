@@ -388,3 +388,15 @@ export function burn(session: packref): bigintref {
   state.setTag(address, texts.fromString(""))
   return next
 }
+
+/**
+ * Burn then mint a fresh sigil (increments the burn counter once).
+ *
+ * @param session Session packref [ed25519_module_address, pubkey]
+ * @param tag Custom tag/label to store with the avatar
+ * @returns SVG string as textref
+ */
+export function reroll(session: packref, tag: textref): textref {
+  burn(session)
+  return mint(session, tag)
+}
