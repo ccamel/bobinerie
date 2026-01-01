@@ -24,7 +24,7 @@ module.exports = {
               "Legend:",
               "  d → development (general code additions or improvements)",
               "  f → bug fixes",
-              "  a → aarchitecture and renames (structural changes, refactoring, file moves)",
+              "  a → architecture and renames (structural changes, refactoring, file moves)",
               "  r → readme and docs (documentation updates)",
               "  t → tests (adding or modifying tests)",
               "  p → deploy on prod (production deployment-related changes)",
