@@ -63,6 +63,19 @@ Burn the caller's sigil and increment the burn counter.
 
 Updated burn count
 
+### `reroll(session, tag)`
+
+Burn then mint a fresh sigil (increments the burn counter once).
+
+**Parameters:**
+
+- `session` - Session packref [ed25519_module_address, pubkey]
+- `tag` - Custom tag/label to store with the avatar
+
+**Returns:**
+
+SVG string as textref
+
 <!-- METHODS:END -->
 
 ## Sample sigils
