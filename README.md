@@ -20,15 +20,13 @@ Available now:
 <!-- CONTRACTS:START -->
 
 - **[counter](contracts/counter/README.md)**
-
   > Per-account counter with Ed25519 session authentication.
 
 - **[say-my-name](contracts/say-my-name/README.md)**
-
   > A simple name storage contract that remembers who you are.
 
 - **[sigil](contracts/sigil/README.md)**
-  > Account-bound on-chain sigil (SVG avatar): mint one per derived address, optional on-chain tag.
+  > Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
 
 <!-- CONTRACTS:END -->
 
