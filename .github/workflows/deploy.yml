@@ -20,7 +20,12 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-    environment: garage-hazae41-bob0
+    strategy:
+      matrix:
+        environment:
+          - garage-hazae41-bob0
+          - garage-ccamel-bob0
+    environment: ${{ matrix.environment }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -35,8 +40,9 @@ jobs:
 
       - name: Create environment files
         run: |
-          echo "SERVER=${{ vars.BOBINE_SERVER }}" > .env
+          echo "SERVER=${{ secrets.BOBINE_SERVER }}" > .env
           touch .env.local
+        shell: bash
 
       - name: Compile contracts
         run: npm run prepack:all
@@ -48,5 +54,3 @@ jobs:
             echo "🚀 Producing $CONTRACT..."
             CONTRACT=$CONTRACT npm run produce || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
           done
-        env:
-          SERVER: ${{ vars.BOBINE_SERVER }}
