@@ -186,92 +186,28 @@ namespace render {
     return o
   }
 
-  const BG: string[] = [
-    `<rect x="0" y="0" width="64" height="64" rx="12" fill="$C"/>`,
-    `<circle cx="32" cy="32" r="30" fill="$C"/>`,
-    `<path d="M32 2 L60 18 L60 46 L32 62 L4 46 L4 18 Z" fill="$C"/>`,
-    `<rect x="0" y="0" width="64" height="64" fill="$C"/><path d="M0 12 H64 M0 28 H64 M0 44 H64" stroke="$C2" stroke-width="4" opacity="0.35"/>`,
-    `<rect x="0" y="0" width="64" height="64" fill="$C"/><path d="M-8 64 L64 -8" stroke="$C2" stroke-width="10" opacity="0.25"/>`,
-    `<rect x="0" y="0" width="64" height="64" fill="$C"/><circle cx="18" cy="18" r="10" fill="$C2" opacity="0.35"/><circle cx="46" cy="46" r="12" fill="$C2" opacity="0.25"/>`,
-    `<rect x="0" y="0" width="64" height="64" fill="$C"/><path d="M0 52 Q32 36 64 52 V64 H0 Z" fill="$C2" opacity="0.35"/>`,
-    `<rect x="0" y="0" width="64" height="64" fill="$C"/><path d="M0 0 H64 V64 H0 Z" fill="none" stroke="$C2" stroke-width="4" opacity="0.35"/>`,
+  const PA_BG1: string[] = [
+    "#0f172a", // eth-ish night
+    "#111827", // slate
+    "#0b1020", // void
+    "#1f0a3a", // solana purple
+    "#082f49", // blue
+    "#2a0b2e", // degen purple
+    "#1b0f0a", // btc dark
+    "#052e2b", // green
   ]
 
-  const FACE: string[] = [
-    `<circle cx="32" cy="34" r="18" fill="$S"/>`,
-    `<rect x="14" y="18" width="36" height="36" rx="16" fill="$S"/>`,
-    `<path d="M32 16 C44 16 52 26 52 36 C52 48 44 56 32 56 C20 56 12 48 12 36 C12 26 20 16 32 16 Z" fill="$S"/>`,
-    `<circle cx="32" cy="34" r="18" fill="$S"/><circle cx="24" cy="40" r="3" fill="#000" opacity="0.06"/><circle cx="40" cy="40" r="3" fill="#000" opacity="0.06"/>`,
-    `<rect x="16" y="18" width="32" height="38" rx="14" fill="$S"/>`,
-    `<circle cx="32" cy="35" r="19" fill="$S"/><path d="M18 28 Q32 18 46 28" fill="none" stroke="#000" opacity="0.06" stroke-width="6"/>`,
-    `<circle cx="32" cy="34" r="18" fill="$S"/><path d="M20 50 Q32 46 44 50" fill="none" stroke="#000" opacity="0.08" stroke-width="4"/>`,
-    `<rect x="14" y="18" width="36" height="36" rx="18" fill="$S"/><path d="M20 26 Q32 20 44 26" fill="none" stroke="#000" opacity="0.06" stroke-width="5"/>`,
-  ]
-
-  const EYES: string[] = [
-    `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/>`,
-    `<path d="M20 32 Q25 28 30 32" fill="none" stroke="#111" stroke-width="2.5"/><path d="M34 32 Q39 28 44 32" fill="none" stroke="#111" stroke-width="2.5"/>`,
-    `<circle cx="25" cy="32" r="2" fill="#111"/><circle cx="39" cy="32" r="2" fill="#111"/><circle cx="25" cy="32" r="6" fill="none" stroke="#111" opacity="0.2" stroke-width="2"/>`,
-    `<path d="M21 31 H29" stroke="#111" stroke-width="3" stroke-linecap="round"/><path d="M35 31 H43" stroke="#111" stroke-width="3" stroke-linecap="round"/>`,
-    `<circle cx="25" cy="33" r="3" fill="#111"/><circle cx="39" cy="33" r="3" fill="#111"/><path d="M20 28 Q25 25 30 28" fill="none" stroke="#111" stroke-width="2"/>`,
-    `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/><circle cx="23.7" cy="31" r="1" fill="#fff" opacity="0.8"/><circle cx="37.7" cy="31" r="1" fill="#fff" opacity="0.8"/>`,
-    `<path d="M20 33 Q25 36 30 33" fill="none" stroke="#111" stroke-width="2.5"/><path d="M34 33 Q39 36 44 33" fill="none" stroke="#111" stroke-width="2.5"/>`,
-    `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/><path d="M24 37 Q32 40 40 37" fill="none" stroke="#111" opacity="0.2" stroke-width="2"/>`,
-  ]
-
-  const MOUTH: string[] = [
-    `<path d="M26 43 Q32 47 38 43" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
-    `<path d="M26 44 Q32 41 38 44" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
-    `<circle cx="32" cy="44" r="2" fill="#111" opacity="0.7"/>`,
-    `<path d="M28 45 Q32 49 36 45" fill="none" stroke="#111" stroke-width="2.5"/><circle cx="30" cy="45" r="1" fill="#111"/><circle cx="34" cy="45" r="1" fill="#111"/>`,
-    `<path d="M27 44 Q32 50 37 44" fill="#111" opacity="0.12"/>`,
-    `<path d="M26 43 Q32 48 38 43" fill="none" stroke="#111" stroke-width="2.5"/><path d="M28 44 Q32 46 36 44" fill="none" stroke="#111" opacity="0.3" stroke-width="1.5"/>`,
-    `<path d="M25 44 H39" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
-    `<path d="M27 43 Q32 45 37 43" fill="none" stroke="#111" stroke-width="2.5"/><path d="M29 47 Q32 49 35 47" fill="none" stroke="#111" opacity="0.25" stroke-width="2"/>`,
-  ]
-
-  const TOP: string[] = [
-    `<path d="M14 30 Q32 10 50 30 Q46 18 32 16 Q18 18 14 30Z" fill="$H"/>`,
-    `<path d="M14 30 Q32 14 50 30 Q50 20 32 20 Q14 20 14 30Z" fill="$H"/><path d="M20 22 Q32 16 44 22" fill="none" stroke="#000" opacity="0.08" stroke-width="4"/>`,
-    `<path d="M16 28 Q32 8 48 28 Q44 14 32 14 Q20 14 16 28Z" fill="$H"/><circle cx="32" cy="14" r="3" fill="#000" opacity="0.08"/>`,
-    `<path d="M12 30 Q32 18 52 30" fill="none" stroke="$H" stroke-width="10" stroke-linecap="round"/>`,
-    `<path d="M18 22 Q32 12 46 22 Q44 10 32 10 Q20 10 18 22Z" fill="$H"/><path d="M18 24 Q32 18 46 24" fill="none" stroke="#000" opacity="0.08" stroke-width="3"/>`,
-    `<path d="M14 30 Q32 6 50 30" fill="none" stroke="$H" stroke-width="10" stroke-linecap="round"/><path d="M18 30 Q32 14 46 30" fill="none" stroke="$H" stroke-width="8" stroke-linecap="round" opacity="0.8"/>`,
-    `<path d="M16 30 Q32 22 48 30 Q44 18 32 18 Q20 18 16 30Z" fill="$H"/><path d="M20 30 Q32 24 44 30" fill="none" stroke="#fff" opacity="0.18" stroke-width="2"/>`,
-    `<path d="M10 30 Q32 12 54 30" fill="none" stroke="$H" stroke-width="12" stroke-linecap="round"/>`,
-  ]
-
-  const ACC: string[] = [
-    ``,
-    `<circle cx="25" cy="32" r="7" fill="none" stroke="#111" stroke-width="2"/><circle cx="39" cy="32" r="7" fill="none" stroke="#111" stroke-width="2"/><path d="M32 32 H32" stroke="#111" stroke-width="2"/>`,
-    `<circle cx="25" cy="32" r="8" fill="none" stroke="#111" stroke-width="2"/><circle cx="39" cy="32" r="8" fill="none" stroke="#111" stroke-width="2"/><path d="M33 32 H31" stroke="#111" stroke-width="2"/><path d="M17 32 H14" stroke="#111" opacity="0.25" stroke-width="2"/><path d="M50 32 H47" stroke="#111" opacity="0.25" stroke-width="2"/>`,
-    `<circle cx="43" cy="41" r="2" fill="#d4af37"/><circle cx="43" cy="46" r="2" fill="#d4af37"/>`,
-    `<path d="M22 45 Q32 52 42 45" fill="none" stroke="#111" opacity="0.18" stroke-width="6" stroke-linecap="round"/>`,
-    `<path d="M18 12 Q32 4 46 12" fill="none" stroke="#d4af37" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="6" r="3" fill="#d4af37"/>`,
-    `<path d="M16 48 Q32 58 48 48" fill="none" stroke="#111" opacity="0.12" stroke-width="8" stroke-linecap="round"/>`,
-    `<path d="M20 52 H44" stroke="#111" opacity="0.18" stroke-width="6" stroke-linecap="round"/>`,
-  ]
-
-  const PA_BG: string[] = [
-    "#0b1020",
-    "#101827",
-    "#0f172a",
-    "#111827",
-    "#052e2b",
-    "#1f2937",
-    "#2a0b2e",
-    "#2c1b0f",
-  ]
   const PA_BG2: string[] = [
-    "#60a5fa",
-    "#34d399",
-    "#f472b6",
-    "#f59e0b",
-    "#a78bfa",
-    "#22c55e",
-    "#fb7185",
-    "#38bdf8",
+    "#2563eb", // eth blue
+    "#06b6d4", // cyan
+    "#a855f7", // purple
+    "#ec4899", // pink
+    "#22c55e", // green
+    "#f59e0b", // orange
+    "#f97316", // btc orange
+    "#60a5fa", // light blue
   ]
+
   const PA_SKIN: string[] = [
     "#f2c9a0",
     "#e8b389",
@@ -282,6 +218,7 @@ namespace render {
     "#e2bfa0",
     "#d1a47f",
   ]
+
   const PA_HAIR: string[] = [
     "#111827",
     "#1f2937",
@@ -293,6 +230,145 @@ namespace render {
     "#3b2f2f",
   ]
 
+  const PA_CLOTH: string[] = [
+    "#111827",
+    "#0f172a",
+    "#1f2937",
+    "#1e293b",
+    "#0b1020",
+    "#2a0b2e",
+    "#3b2f2f",
+    "#052e2b",
+  ]
+
+  const BG: string[] = [
+    `<rect x="0" y="0" width="64" height="64" rx="12" fill="url(#sigil_bg_grad)"/>`,
+    `<rect x="0" y="0" width="64" height="64" rx="12" fill="url(#sigil_bg_grad)"/><path d="M0 14 H64 M0 30 H64 M0 46 H64" stroke="#fff" stroke-width="2" opacity="0.07"/>`,
+    `<rect x="0" y="0" width="64" height="64" rx="12" fill="url(#sigil_bg_grad)"/><path d="M-10 66 L66 -10" stroke="#fff" stroke-width="10" opacity="0.05"/>`,
+    `<rect x="0" y="0" width="64" height="64" rx="12" fill="url(#sigil_bg_grad)"/><circle cx="50" cy="18" r="10" fill="#fff" opacity="0.06"/>`,
+    `<rect x="0" y="0" width="64" height="64" rx="12" fill="url(#sigil_bg_grad)"/><path d="M0 52 Q32 36 64 52 V64 H0 Z" fill="#000" opacity="0.10"/>`,
+  ]
+
+  const HEAD: string[] = [
+    // Human
+    `<circle cx="32" cy="34" r="18" fill="$S"/>`,
+    // Ape jaw
+    `<path d="M32 16 C44 16 52 26 52 36 C52 50 42 56 32 56 C22 56 12 50 12 36 C12 26 20 16 32 16 Z" fill="$S"/>` +
+      `<path d="M18 42 Q32 52 46 42" fill="#000" opacity="0.08"/>`,
+    // Alien
+    `<ellipse cx="32" cy="32" rx="18" ry="22" fill="$S"/>`,
+    // Zombie (boxy)
+    `<rect x="14" y="16" width="36" height="40" rx="10" fill="$S"/>` +
+      `<path d="M20 28 L24 24 L28 28" fill="none" stroke="#000" opacity="0.08" stroke-width="3" stroke-linecap="round"/>`,
+    // Ghost
+    `<path d="M18 56 V32 C18 22 25 16 32 16 C39 16 46 22 46 32 V56" fill="$S"/>` +
+      `<path d="M18 56 Q22 52 26 56 Q30 52 34 56 Q38 52 42 56 Q44 54 46 56" fill="$S"/>`,
+    // Pepe-ish (wide)
+    `<ellipse cx="32" cy="36" rx="20" ry="18" fill="$S"/>` +
+      `<path d="M16 38 Q32 28 48 38" fill="none" stroke="#000" opacity="0.06" stroke-width="6" stroke-linecap="round"/>`,
+  ]
+
+  const BODY: string[] = [
+    // Hoodie
+    `<path d="M10 64 V46 Q32 30 54 46 V64 Z" fill="$C"/>` +
+      `<path d="M18 46 Q32 36 46 46" fill="none" stroke="#fff" opacity="0.10" stroke-width="3" stroke-linecap="round"/>` +
+      `<path d="M26 46 V64" stroke="#000" opacity="0.10" stroke-width="3"/>` +
+      `<path d="M38 46 V64" stroke="#000" opacity="0.10" stroke-width="3"/>`,
+    // Suit
+    `<path d="M12 64 V44 Q32 34 52 44 V64 Z" fill="$C"/>` +
+      `<path d="M32 44 L26 64" stroke="#000" opacity="0.12" stroke-width="3"/>` +
+      `<path d="M32 44 L38 64" stroke="#000" opacity="0.12" stroke-width="3"/>` +
+      `<path d="M28 46 Q32 50 36 46" fill="#fff" opacity="0.10"/>`,
+    // Tee
+    `<path d="M12 64 V48 Q32 40 52 48 V64 Z" fill="$C"/>` +
+      `<path d="M22 48 Q32 44 42 48" fill="none" stroke="#000" opacity="0.10" stroke-width="3" stroke-linecap="round"/>`,
+    // Naked
+    ``,
+  ]
+
+  const EYES: string[] = [
+    // Normal
+    `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/>`,
+    // Bored
+    `<path d="M21 31 H29" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
+      `<path d="M35 31 H43" stroke="#111" stroke-width="3" stroke-linecap="round"/>`,
+    // Crying
+    `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/>` +
+      `<path d="M24 35 Q23 40 25 44" fill="none" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>`,
+    // Noggles
+    `<circle cx="25" cy="32" r="8" fill="none" stroke="#111" stroke-width="2"/>` +
+      `<circle cx="39" cy="32" r="8" fill="none" stroke="#111" stroke-width="2"/>` +
+      `<path d="M33 32 H31" stroke="#111" stroke-width="2"/>`,
+    // Laser eyes (meme, not ultra-rare)
+    `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/>` +
+      `<path d="M25 32 L0 22" stroke="#ef4444" stroke-width="3" stroke-linecap="round" opacity="0.55" filter="url(#sigil_laser_glow)"/>` +
+      `<path d="M39 32 L64 22" stroke="#ef4444" stroke-width="3" stroke-linecap="round" opacity="0.55" filter="url(#sigil_laser_glow)"/>` +
+      `<path d="M25 33 L0 34" stroke="#fb7185" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>` +
+      `<path d="M39 33 L64 34" stroke="#fb7185" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>`,
+    // Dead
+    `<path d="M22 30 L28 36" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
+      `<path d="M28 30 L22 36" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
+      `<path d="M36 30 L42 36" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
+      `<path d="M42 30 L36 36" stroke="#111" stroke-width="3" stroke-linecap="round"/>`,
+  ]
+
+  const BROWS: string[] = [
+    ``,
+    `<path d="M20 27 Q25 24 30 27" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" opacity="0.35"/>` +
+      `<path d="M34 27 Q39 24 44 27" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" opacity="0.35"/>`,
+    `<path d="M20 27 Q25 22 30 27" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" opacity="0.40"/>` +
+      `<path d="M34 27 Q39 22 44 27" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" opacity="0.40"/>`,
+    `<path d="M20 26 Q25 29 30 26" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" opacity="0.35"/>` +
+      `<path d="M34 26 Q39 29 44 26" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" opacity="0.35"/>`,
+  ]
+
+  const MOUTH: string[] = [
+    `<path d="M26 43 Q32 47 38 43" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
+    `<path d="M26 44 Q32 41 38 44" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
+    `<path d="M25 44 H39" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
+    // Cigarette
+    `<path d="M26 44 H38" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>` +
+      `<path d="M38 44 H46" stroke="#e5e7eb" stroke-width="3" stroke-linecap="round"/>` +
+      `<path d="M47 43 Q50 41 49 38" fill="none" stroke="#9ca3af" stroke-width="2" opacity="0.55" stroke-linecap="round"/>`,
+    // Pipe
+    `<path d="M26 44 Q32 48 38 44" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>` +
+      `<path d="M40 44 Q45 46 46 42" fill="none" stroke="#111" opacity="0.65" stroke-width="3" stroke-linecap="round"/>`,
+  ]
+
+  const HAT: string[] = [
+    // Nothing
+    ``,
+    // Cap
+    `<path d="M16 28 Q32 16 48 28 Q44 18 32 18 Q20 18 16 28Z" fill="$H"/>` +
+      `<path d="M22 26 Q32 22 42 26" fill="none" stroke="#000" opacity="0.10" stroke-width="4" stroke-linecap="round"/>`,
+    // Beanie
+    `<path d="M16 30 Q32 14 48 30 Q48 22 32 22 Q16 22 16 30Z" fill="$H"/>`,
+    // Crown
+    `<path d="M18 22 L24 14 L32 22 L40 14 L46 22" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<circle cx="24" cy="14" r="2" fill="#fef08a" opacity="0.9"/>` +
+      `<circle cx="40" cy="14" r="2" fill="#fef08a" opacity="0.9"/>`,
+    // Top hat
+    `<rect x="22" y="10" width="20" height="14" rx="2" fill="$H"/>` +
+      `<path d="M18 24 H46" stroke="$H" stroke-width="6" stroke-linecap="round"/>`,
+    // Brain
+    `<path d="M20 26 Q24 14 32 18 Q40 14 44 26" fill="none" stroke="#fb7185" stroke-width="4" opacity="0.55" stroke-linecap="round"/>`,
+  ]
+
+  const FX: string[] = [
+    // Nothing
+    ``,
+    // Sparkles
+    `<path d="M12 18 L14 22 L18 24 L14 26 L12 30 L10 26 L6 24 L10 22 Z" fill="#fff" opacity="0.12"/>` +
+      `<path d="M52 40 L54 44 L58 46 L54 48 L52 52 L50 48 L46 46 L50 44 Z" fill="#fff" opacity="0.10"/>`,
+    // Coins
+    `<circle cx="14" cy="50" r="5" fill="#f59e0b" opacity="0.22"/>` +
+      `<circle cx="52" cy="18" r="4" fill="#f59e0b" opacity="0.18"/>`,
+    // Flies (rot)
+    `<circle cx="16" cy="20" r="2" fill="#111" opacity="0.14"/>` +
+      `<circle cx="20" cy="18" r="1.5" fill="#111" opacity="0.12"/>` +
+      `<circle cx="48" cy="44" r="2" fill="#111" opacity="0.14"/>`,
+  ]
+
   export function svg(
     seed32hex: string,
     tag: string,
@@ -300,6 +376,7 @@ namespace render {
     blessCountText: string,
     blessed: bool,
   ): string {
+    // seed32hex is 32 hex chars = 16 bytes
     const b0 = byteAt(seed32hex, 0)
     const b1 = byteAt(seed32hex, 1)
     const b2 = byteAt(seed32hex, 2)
@@ -308,93 +385,179 @@ namespace render {
     const b5 = byteAt(seed32hex, 5)
     const b6 = byteAt(seed32hex, 6)
     const b7 = byteAt(seed32hex, 7)
+    const b14 = byteAt(seed32hex, 14)
+    const b15 = byteAt(seed32hex, 15)
 
-    const pal = b6 & 7
-    const env = b0 & 7
-    const face = b1 & 7
-    const eyes = b2 & 7
-    const mouth = b3 & 7
-    const top = b4 & 7
-    let acc = b5 & 7
+    const pal = b6 % PA_BG1.length
+    const bg = b0 % BG.length
+    const arche = b1 % HEAD.length
+    const body = b2 % BODY.length
+    const eyes = b3 % EYES.length
+    const mouth = b4 % MOUTH.length
+    const hat = b5 % HAT.length
+    const fx = b7 % FX.length
+    const brow = (b6 >> 1) & 3
 
-    if (b0 === 0 && b1 === 0) acc = 5
+    const anomaly = b15 === 0
+    const anomalyKind = b14 % 3
 
-    const C = PA_BG[pal]
-    const C2 = PA_BG2[pal]
+    const BG1 = PA_BG1[pal]
+    const BG2 = PA_BG2[pal]
     const S = PA_SKIN[b7 & 7]
     const H = PA_HAIR[(b7 >> 3) & 7]
+    const C = PA_CLOTH[(pal + (b2 & 3)) % PA_CLOTH.length]
 
-    const bg = BG[env].replace("$C", C).replace("$C2", C2)
-    const head = FACE[face].replace("$S", S)
-    const eye = EYES[eyes]
-    const mou = MOUTH[mouth]
-    const hair = TOP[top].replace("$H", H)
-    const accessory = ACC[acc]
+    const bgSvg = BG[bg]
+    const bodySvg = BODY[body].replace("$C", C)
+    const headSvg = HEAD[arche].replace("$S", S)
+    const browSvg = BROWS[brow]
+    const eyesSvg = EYES[eyes]
+    const mouthSvg = MOUTH[mouth]
+    const hatSvg = HAT[hat].replace("$H", H)
+    const fxSvg = FX[fx]
 
-    const bgLayer = `<g id="sigil-bg">${bg}</g>`
+    const faceFx =
+      `<path d=\"M20 26 Q32 18 44 26\" fill=\"none\" stroke=\"#fff\" opacity=\"0.08\" stroke-width=\"4\" stroke-linecap=\"round\"/>` +
+      `<path d=\"M20 50 Q32 56 44 50\" fill=\"none\" stroke=\"#000\" opacity=\"0.07\" stroke-width=\"6\" stroke-linecap=\"round\"/>` +
+      `<circle cx=\"22\" cy=\"42\" r=\"5\" fill=\"#fff\" opacity=\"0.030\"/>` +
+      `<circle cx=\"42\" cy=\"42\" r=\"5\" fill=\"#fff\" opacity=\"0.022\"/>`
+
+    const baseDefs =
+      `<defs>` +
+      `<linearGradient id=\"sigil_bg_grad\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">` +
+      `<stop offset=\"0%\" stop-color=\"${BG1}\"/>` +
+      `<stop offset=\"100%\" stop-color=\"${BG2}\"/>` +
+      `</linearGradient>` +
+      `<filter id=\"sigil_soft_shadow\" x=\"-20%\" y=\"-20%\" width=\"140%\" height=\"140%\">` +
+      `<feDropShadow dx=\"0\" dy=\"1.2\" stdDeviation=\"1.1\" flood-color=\"#000\" flood-opacity=\"0.28\"/>` +
+      `</filter>` +
+      `<radialGradient id=\"sigil_vignette\" cx=\"50%\" cy=\"45%\" r=\"70%\">` +
+      `<stop offset=\"0%\" stop-color=\"#000\" stop-opacity=\"0\"/>` +
+      `<stop offset=\"75%\" stop-color=\"#000\" stop-opacity=\"0\"/>` +
+      `<stop offset=\"100%\" stop-color=\"#000\" stop-opacity=\"0.22\"/>` +
+      `</radialGradient>` +
+      `<clipPath id=\"sigil_clip\">` +
+      `<rect x=\"0\" y=\"0\" width=\"64\" height=\"64\" rx=\"12\"/>` +
+      `</clipPath>` +
+      `<filter id=\"sigil_frame_shadow\" x=\"-20%\" y=\"-20%\" width=\"140%\" height=\"140%\">` +
+      `<feDropShadow dx=\"0\" dy=\"1\" stdDeviation=\"1.2\" flood-color=\"#000\" flood-opacity=\"0.22\"/>` +
+      `</filter>` +
+      `<filter id=\"sigil_laser_glow\" x=\"-40%\" y=\"-40%\" width=\"180%\" height=\"180%\">` +
+      `<feGaussianBlur stdDeviation=\"0.7\"/>` +
+      `</filter>` +
+      `<filter id=\"sigil_tint_r\">` +
+      `<feColorMatrix type=\"matrix\" values=\"1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0\"/>` +
+      `</filter>` +
+      `<filter id=\"sigil_tint_c\">` +
+      `<feColorMatrix type=\"matrix\" values=\"0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0\"/>` +
+      `</filter>` +
+      `</defs>`
+
+    const bgLayer =
+      `<g id=\"sigil-bg\">` +
+      bgSvg +
+      `<rect x=\"0\" y=\"0\" width=\"64\" height=\"64\" rx=\"12\" fill=\"url(#sigil_vignette)\"/>` +
+      `</g>`
+
+    const avatarCore =
+      `<g id=\"sigil-body\">` +
+      bodySvg +
+      `</g>` +
+      `<g id=\"sigil-head\">` +
+      headSvg +
+      faceFx +
+      `</g>` +
+      `<g id=\"sigil-brows\">` +
+      browSvg +
+      `</g>` +
+      `<g id=\"sigil-eyes\">` +
+      eyesSvg +
+      `</g>` +
+      `<g id=\"sigil-mouth\">` +
+      mouthSvg +
+      `</g>` +
+      `<g id=\"sigil-hat\">` +
+      hatSvg +
+      `</g>` +
+      `<g id=\"sigil-fx\">` +
+      fxSvg +
+      `</g>`
 
     const avatarLayer =
-      `<g id="sigil-avatar">` +
-      `<g id="sigil-face">` +
-      head +
-      `</g>` +
-      `<g id="sigil-eyes">` +
-      eye +
-      `</g>` +
-      `<g id="sigil-mouth">` +
-      mou +
-      `</g>` +
-      `<g id="sigil-top">` +
-      hair +
-      `</g>` +
-      `<g id="sigil-accessory">` +
-      accessory +
-      `</g>` +
+      `<g id=\"sigil-avatar\" filter=\"url(#sigil_soft_shadow)\">` +
+      avatarCore +
       `</g>`
+
+    const anomalyOverlay = anomaly
+      ? `<g id=\"sigil-anomaly\">` +
+        `<g opacity=\"0.55\" transform=\"translate(-0.8,0)\" filter=\"url(#sigil_tint_r)\">` +
+        avatarLayer +
+        `</g>` +
+        `<g opacity=\"0.55\" transform=\"translate(0.8,0)\" filter=\"url(#sigil_tint_c)\">` +
+        avatarLayer +
+        `</g>` +
+        `<g opacity=\"1\">` +
+        avatarLayer +
+        `</g>` +
+        (anomalyKind === 0
+          ? `<path d=\"M0 12 H64 M0 20 H64 M0 28 H64 M0 36 H64 M0 44 H64 M0 52 H64\" stroke=\"#fff\" stroke-width=\"1\" opacity=\"0.06\"/>`
+          : anomalyKind === 1
+            ? `<path d=\"M0 10 H64 M0 18 H64 M0 26 H64 M0 34 H64 M0 42 H64 M0 50 H64\" stroke=\"#000\" stroke-width=\"1\" opacity=\"0.08\"/>`
+            : `<path d=\"M-8 64 L64 -8\" stroke=\"#fff\" stroke-width=\"8\" opacity=\"0.05\"/>`) +
+        `</g>`
+      : ""
+
+    const normalOverlay = anomaly ? "" : avatarLayer
+
+    const frameLayer =
+      `<g id=\"sigil-frame\" filter=\"url(#sigil_frame_shadow)\">` +
+      `<rect x=\"1.5\" y=\"1.5\" width=\"61\" height=\"61\" rx=\"12\" fill=\"none\" stroke=\"#fff\" stroke-width=\"3\" opacity=\"0.10\"/>` +
+      `<rect x=\"3\" y=\"3\" width=\"58\" height=\"58\" rx=\"11\" fill=\"none\" stroke=\"#000\" stroke-width=\"2\" opacity=\"0.10\"/>` +
+      `</g>`
+
     const desc = `<desc>${esc(tag)}</desc>`
+
     const metadata =
       `<metadata>` +
-      `<sigil:data xmlns:sigil="${XMLNS_SIGIL}">` +
+      `<sigil:data xmlns:sigil=\"${XMLNS_SIGIL}\">` +
       `<sigil:seed>${seed32hex}</sigil:seed>` +
       `<sigil:burns>${burnsText}</sigil:burns>` +
       `<sigil:bless_count>${blessCountText}</sigil:bless_count>` +
-      `<sigil:traits env="${env}" face="${face}" eyes="${eyes}" mouth="${mouth}" top="${top}" acc="${acc}" pal="${pal}"/>` +
+      `<sigil:traits bg=\"${bg}\" arche=\"${arche}\" body=\"${body}\" brow=\"${brow}\" eyes=\"${eyes}\" mouth=\"${mouth}\" hat=\"${hat}\" fx=\"${fx}\" pal=\"${pal}\" anomaly=\"${anomaly ? 1 : 0}\" anomaly_kind=\"${anomalyKind}\"/>` +
       `</sigil:data>` +
       `</metadata>`
-    const blessedDefs = blessed
-      ? `<defs>
-      <linearGradient id="sigil_bless_beam" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#fef08a" stop-opacity="0.70"/>
-        <stop offset="55%" stop-color="#fef08a" stop-opacity="0.22"/>
-        <stop offset="100%" stop-color="#fef08a" stop-opacity="0"/>
-      </linearGradient>
 
-      <filter id="sigil_bless_glow" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="1.8"/>
-      </filter>
-    </defs>`
+    const blessedDefs = blessed
+      ? `<defs>` +
+        `<linearGradient id=\"sigil_bless_beam\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">` +
+        `<stop offset=\"0%\" stop-color=\"#fef08a\" stop-opacity=\"0.70\"/>` +
+        `<stop offset=\"55%\" stop-color=\"#fef08a\" stop-opacity=\"0.22\"/>` +
+        `<stop offset=\"100%\" stop-color=\"#fef08a\" stop-opacity=\"0\"/>` +
+        `</linearGradient>` +
+        `<filter id=\"sigil_bless_glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\">` +
+        `<feGaussianBlur stdDeviation=\"1.8\"/>` +
+        `</filter>` +
+        `</defs>`
       : ""
+
     const blessedOverlay = blessed
-      ? `<g opacity="0.75">
-      <path d="M26 0
-               Q32 0 38 0
-               L54 22
-               L10 22
-               Z"
-            fill="url(#sigil_bless_beam)"
-            opacity="0.55"
-            filter="url(#sigil_bless_glow)"/>
-    </g>`
+      ? `<g opacity=\"0.75\">` +
+        `<path d=\"M24 0 Q32 0 40 0 L56 22 L8 22 Z\" fill=\"url(#sigil_bless_beam)\" opacity=\"0.55\" filter=\"url(#sigil_bless_glow)\"/>` +
+        `</g>`
       : ""
 
     return (
-      `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64">` +
+      `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"256\" height=\"256\" viewBox=\"0 0 64 64\">` +
+      baseDefs +
       blessedDefs +
       desc +
       metadata +
+      `<g id=\"sigil-scene\" clip-path=\"url(#sigil_clip)\">` +
       bgLayer +
-      avatarLayer +
-      (blessed ? `<g id="sigil-bless">${blessedOverlay}</g>` : "") +
+      (anomaly ? anomalyOverlay : normalOverlay) +
+      (blessed ? `<g id=\"sigil-bless\">${blessedOverlay}</g>` : "") +
+      `</g>` +
+      frameLayer +
       `</svg>`
     )
   }
