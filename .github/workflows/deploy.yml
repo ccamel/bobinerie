@@ -45,12 +45,12 @@ jobs:
         shell: bash
 
       - name: Compile contracts
-        run: npm run prepack:all
+        run: npm -s run prepack:all
 
       - name: Deploy all contracts
         run: |
           for dir in contracts/*/; do
             CONTRACT=$(basename $dir)
             echo "🚀 Producing $CONTRACT..."
-            CONTRACT=$CONTRACT npm run produce || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
+            CONTRACT=$CONTRACT npm -s run produce || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
           done
