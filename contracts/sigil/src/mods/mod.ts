@@ -13,6 +13,18 @@ import {
 
 const XMLNS_SIGIL = "https://bobine.tech#sigil"
 
+function zeroText(): textref {
+  return texts.fromString("0")
+}
+
+function oneText(): textref {
+  return texts.fromString("1")
+}
+
+function emptyText(): textref {
+  return texts.fromString("")
+}
+
 namespace addresses {
   export function compute(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
@@ -69,7 +81,7 @@ namespace state {
   }
 
   function setBool(k: textref, v: bool): void {
-    storage.set(k, texts.fromString(v ? "1" : "0"))
+    storage.set(k, v ? oneText() : zeroText())
   }
 
   export function getNonce(): bigintref {
@@ -614,10 +626,10 @@ export function address(session: packref): textref {
  */
 export function get(address: textref): textref {
   const seed = state.getSeed(address)
-  if (!seed) return texts.fromString("")
+  if (!seed) return emptyText()
 
   const seedText = texts.toString(seed)
-  if (seedText.length === 0) return texts.fromString("")
+  if (seedText.length === 0) return emptyText()
 
   const tag = state.getTag(address)
   const tagText = tag ? texts.toString(tag) : ""
@@ -657,10 +669,10 @@ export function burn(session: packref): bigintref {
   const burns = state.getBurns(address)
   const next = bigints.inc(burns)
   state.setBurns(address, next)
-  state.setSeed(address, texts.fromString(""))
-  state.setTag(address, texts.fromString(""))
+  state.setSeed(address, emptyText())
+  state.setTag(address, emptyText())
   state.setBlessCount(address, bigints.zero())
-  state.setBlessMix(address, texts.fromString(""))
+  state.setBlessMix(address, emptyText())
   state.setBlessed(address, false)
   return next
 }
@@ -699,7 +711,7 @@ export function bless(target: textref): textref {
   const nextRef = bigints.toBase10(next)
 
   const mix = state.getBlessMix(target)
-  const mixRef = mix ? mix : texts.fromString("")
+  const mixRef = mix ? mix : emptyText()
 
   const mixPack = packs.create4(
     texts.fromString("bless:v1"),
@@ -735,7 +747,7 @@ export function vibes(target: textref): packref {
   const countText = bigints.toBase10(count)
 
   const blessed = state.getBlessed(target)
-  const blessedText = texts.fromString(blessed ? "1" : "0")
+  const blessedText = blessed ? oneText() : zeroText()
 
   const seed = state.getSeed(target)
   let k: i32 = 0
