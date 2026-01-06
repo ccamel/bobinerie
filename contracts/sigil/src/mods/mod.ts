@@ -429,145 +429,145 @@ namespace render {
     const fxSvg = FX[fx]
 
     const faceFx =
-      `<path d=\"M20 26 Q32 18 44 26\" fill=\"none\" stroke=\"#fff\" opacity=\"0.08\" stroke-width=\"4\" stroke-linecap=\"round\"/>` +
-      `<path d=\"M20 50 Q32 56 44 50\" fill=\"none\" stroke=\"#000\" opacity=\"0.07\" stroke-width=\"6\" stroke-linecap=\"round\"/>` +
-      `<circle cx=\"22\" cy=\"42\" r=\"5\" fill=\"#fff\" opacity=\"0.030\"/>` +
-      `<circle cx=\"42\" cy=\"42\" r=\"5\" fill=\"#fff\" opacity=\"0.022\"/>`
+      `<path d="M20 26 Q32 18 44 26" fill="none" stroke="#fff" opacity="0.08" stroke-width="4" stroke-linecap="round"/>` +
+      `<path d="M20 50 Q32 56 44 50" fill="none" stroke="#000" opacity="0.07" stroke-width="6" stroke-linecap="round"/>` +
+      `<circle cx="22" cy="42" r="5" fill="#fff" opacity="0.030"/>` +
+      `<circle cx="42" cy="42" r="5" fill="#fff" opacity="0.022"/>`
 
     const baseDefs =
       `<defs>` +
-      `<linearGradient id=\"sigil_bg_grad\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">` +
-      `<stop offset=\"0%\" stop-color=\"${BG1}\"/>` +
-      `<stop offset=\"100%\" stop-color=\"${BG2}\"/>` +
+      `<linearGradient id="sigil_bg_grad" x1="0" y1="0" x2="1" y2="1">` +
+      `<stop offset="0%" stop-color="${BG1}"/>` +
+      `<stop offset="100%" stop-color="${BG2}"/>` +
       `</linearGradient>` +
-      `<filter id=\"sigil_soft_shadow\" x=\"-20%\" y=\"-20%\" width=\"140%\" height=\"140%\">` +
-      `<feDropShadow dx=\"0\" dy=\"1.2\" stdDeviation=\"1.1\" flood-color=\"#000\" flood-opacity=\"0.28\"/>` +
+      `<filter id="sigil_soft_shadow" x="-20%" y="-20%" width="140%" height="140%">` +
+      `<feDropShadow dx="0" dy="1.2" stdDeviation="1.1" flood-color="#000" flood-opacity="0.28"/>` +
       `</filter>` +
-      `<radialGradient id=\"sigil_vignette\" cx=\"50%\" cy=\"45%\" r=\"70%\">` +
-      `<stop offset=\"0%\" stop-color=\"#000\" stop-opacity=\"0\"/>` +
-      `<stop offset=\"75%\" stop-color=\"#000\" stop-opacity=\"0\"/>` +
-      `<stop offset=\"100%\" stop-color=\"#000\" stop-opacity=\"0.22\"/>` +
+      `<radialGradient id="sigil_vignette" cx="50%" cy="45%" r="70%">` +
+      `<stop offset="0%" stop-color="#000" stop-opacity="0"/>` +
+      `<stop offset="75%" stop-color="#000" stop-opacity="0"/>` +
+      `<stop offset="100%" stop-color="#000" stop-opacity="0.22"/>` +
       `</radialGradient>` +
-      `<clipPath id=\"sigil_clip\">` +
-      `<rect x=\"0\" y=\"0\" width=\"64\" height=\"64\" rx=\"12\"/>` +
+      `<clipPath id="sigil_clip">` +
+      `<rect x="0" y="0" width="64" height="64" rx="12"/>` +
       `</clipPath>` +
-      `<filter id=\"sigil_frame_shadow\" x=\"-20%\" y=\"-20%\" width=\"140%\" height=\"140%\">` +
-      `<feDropShadow dx=\"0\" dy=\"1\" stdDeviation=\"1.2\" flood-color=\"#000\" flood-opacity=\"0.22\"/>` +
+      `<filter id="sigil_frame_shadow" x="-20%" y="-20%" width="140%" height="140%">` +
+      `<feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#000" flood-opacity="0.22"/>` +
       `</filter>` +
-      `<filter id=\"sigil_laser_glow\" x=\"-40%\" y=\"-40%\" width=\"180%\" height=\"180%\">` +
-      `<feGaussianBlur stdDeviation=\"0.7\"/>` +
+      `<filter id="sigil_laser_glow" x="-40%" y="-40%" width="180%" height="180%">` +
+      `<feGaussianBlur stdDeviation="0.7"/>` +
       `</filter>` +
-      `<filter id=\"sigil_tint_r\">` +
-      `<feColorMatrix type=\"matrix\" values=\"1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0\"/>` +
+      `<filter id="sigil_tint_r">` +
+      `<feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>` +
       `</filter>` +
-      `<filter id=\"sigil_tint_c\">` +
-      `<feColorMatrix type=\"matrix\" values=\"0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0\"/>` +
+      `<filter id="sigil_tint_c">` +
+      `<feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>` +
       `</filter>` +
       `</defs>`
 
     const bgLayer =
-      `<g id=\"sigil-bg\">` +
+      `<g id="sigil-bg">` +
       bgSvg +
-      `<rect x=\"0\" y=\"0\" width=\"64\" height=\"64\" rx=\"12\" fill=\"url(#sigil_vignette)\"/>` +
+      `<rect x="0" y="0" width="64" height="64" rx="12" fill="url(#sigil_vignette)"/>` +
       `</g>`
 
     const avatarCore =
-      `<g id=\"sigil-body\">` +
+      `<g id="sigil-body">` +
       bodySvg +
       `</g>` +
-      `<g id=\"sigil-head\">` +
+      `<g id="sigil-head">` +
       headSvg +
       faceFx +
       `</g>` +
-      `<g id=\"sigil-brows\">` +
+      `<g id="sigil-brows">` +
       browSvg +
       `</g>` +
-      `<g id=\"sigil-eyes\">` +
+      `<g id="sigil-eyes">` +
       eyesSvg +
       `</g>` +
-      `<g id=\"sigil-mouth\">` +
+      `<g id="sigil-mouth">` +
       mouthSvg +
       `</g>` +
-      `<g id=\"sigil-hat\">` +
+      `<g id="sigil-hat">` +
       hatSvg +
       `</g>` +
-      `<g id=\"sigil-fx\">` +
+      `<g id="sigil-fx">` +
       fxSvg +
       `</g>`
 
     const avatarLayer =
-      `<g id=\"sigil-avatar\" filter=\"url(#sigil_soft_shadow)\">` +
+      `<g id="sigil-avatar" filter="url(#sigil_soft_shadow)">` +
       avatarCore +
       `</g>`
 
     const anomalyOverlay = anomaly
-      ? `<g id=\"sigil-anomaly\">` +
-        `<g opacity=\"0.55\" transform=\"translate(-0.8,0)\" filter=\"url(#sigil_tint_r)\">` +
+      ? `<g id="sigil-anomaly">` +
+        `<g opacity="0.55" transform="translate(-0.8,0)" filter="url(#sigil_tint_r)">` +
         avatarLayer +
         `</g>` +
-        `<g opacity=\"0.55\" transform=\"translate(0.8,0)\" filter=\"url(#sigil_tint_c)\">` +
+        `<g opacity="0.55" transform="translate(0.8,0)" filter="url(#sigil_tint_c)">` +
         avatarLayer +
         `</g>` +
-        `<g opacity=\"1\">` +
+        `<g opacity="1">` +
         avatarLayer +
         `</g>` +
         (anomalyKind === 0
-          ? `<path d=\"M0 12 H64 M0 20 H64 M0 28 H64 M0 36 H64 M0 44 H64 M0 52 H64\" stroke=\"#fff\" stroke-width=\"1\" opacity=\"0.06\"/>`
+          ? `<path d="M0 12 H64 M0 20 H64 M0 28 H64 M0 36 H64 M0 44 H64 M0 52 H64" stroke="#fff" stroke-width="1" opacity="0.06"/>`
           : anomalyKind === 1
-            ? `<path d=\"M0 10 H64 M0 18 H64 M0 26 H64 M0 34 H64 M0 42 H64 M0 50 H64\" stroke=\"#000\" stroke-width=\"1\" opacity=\"0.08\"/>`
-            : `<path d=\"M-8 64 L64 -8\" stroke=\"#fff\" stroke-width=\"8\" opacity=\"0.05\"/>`) +
+            ? `<path d="M0 10 H64 M0 18 H64 M0 26 H64 M0 34 H64 M0 42 H64 M0 50 H64" stroke="#000" stroke-width="1" opacity="0.08"/>`
+            : `<path d="M-8 64 L64 -8" stroke="#fff" stroke-width="8" opacity="0.05"/>`) +
         `</g>`
       : ""
 
     const normalOverlay = anomaly ? "" : avatarLayer
 
     const frameLayer =
-      `<g id=\"sigil-frame\" filter=\"url(#sigil_frame_shadow)\">` +
-      `<rect x=\"1.5\" y=\"1.5\" width=\"61\" height=\"61\" rx=\"12\" fill=\"none\" stroke=\"#fff\" stroke-width=\"3\" opacity=\"0.10\"/>` +
-      `<rect x=\"3\" y=\"3\" width=\"58\" height=\"58\" rx=\"11\" fill=\"none\" stroke=\"#000\" stroke-width=\"2\" opacity=\"0.10\"/>` +
+      `<g id="sigil-frame" filter="url(#sigil_frame_shadow)">` +
+      `<rect x="1.5" y="1.5" width="61" height="61" rx="12" fill="none" stroke="#fff" stroke-width="3" opacity="0.10"/>` +
+      `<rect x="3" y="3" width="58" height="58" rx="11" fill="none" stroke="#000" stroke-width="2" opacity="0.10"/>` +
       `</g>`
 
     const desc = `<desc>${esc(tag)}</desc>`
 
     const metadata =
       `<metadata>` +
-      `<sigil:data xmlns:sigil=\"${XMLNS_SIGIL}\">` +
+      `<sigil:data xmlns:sigil="${XMLNS_SIGIL}">` +
       `<sigil:seed>${seed32hex}</sigil:seed>` +
       `<sigil:burns>${burnsText}</sigil:burns>` +
       `<sigil:bless_count>${blessCountText}</sigil:bless_count>` +
-      `<sigil:traits bg=\"${bg}\" arche=\"${arche}\" body=\"${body}\" brow=\"${brow}\" eyes=\"${eyes}\" mouth=\"${mouth}\" hat=\"${hat}\" fx=\"${fx}\" pal=\"${pal}\" anomaly=\"${anomaly ? 1 : 0}\" anomaly_kind=\"${anomalyKind}\"/>` +
+      `<sigil:traits bg="${bg}" arche="${arche}" body="${body}" brow="${brow}" eyes="${eyes}" mouth="${mouth}" hat="${hat}" fx="${fx}" pal="${pal}" anomaly="${anomaly ? 1 : 0}" anomaly_kind="${anomalyKind}"/>` +
       `</sigil:data>` +
       `</metadata>`
 
     const blessedDefs = blessed
       ? `<defs>` +
-        `<linearGradient id=\"sigil_bless_beam\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">` +
-        `<stop offset=\"0%\" stop-color=\"#fef08a\" stop-opacity=\"0.70\"/>` +
-        `<stop offset=\"55%\" stop-color=\"#fef08a\" stop-opacity=\"0.22\"/>` +
-        `<stop offset=\"100%\" stop-color=\"#fef08a\" stop-opacity=\"0\"/>` +
+        `<linearGradient id="sigil_bless_beam" x1="0" y1="0" x2="0" y2="1">` +
+        `<stop offset="0%" stop-color="#fef08a" stop-opacity="0.70"/>` +
+        `<stop offset="55%" stop-color="#fef08a" stop-opacity="0.22"/>` +
+        `<stop offset="100%" stop-color="#fef08a" stop-opacity="0"/>` +
         `</linearGradient>` +
-        `<filter id=\"sigil_bless_glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\">` +
-        `<feGaussianBlur stdDeviation=\"1.8\"/>` +
+        `<filter id="sigil_bless_glow" x="-30%" y="-30%" width="160%" height="160%">` +
+        `<feGaussianBlur stdDeviation="1.8"/>` +
         `</filter>` +
         `</defs>`
       : ""
 
     const blessedOverlay = blessed
-      ? `<g opacity=\"0.75\">` +
-        `<path d=\"M24 0 Q32 0 40 0 L56 22 L8 22 Z\" fill=\"url(#sigil_bless_beam)\" opacity=\"0.55\" filter=\"url(#sigil_bless_glow)\"/>` +
+      ? `<g opacity="0.75">` +
+        `<path d="M24 0 Q32 0 40 0 L56 22 L8 22 Z" fill="url(#sigil_bless_beam)" opacity="0.55" filter="url(#sigil_bless_glow)"/>` +
         `</g>`
       : ""
 
     return (
-      `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"256\" height=\"256\" viewBox=\"0 0 64 64\">` +
+      `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64">` +
       baseDefs +
       blessedDefs +
       desc +
       metadata +
-      `<g id=\"sigil-scene\" clip-path=\"url(#sigil_clip)\">` +
+      `<g id="sigil-scene" clip-path="url(#sigil_clip)">` +
       bgLayer +
       (anomaly ? anomalyOverlay : normalOverlay) +
-      (blessed ? `<g id=\"sigil-bless\">${blessedOverlay}</g>` : "") +
+      (blessed ? `<g id="sigil-bless">${blessedOverlay}</g>` : "") +
       `</g>` +
       frameLayer +
       `</svg>`
