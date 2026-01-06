@@ -26,11 +26,34 @@ This document defines the mandatory coding style and local workflow rules for Bo
 - Avoid boolean flags when separate functions express intent better.
 - Avoid abstractions unless reused at least twice.
 
-## Structure
+## Namespaces and structure
 
-- Organize by intent.
-- Separate concerns explicitly.
-- Keep boundaries obvious.
+Use a domain-driven namespace layout.
+
+### Domains
+
+- One `namespace` per domain.
+- A domain namespace owns:
+  - its storage keys and access
+  - its boundary encodings/decodings when relevant
+  - its domain helpers
+
+Examples of domains:
+
+- `addresses` (identity, sessions, verification)
+- `balances`
+- `owner`
+- `allowances`
+- `config`
+- `metadata`
+
+Rules:
+
+- Contract API methods orchestrate domains.
+  They must not implement storage details inline.
+- Storage access (`storage.get/set`) lives inside domain namespaces.
+- Keep domain namespaces focused.
+  If a namespace starts to mix unrelated concerns, split it.
 
 ## Encoding rules
 

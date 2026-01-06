@@ -195,7 +195,7 @@ Use an intent tuple for executable actions/messages:
 
 - `0: "<DOMAIN>/intent"`
 - `1: 1`
-- `2: target` (textref or blobref, chosen contract-wide)
+- `2: target` (textref)
 - `3: method` (textref)
 - `4: args` (packref)
 - `5: nonce` (bigintref, optional but recommended)
