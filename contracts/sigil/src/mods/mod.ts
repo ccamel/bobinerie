@@ -11,6 +11,8 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
+const DOMAIN = "bobine.sigil"
+
 const XMLNS_SIGIL = "https://bobine.tech#sigil"
 
 function zeroText(): textref {
@@ -583,8 +585,9 @@ namespace avatars {
     const burnsText = bigints.toBase10(burns)
     const nonceText = bigints.toBase10(nonce)
 
-    const seedPack = packs.create4(
-      texts.fromString("avatar:v1"),
+    const seedPack = packs.create5(
+      texts.fromString(`${DOMAIN}/avatar_seed`),
+      bigints.inc(bigints.zero()),
       address,
       burnsText,
       nonceText,
@@ -713,14 +716,21 @@ export function bless(target: textref): textref {
   const mix = state.getBlessMix(target)
   const mixRef = mix ? mix : emptyText()
 
-  const mixPack = packs.create4(
-    texts.fromString("bless:v1"),
+  const mixPack = packs.create5<
+    textref,
+    bigintref,
+    textref,
+    bigintref,
+    textref
+  >(
+    texts.fromString(`${DOMAIN}/bless_mix`),
+    bigints.inc(bigints.zero()),
     seed,
     nextRef,
     mixRef,
   )
 
-  const digest = sha256.digest(blobs.encode(mixPack))
+  const digest = sha256.digest(blobs.encode<packref>(mixPack))
   const digestHexRef = blobs.toBase16(digest) // textref
   state.setBlessMix(target, digestHexRef)
 
@@ -740,7 +750,7 @@ export function bless(target: textref): textref {
  * Read the collective blessing progress for a target sigil.
  *
  * @param target The address to inspect
- * @returns [count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
+ * @returns ["bobine.sigil/vibes_view", 1, count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
  */
 export function vibes(target: textref): packref {
   const count = state.getBlessCount(target)
@@ -759,5 +769,11 @@ export function vibes(target: textref): packref {
 
   const kText = texts.fromString(k.toString())
 
-  return packs.create3(countText, blessedText, kText)
+  return packs.create5(
+    texts.fromString(`${DOMAIN}/vibes_view`),
+    bigints.inc(bigints.zero()),
+    countText,
+    blessedText,
+    kText,
+  )
 }

@@ -100,7 +100,7 @@ Read the collective blessing progress for a target sigil.
 
 **Returns:**
 
-[count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
+["bobine.sigil/vibes_view", 1, count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
 
 <!-- METHODS:END -->
 
