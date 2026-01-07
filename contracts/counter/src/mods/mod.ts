@@ -11,51 +11,49 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
-namespace addresses {
-  export function compute(session: packref): textref {
+const verifyMethod = (): textref => texts.fromString("verify")
+const counterPrefix = (): textref => texts.fromString("counter:")
+
+namespace sessions {
+  export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
   }
 
-  export function verify(session: packref): textref {
+  export function assert(session: packref): textref {
     const module = packs.get<textref>(session, 0)
-
-    if (
-      !packs.get<bool>(
-        modules.call(
-          module,
-          texts.fromString("verify"),
-          packs.create1(session),
-        ),
-        0,
-      )
+    const verified = packs.get<bool>(
+      modules.call(module, verifyMethod(), packs.create1(session)),
+      0,
     )
-      throw new Error("Invalid session")
 
-    return compute(session)
+    if (!verified) throw new Error("Invalid session")
+
+    return addressOf(session)
   }
 }
 
-function getStorageKey(prefix: string, address: textref): textref {
-  const prefixText = texts.fromString(prefix)
-  return texts.concat(prefixText, address)
-}
+namespace counters {
+  function key(address: textref): textref {
+    return texts.concat(counterPrefix(), address)
+  }
 
-function getCounter(address: textref): bigintref {
-  const key = getStorageKey("counter:", address)
-  const val = storage.get(key)
+  function read(address: textref): bigintref {
+    const value = storage.get(key(address))
+    if (!value) return bigints.zero()
 
-  if (!val) return bigints.zero()
+    const text = changetype<textref>(value)
+    return bigints.fromBase10(text)
+  }
 
-  const text = packs.get<textref>(val, 0)
-  return bigints.fromBase10(text)
-}
+  function write(address: textref, value: bigintref): void {
+    storage.set(key(address), bigints.toBase10(value))
+  }
 
-function incrementCounter(address: textref, current: bigintref): bigintref {
-  const key = getStorageKey("counter:", address)
-  const next = bigints.inc(current)
-  const text = bigints.toBase10(next)
-  storage.set(key, text)
-  return next
+  export function increment(address: textref): bigintref {
+    const next = bigints.inc(read(address))
+    write(address, next)
+    return next
+  }
 }
 
 /**
@@ -65,7 +63,6 @@ function incrementCounter(address: textref, current: bigintref): bigintref {
  * @returns Incremented counter value
  */
 export function add(session: packref): bigintref {
-  const caller = addresses.verify(session)
-  const current = getCounter(caller)
-  return incrementCounter(caller, current)
+  const caller = sessions.assert(session)
+  return counters.increment(caller)
 }
