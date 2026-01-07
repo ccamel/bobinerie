@@ -22,6 +22,18 @@ Atomically increments the counter for the caller.
 
 Incremented counter value
 
+### `reset(session)`
+
+Reset the caller counter to zero.
+
+**Parameters:**
+
+- `session` - Session packref [ed25519_module_address, pubkey]
+
+**Returns:**
+
+Reset counter value
+
 <!-- METHODS:END -->
 
 ## Examples
