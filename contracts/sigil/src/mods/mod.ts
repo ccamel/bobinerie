@@ -17,6 +17,9 @@ const XMLNS_SIGIL = "https://bobine.tech#sigil"
 const zeroText = (): textref => texts.fromString("0")
 const oneText = (): textref => texts.fromString("1")
 const emptyText = (): textref => texts.fromString("")
+const version = (): bigintref => bigints.inc(bigints.zero())
+const domainTag = (suffix: string): textref =>
+  texts.fromString(`${DOMAIN}/${suffix}`)
 
 namespace sessions {
   const verifyMethod = (): textref => texts.fromString("verify")
@@ -38,99 +41,189 @@ namespace sessions {
   }
 }
 
-namespace state {
-  function key(prefix: string, address: textref): textref {
-    return texts.concat(texts.fromString(prefix), address)
+namespace store {
+  export function readText(key: textref): textref {
+    const value = storage.get(key)
+    if (!value) return null
+    return changetype<textref>(value)
   }
 
-  function getText(k: textref): textref {
-    const v = storage.get(k)
-    if (!v) return null
-    return packs.get<textref>(v, 0)
+  export function writeText(key: textref, value: textref): void {
+    storage.set(key, value)
   }
 
-  function getBigint(k: textref): bigintref {
-    const t = getText(k)
-    if (!t) return bigints.zero()
+  export function readBigint(key: textref): bigintref {
+    const text = readText(key)
+    if (!text) return bigints.zero()
 
-    const s = texts.toString(t)
+    const s = texts.toString(text)
     if (s.length === 0) return bigints.zero()
 
-    return bigints.fromBase10(t)
+    return bigints.fromBase10(text)
   }
 
-  function setBigint(k: textref, v: bigintref): void {
-    storage.set(k, bigints.toBase10(v))
+  export function writeBigint(key: textref, value: bigintref): void {
+    storage.set(key, bigints.toBase10(value))
   }
 
-  function getBool(k: textref): bool {
-    const t = getText(k)
-    if (!t) return false
-    return texts.toString(t) === "1"
+  export function readBool(key: textref): bool {
+    const text = readText(key)
+    if (!text) return false
+    return texts.toString(text) === "1"
   }
 
-  function setBool(k: textref, v: bool): void {
-    storage.set(k, v ? oneText() : zeroText())
+  export function writeBool(key: textref, value: bool): void {
+    storage.set(key, value ? oneText() : zeroText())
+  }
+}
+
+namespace nonce {
+  const key = (): textref => texts.fromString("nonce")
+
+  export function read(): bigintref {
+    return store.readBigint(key())
   }
 
-  export function getNonce(): bigintref {
-    return getBigint(texts.fromString("nonce"))
+  export function write(value: bigintref): void {
+    store.writeBigint(key(), value)
   }
 
-  export function bumpNonce(): bigintref {
-    const k = texts.fromString("nonce")
-    const cur = getBigint(k)
-    const next = bigints.inc(cur)
-    setBigint(k, next)
+  export function next(): bigintref {
+    const cur = read()
+    write(bigints.inc(cur))
     return cur
   }
+}
 
-  export function getBurns(address: textref): bigintref {
-    return getBigint(key("burns:", address))
+namespace burns {
+  const prefix = (): textref => texts.fromString("burns:")
+
+  function key(address: textref): textref {
+    return texts.concat(prefix(), address)
   }
 
-  export function setBurns(address: textref, burns: bigintref): void {
-    setBigint(key("burns:", address), burns)
+  export function read(address: textref): bigintref {
+    return store.readBigint(key(address))
   }
 
-  export function getSeed(address: textref): textref {
-    return getText(key("seed:", address))
+  function write(address: textref, value: bigintref): void {
+    store.writeBigint(key(address), value)
   }
 
-  export function setSeed(address: textref, seed: textref): void {
-    storage.set(key("seed:", address), seed)
+  export function increment(address: textref): bigintref {
+    const next = bigints.inc(read(address))
+    write(address, next)
+    return next
   }
 
-  export function getTag(address: textref): textref {
-    return getText(key("tag:", address))
+  export function reset(address: textref): void {
+    write(address, bigints.zero())
+  }
+}
+
+namespace seeds {
+  const prefix = (): textref => texts.fromString("seed:")
+
+  function key(address: textref): textref {
+    return texts.concat(prefix(), address)
   }
 
-  export function setTag(address: textref, tag: textref): void {
-    storage.set(key("tag:", address), tag)
+  export function read(address: textref): textref {
+    return store.readText(key(address))
   }
 
-  export function getBlessCount(address: textref): bigintref {
-    return getBigint(key("bless_count:", address))
+  export function write(address: textref, value: textref): void {
+    store.writeText(key(address), value)
   }
 
-  export function setBlessCount(address: textref, count: bigintref): void {
-    setBigint(key("bless_count:", address), count)
+  export function clear(address: textref): void {
+    write(address, emptyText())
+  }
+}
+
+namespace tags {
+  const prefix = (): textref => texts.fromString("tag:")
+
+  function key(address: textref): textref {
+    return texts.concat(prefix(), address)
   }
 
-  export function getBlessMix(address: textref): textref {
-    return getText(key("bless_mix:", address))
+  export function read(address: textref): textref {
+    return store.readText(key(address))
   }
 
-  export function setBlessMix(address: textref, mix: textref): void {
-    storage.set(key("bless_mix:", address), mix)
+  export function write(address: textref, value: textref): void {
+    store.writeText(key(address), value)
   }
 
-  export function getBlessed(address: textref): bool {
-    return getBool(key("blessed:", address))
+  export function clear(address: textref): void {
+    write(address, emptyText())
+  }
+}
+
+namespace blessCounts {
+  const prefix = (): textref => texts.fromString("bless_count:")
+
+  function key(address: textref): textref {
+    return texts.concat(prefix(), address)
   }
 
-  export function setBlessed(address: textref, blessed: bool): void {
-    setBool(key("blessed:", address), blessed)
+  export function read(address: textref): bigintref {
+    return store.readBigint(key(address))
+  }
+
+  function write(address: textref, value: bigintref): void {
+    store.writeBigint(key(address), value)
+  }
+
+  export function increment(address: textref): bigintref {
+    const next = bigints.inc(read(address))
+    write(address, next)
+    return next
+  }
+
+  export function reset(address: textref): void {
+    write(address, bigints.zero())
+  }
+}
+
+namespace blessMixes {
+  const prefix = (): textref => texts.fromString("bless_mix:")
+
+  function key(address: textref): textref {
+    return texts.concat(prefix(), address)
+  }
+
+  export function read(address: textref): textref {
+    return store.readText(key(address))
+  }
+
+  export function write(address: textref, value: textref): void {
+    store.writeText(key(address), value)
+  }
+
+  export function clear(address: textref): void {
+    write(address, emptyText())
+  }
+}
+
+namespace blessFlags {
+  const prefix = (): textref => texts.fromString("blessed:")
+
+  function key(address: textref): textref {
+    return texts.concat(prefix(), address)
+  }
+
+  export function read(address: textref): bool {
+    return store.readBool(key(address))
+  }
+
+  export function write(address: textref, value: bool): void {
+    store.writeBool(key(address), value)
+  }
+
+  export function clear(address: textref): void {
+    write(address, false)
   }
 }
 
@@ -566,15 +659,15 @@ namespace render {
 
 namespace avatars {
   export function generateSeed(address: textref): textref {
-    const burns = state.getBurns(address)
-    const nonce = state.bumpNonce()
+    const burnCount = burns.read(address)
+    const nonceValue = nonce.next()
 
-    const burnsText = bigints.toBase10(burns)
-    const nonceText = bigints.toBase10(nonce)
+    const burnsText = bigints.toBase10(burnCount)
+    const nonceText = bigints.toBase10(nonceValue)
 
     const seedPack = packs.create5(
-      texts.fromString(`${DOMAIN}/avatar_seed`),
-      bigints.inc(bigints.zero()),
+      domainTag("avatar_seed"),
+      version(),
       address,
       burnsText,
       nonceText,
@@ -585,7 +678,7 @@ namespace avatars {
   }
 
   export function retrieve(address: textref): textref {
-    const stored = state.getSeed(address)
+    const stored = seeds.read(address)
 
     if (stored) {
       const storedStr = texts.toString(stored)
@@ -593,7 +686,7 @@ namespace avatars {
     }
 
     const seed = generateSeed(address)
-    state.setSeed(address, seed)
+    seeds.write(address, seed)
     return seed
   }
 }
@@ -615,20 +708,20 @@ export function address(session: packref): textref {
  * @returns SVG string as textref
  */
 export function get(address: textref): textref {
-  const seed = state.getSeed(address)
+  const seed = seeds.read(address)
   if (!seed) return emptyText()
 
   const seedText = texts.toString(seed)
   if (seedText.length === 0) return emptyText()
 
-  const tag = state.getTag(address)
+  const tag = tags.read(address)
   const tagText = tag ? texts.toString(tag) : ""
 
-  const burns = state.getBurns(address)
-  const burnsText = texts.toString(bigints.toBase10(burns))
-  const blessCount = state.getBlessCount(address)
+  const burnCount = burns.read(address)
+  const burnsText = texts.toString(bigints.toBase10(burnCount))
+  const blessCount = blessCounts.read(address)
   const blessCountText = texts.toString(bigints.toBase10(blessCount))
-  const blessed = state.getBlessed(address)
+  const blessed = blessFlags.read(address)
   return texts.fromString(
     render.svg(seedText, tagText, burnsText, blessCountText, blessed),
   )
@@ -644,7 +737,7 @@ export function get(address: textref): textref {
 export function mint(session: packref, tag: textref): textref {
   const address = sessions.assert(session)
   avatars.retrieve(address)
-  state.setTag(address, tag)
+  tags.write(address, tag)
   return get(address)
 }
 
@@ -656,14 +749,12 @@ export function mint(session: packref, tag: textref): textref {
  */
 export function burn(session: packref): bigintref {
   const address = sessions.assert(session)
-  const burns = state.getBurns(address)
-  const next = bigints.inc(burns)
-  state.setBurns(address, next)
-  state.setSeed(address, emptyText())
-  state.setTag(address, emptyText())
-  state.setBlessCount(address, bigints.zero())
-  state.setBlessMix(address, emptyText())
-  state.setBlessed(address, false)
+  const next = burns.increment(address)
+  seeds.clear(address)
+  tags.clear(address)
+  blessCounts.reset(address)
+  blessMixes.clear(address)
+  blessFlags.clear(address)
   return next
 }
 
@@ -686,21 +777,18 @@ export function reroll(session: packref, tag: textref): textref {
  * @returns "blessed" if the roll hits, otherwise "ok"
  */
 export function bless(target: textref): textref {
-  const seed = state.getSeed(target)
+  const seed = seeds.read(target)
   if (!seed) throw new Error("Sigil not minted")
   const seedText = texts.toString(seed)
   if (seedText.length === 0) throw new Error("Sigil not minted")
 
-  const already = state.getBlessed(target)
+  const already = blessFlags.read(target)
   if (already) return texts.fromString("blessed")
 
-  const count = state.getBlessCount(target)
-  const next = bigints.inc(count)
-  state.setBlessCount(target, next)
-
+  const next = blessCounts.increment(target)
   const nextRef = bigints.toBase10(next)
 
-  const mix = state.getBlessMix(target)
+  const mix = blessMixes.read(target)
   const mixRef = mix ? mix : emptyText()
 
   const mixPack = packs.create5<
@@ -709,24 +797,18 @@ export function bless(target: textref): textref {
     textref,
     bigintref,
     textref
-  >(
-    texts.fromString(`${DOMAIN}/bless_mix`),
-    bigints.inc(bigints.zero()),
-    seed,
-    nextRef,
-    mixRef,
-  )
+  >(domainTag("bless_mix"), version(), seed, nextRef, mixRef)
 
   const digest = sha256.digest(blobs.encode<packref>(mixPack))
   const digestHexRef = blobs.toBase16(digest) // textref
-  state.setBlessMix(target, digestHexRef)
+  blessMixes.write(target, digestHexRef)
 
   const digestHex = texts.toString(digestHexRef)
   const k = blessings.difficulty(seedText)
   const hit = blessings.hit(digestHex, k)
 
   if (hit) {
-    state.setBlessed(target, true)
+    blessFlags.write(target, true)
     return texts.fromString("blessed")
   }
 
@@ -740,13 +822,13 @@ export function bless(target: textref): textref {
  * @returns ["bobine.sigil/vibes_view", 1, count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
  */
 export function vibes(target: textref): packref {
-  const count = state.getBlessCount(target)
+  const count = blessCounts.read(target)
   const countText = bigints.toBase10(count)
 
-  const blessed = state.getBlessed(target)
+  const blessed = blessFlags.read(target)
   const blessedText = blessed ? oneText() : zeroText()
 
-  const seed = state.getSeed(target)
+  const seed = seeds.read(target)
   let k: i32 = 0
 
   if (seed) {
@@ -757,8 +839,8 @@ export function vibes(target: textref): packref {
   const kText = texts.fromString(k.toString())
 
   return packs.create5(
-    texts.fromString(`${DOMAIN}/vibes_view`),
-    bigints.inc(bigints.zero()),
+    domainTag("vibes_view"),
+    version(),
     countText,
     blessedText,
     kText,
