@@ -12,42 +12,28 @@ import {
 } from "@hazae41/stdbob"
 
 const DOMAIN = "bobine.sigil"
-
 const XMLNS_SIGIL = "https://bobine.tech#sigil"
 
-function zeroText(): textref {
-  return texts.fromString("0")
-}
+const zeroText = (): textref => texts.fromString("0")
+const oneText = (): textref => texts.fromString("1")
+const emptyText = (): textref => texts.fromString("")
+const verifyMethod = (): textref => texts.fromString("verify")
 
-function oneText(): textref {
-  return texts.fromString("1")
-}
-
-function emptyText(): textref {
-  return texts.fromString("")
-}
-
-namespace addresses {
-  export function compute(session: packref): textref {
+namespace sessions {
+  export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
   }
 
-  export function verify(session: packref): textref {
+  export function assert(session: packref): textref {
     const module = packs.get<textref>(session, 0)
-
-    if (
-      !packs.get<bool>(
-        modules.call(
-          module,
-          texts.fromString("verify"),
-          packs.create1(session),
-        ),
-        0,
-      )
+    const verified = packs.get<bool>(
+      modules.call(module, verifyMethod(), packs.create1(session)),
+      0,
     )
-      throw new Error("Invalid session")
 
-    return compute(session)
+    if (!verified) throw new Error("Invalid session")
+
+    return addressOf(session)
   }
 }
 
@@ -618,7 +604,7 @@ namespace avatars {
  * @returns Derived address as textref
  */
 export function address(session: packref): textref {
-  return addresses.verify(session)
+  return sessions.assert(session)
 }
 
 /**
@@ -655,7 +641,7 @@ export function get(address: textref): textref {
  * @returns SVG string as textref
  */
 export function mint(session: packref, tag: textref): textref {
-  const address = addresses.verify(session)
+  const address = sessions.assert(session)
   avatars.retrieve(address)
   state.setTag(address, tag)
   return get(address)
@@ -668,7 +654,7 @@ export function mint(session: packref, tag: textref): textref {
  * @returns Updated burn count
  */
 export function burn(session: packref): bigintref {
-  const address = addresses.verify(session)
+  const address = sessions.assert(session)
   const burns = state.getBurns(address)
   const next = bigints.inc(burns)
   state.setBurns(address, next)
