@@ -55,6 +55,12 @@ namespace counters {
     write(address, next)
     return next
   }
+
+  export function reset(address: textref): bigintref {
+    const zero = bigints.zero()
+    write(address, zero)
+    return zero
+  }
 }
 
 /**
@@ -66,4 +72,15 @@ namespace counters {
 export function add(session: packref): bigintref {
   const caller = sessions.assert(session)
   return counters.increment(caller)
+}
+
+/**
+ * Reset the caller counter to zero.
+ *
+ * @param session Session packref [ed25519_module_address, pubkey]
+ * @returns Reset counter value
+ */
+export function reset(session: packref): bigintref {
+  const caller = sessions.assert(session)
+  return counters.reset(caller)
 }
