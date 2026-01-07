@@ -17,9 +17,10 @@ const XMLNS_SIGIL = "https://bobine.tech#sigil"
 const zeroText = (): textref => texts.fromString("0")
 const oneText = (): textref => texts.fromString("1")
 const emptyText = (): textref => texts.fromString("")
-const verifyMethod = (): textref => texts.fromString("verify")
 
 namespace sessions {
+  const verifyMethod = (): textref => texts.fromString("verify")
+
   export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
   }

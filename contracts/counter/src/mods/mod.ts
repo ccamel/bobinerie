@@ -11,10 +11,9 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
-const verifyMethod = (): textref => texts.fromString("verify")
-const counterPrefix = (): textref => texts.fromString("counter:")
-
 namespace sessions {
+  const verifyMethod = (): textref => texts.fromString("verify")
+
   export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
   }
@@ -33,8 +32,10 @@ namespace sessions {
 }
 
 namespace counters {
+  const namespace = (): textref => texts.fromString("counter:")
+
   function key(address: textref): textref {
-    return texts.concat(counterPrefix(), address)
+    return texts.concat(namespace(), address)
   }
 
   function read(address: textref): bigintref {
