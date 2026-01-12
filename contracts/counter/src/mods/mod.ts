@@ -38,7 +38,7 @@ namespace counters {
     return texts.concat(namespace(), address)
   }
 
-  function read(address: textref): bigintref {
+  export function read(address: textref): bigintref {
     const value = storage.get(key(address))
     if (!value) return bigints.zero()
 
@@ -72,6 +72,17 @@ namespace counters {
 export function add(session: packref): bigintref {
   const caller = sessions.assert(session)
   return counters.increment(caller)
+}
+
+/**
+ * Read the caller counter value.
+ *
+ * @param session Session packref [ed25519_module_address, pubkey]
+ * @returns Counter value
+ */
+export function getValue(session: packref): bigintref {
+  const caller = sessions.assert(session)
+  return counters.read(caller)
 }
 
 /**
