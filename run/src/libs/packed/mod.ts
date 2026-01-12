@@ -61,7 +61,7 @@ export namespace Packed {
       return values
     }
 
-    throw new Error("Unknown pack type")
+    throw new Error(`Unknown pack type: ${type}`)
   }
 
   export function sizeOrThrow(value: Packable) {

@@ -1,15 +1,19 @@
+import { createHash, randomBytes } from "node:crypto"
+
 export async function generate(target: number | bigint) {
+  const targetBig = BigInt(target)
+  const max = 2n ** 256n
+
   while (true) {
-    const effort = crypto.getRandomValues(new Uint8Array(32))
+    const effort = new Uint8Array(randomBytes(32))
+    const hash = createHash("sha256").update(effort).digest()
+    const hashInt = BigInt(`0x${hash.toString("hex")}`)
 
-    const value =
-      2n ** 256n /
-      BigInt(
-        "0x" +
-          new Uint8Array(await crypto.subtle.digest("SHA-256", effort)).toHex(),
-      )
+    if (hashInt === 0n) continue
 
-    if (value < target) continue
+    const value = max / hashInt
+
+    if (value < targetBig) continue
 
     return effort
   }

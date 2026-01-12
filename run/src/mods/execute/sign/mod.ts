@@ -31,7 +31,7 @@ async function execute<T extends Packable = Packable>(
     "params",
     new Blob([Writable.writeToBytesOrThrow(new Packed(params))]),
   )
-  body.append("effort", new Blob([await generate(2n ** 19n)]))
+  body.append("effort", new Blob([await generate(2n ** 20n)]))
 
   const response = await fetch(new URL("/api/execute", process.env.SERVER), {
     method: "POST",
