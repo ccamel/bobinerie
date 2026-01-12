@@ -22,6 +22,18 @@ Atomically increments the counter for the caller.
 
 Incremented counter value
 
+### `getValue(session)`
+
+Read the caller counter value.
+
+**Parameters:**
+
+- `session` - Session packref [ed25519_module_address, pubkey]
+
+**Returns:**
+
+Counter value
+
 ### `reset(session)`
 
 Reset the caller counter to zero.
