@@ -80,7 +80,7 @@ export function add(session: packref): bigintref {
  * @param session Session packref [ed25519_module_address, pubkey]
  * @returns Counter value
  */
-export function getValue(session: packref): bigintref {
+export function value(session: packref): bigintref {
   const caller = sessions.assert(session)
   return counters.read(caller)
 }
