@@ -54,4 +54,4 @@ The project enforces this via commitlint. See `commitlint.config.cjs` for the im
 
 ## Reference
 
-See: https://x.com/hazae41/status/2001986156834267231
+See: <https://x.com/hazae41/status/2001986156834267231>
