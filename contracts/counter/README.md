@@ -22,7 +22,7 @@ Atomically increments the counter for the caller.
 
 Incremented counter value
 
-### `getValue(session)`
+### `value(session)`
 
 Read the caller counter value.
 
@@ -86,6 +86,10 @@ npm run execute:sign <ed25519_module_address> <counter_module_address> add
 
 # Second call
 npm run execute:sign <ed25519_module_address> <counter_module_address> add
+# → 2
+
+# Get current value
+npm run execute:sign <ed25519_module_address> <counter_module_address> value
 # → 2
 ```
 
