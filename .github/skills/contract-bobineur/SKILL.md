@@ -55,5 +55,6 @@ If Context7 is unavailable:
 
 ## Related documents
 
-- Coding rules: `coding-style.md`
+- Coding rules: [references/coding-style.md](references/coding-style.md)
+- Bobine CPEs: [references/bobine-cpes.md](references/bobine-cpes.md)
 - Bobine website: <https://bobine.tech>
