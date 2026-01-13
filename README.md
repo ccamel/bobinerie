@@ -68,9 +68,15 @@ npm run prepack
 Deploy a contract:
 
 ```bash
-CONTRACT=say-my-name npm run produce
+CONTRACT=say-my-name npm run contract:produce
 # Returns: { address: "3ca2c27f..." }
 ```
+
+Other common tasks:
+
+- Build a single contract: `CONTRACT=say-my-name npm run contract:build`
+- Produce all contracts: `npm run produce`
+- Generate docs: `npm run docs`
 
 Execute a contract method:
 
