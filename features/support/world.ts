@@ -22,17 +22,26 @@ export interface SessionKeys {
   authModuleName: string
 }
 
+export interface UserKeyPair {
+  publicKey: Uint8Array
+  privateKey: CryptoKey
+}
+
 export class BobineWorld extends World {
   public serverUrl: string = `http://127.0.0.1:${BOBINE_PORT}`
   public bobineProcess?: ChildProcess
   public contractStates: Map<string, ContractState> = new Map()
   public lastExecutionResult?: ExecutionResult
   public sessionKeys?: SessionKeys
+  public authModuleName?: string
+  public userKeys: Map<string, UserKeyPair> = new Map()
 
   reset(): void {
     this.contractStates.clear()
     this.lastExecutionResult = undefined
     this.sessionKeys = undefined
+    this.authModuleName = undefined
+    this.userKeys.clear()
   }
 
   getContract(name: string): ContractState {

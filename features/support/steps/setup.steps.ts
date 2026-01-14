@@ -79,7 +79,7 @@ Given(
   "a prepackaged contract {string}",
   async function (this: BobineWorld, contractName: string) {
     try {
-      execSync(`CONTRACT=${contractName} npm run prepack:contract`, {
+      execSync(`CONTRACT=${contractName} npm run contract:build`, {
         cwd: process.cwd(),
         stdio: "pipe",
         encoding: "utf-8",
@@ -124,5 +124,56 @@ Given(
       producedLabel: "fixture contract",
       errorSuffix: "(fixture contract)",
     })
+  },
+)
+
+Given(
+  "I use auth module {string}",
+  function (this: BobineWorld, authModuleName: string) {
+    this.getProducedModuleAddress(authModuleName)
+    this.authModuleName = authModuleName
+
+    if (this.sessionKeys) {
+      this.sessionKeys.authModuleName = authModuleName
+    }
+
+    console.log(`🔐 Using auth module: ${authModuleName}`)
+  },
+)
+
+Given(
+  "I have keys for {string}",
+  async function (this: BobineWorld, userName: string) {
+    if (!this.authModuleName) {
+      throw new Error("Auth module is not configured")
+    }
+
+    let keyPair = this.userKeys.get(userName)
+
+    if (!keyPair) {
+      const generated = (await crypto.subtle.generateKey("Ed25519", true, [
+        "sign",
+        "verify",
+      ])) as CryptoKeyPair
+
+      const publicKey = new Uint8Array(
+        await crypto.subtle.exportKey("spki", generated.publicKey),
+      )
+
+      keyPair = {
+        publicKey,
+        privateKey: generated.privateKey,
+      }
+
+      this.userKeys.set(userName, keyPair)
+    }
+
+    this.sessionKeys = {
+      publicKey: keyPair.publicKey,
+      privateKey: keyPair.privateKey,
+      authModuleName: this.authModuleName,
+    }
+
+    console.log(`🔐 Using keys for ${userName}`)
   },
 )

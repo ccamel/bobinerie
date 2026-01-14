@@ -2,6 +2,12 @@ import { strict as assert } from "node:assert"
 import { Then } from "@cucumber/cucumber"
 import { BobineWorld } from "../world"
 
+function formatValue(value: unknown): string {
+  return JSON.stringify(value, (_key, val) =>
+    typeof val === "bigint" ? `bigint:${val.toString()}` : val,
+  )
+}
+
 Then("the execution should succeed", function (this: BobineWorld) {
   if (!this.lastExecutionResult) {
     throw new Error("No execution result found")
@@ -90,10 +96,10 @@ Then(
     assert.deepStrictEqual(
       normalizedReturned,
       expected,
-      `Expected returned value to be ${JSON.stringify(expected)}, but got ${JSON.stringify(normalizedReturned)}`,
+      `Expected returned value to be ${formatValue(expected)}, but got ${formatValue(normalizedReturned)}`,
     )
 
-    console.log(`✅ Returned value matches: ${JSON.stringify(expected)}`)
+    console.log(`✅ Returned value matches: ${formatValue(expected)}`)
   },
 )
 
