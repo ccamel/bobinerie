@@ -8,9 +8,9 @@
 [![Version](https://img.shields.io/github/v/release/ccamel/bobinerie?style=for-the-badge)](https://github.com/ccamel/bobinerie/releases)
 [![AssemblyScript](https://img.shields.io/badge/AssemblyScript-%23007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white)](https://www.assemblyscript.org/)
 [![Commit Convention: DAFT](https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge)](https://x.com/hazae41/status/2001986156834267231)
-[![Build](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?style=for-the-badge)](https://github.com/ccamel/bobinerie/actions/workflows/build.yml)
-[![Lint](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?style=for-the-badge)](https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml)
-[![Deploy](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?style=for-the-badge)](https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml)
+[![Build](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?style=for-the-badge&label=build)](https://github.com/ccamel/bobinerie/actions/workflows/build.yml)
+[![Lint](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?style=for-the-badge&label=lint)](https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml)
+[![Deploy](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?style=for-the-badge&label=deploy)](https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ## Le Comptoir
