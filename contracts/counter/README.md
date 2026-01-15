@@ -1,4 +1,4 @@
-# Counter
+# Counter ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
 
 Per-account counter with Ed25519 session authentication.
 

@@ -1,4 +1,4 @@
-# Say My Name
+# Say My Name ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
 
 A simple name storage contract that remembers who you are.
 

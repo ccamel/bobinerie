@@ -19,13 +19,13 @@ Available now:
 
 <!-- CONTRACTS:START -->
 
-- **[counter](contracts/counter/README.md)**
+- **[counter](contracts/counter/README.md)** ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
   > Per-account counter with Ed25519 session authentication.
 
-- **[say-my-name](contracts/say-my-name/README.md)**
+- **[say-my-name](contracts/say-my-name/README.md)** ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
   > A simple name storage contract that remembers who you are.
 
-- **[sigil](contracts/sigil/README.md)**
+- **[sigil](contracts/sigil/README.md)** ![creative](https://img.shields.io/badge/creative-FF9F1C)
   > Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
 
 <!-- CONTRACTS:END -->

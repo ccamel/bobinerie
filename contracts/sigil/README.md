@@ -1,4 +1,4 @@
-# Sigil
+# Sigil ![creative](https://img.shields.io/badge/creative-FF9F1C)
 
 Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
 
