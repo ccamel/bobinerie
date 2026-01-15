@@ -43,7 +43,7 @@ jobs:
         run: npm ci
 
       - name: Build contracts
-        run: npm run prepack:all
+        run: npm run prepack
 
       - name: Prepare release assets
         run: deno run -A ./run/src/mods/release/mod.ts
