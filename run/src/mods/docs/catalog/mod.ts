@@ -17,12 +17,16 @@ const contracts = readdirSync(contractsDir)
 
       let title = name
       let description = ""
+      let badges: string[] = []
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim()
 
         if (line.startsWith("# ")) {
-          title = line.slice(2).trim()
+          const heading = line.slice(2).trim()
+          const matches = heading.match(/!\[[^\]]*\]\([^)]+\)/g)
+          badges = matches ?? []
+          title = heading.replace(/!\[[^\]]*\]\([^)]+\)/g, "").trim() || name
           continue
         }
 
@@ -32,9 +36,14 @@ const contracts = readdirSync(contractsDir)
         }
       }
 
-      return { name, title, description }
+      return { name, title, description, badges }
     } catch {
-      return { name, title: name, description: "No description available" }
+      return {
+        name,
+        title: name,
+        description: "No description available",
+        badges: [],
+      }
     }
   })
   .sort((a, b) => a.name.localeCompare(b.name))
@@ -42,7 +51,9 @@ const contracts = readdirSync(contractsDir)
 let list = ""
 
 for (const contract of contracts) {
-  list += `- **[${contract.name}](contracts/${contract.name}/README.md)**\n`
+  list += `- **[${contract.name}](contracts/${contract.name}/README.md)**`
+  if (contract.badges.length > 0) list += ` ${contract.badges.join(" ")}`
+  list += `\n`
   if (contract.description) list += `  > ${contract.description}`
   else list += `  > Surprise contract!`
   list += `\n\n`
