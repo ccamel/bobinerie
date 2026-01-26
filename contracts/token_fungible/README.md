@@ -1,4 +1,4 @@
-# Token Fungible
+# Token Fungible ![defi](https://img.shields.io/badge/defi-6C63FF)
 
 A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).
 

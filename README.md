@@ -28,7 +28,7 @@ Available now:
 - **[sigil](contracts/sigil/README.md)** ![creative](https://img.shields.io/badge/creative-FF9F1C)
   > Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
 
-- **[token_fungible](contracts/token_fungible/README.md)**
+- **[token_fungible](contracts/token_fungible/README.md)** ![defi](https://img.shields.io/badge/defi-6C63FF)
   > A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).
 
 <!-- CONTRACTS:END -->
