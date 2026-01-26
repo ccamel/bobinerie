@@ -39,7 +39,7 @@ the code + creator tuple, then stores the owner.
 
 - `creator` - The address that becomes the token owner (allowed to mint).
 
-### `get_balance(target)`
+### `balance(target)`
 
 Read the token balance of an address.
 
@@ -64,7 +64,7 @@ This increases both the recipient balance and the total supply.
 - `target` - Recipient address.
 - `amount` - Amount to mint.
 
-### `get_total_supply()`
+### `total_supply()`
 
 Read the total token supply.
 
@@ -72,7 +72,7 @@ Read the total token supply.
 
 Total supply (0 if absent).
 
-### `get_allowance(owner, spender)`
+### `allowance(owner, spender)`
 
 Read the remaining allowance from an owner to a spender.
 
