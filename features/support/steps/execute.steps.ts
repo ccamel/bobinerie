@@ -6,10 +6,18 @@ import { BobineWorld } from "../world"
 
 const AUTH_DOMAIN_ID = "17fa1cb5-c5af-4cfd-9bea-1a36590b890d"
 
-function parseParamValue(token: string): Packable {
+function parseParamValue(world: BobineWorld, token: string): Packable {
   const trimmed = token.trim()
   if (!trimmed || trimmed === "null") {
     return null
+  }
+  if (trimmed.startsWith("address:")) {
+    const key = trimmed.slice("address:".length)
+    const address = world.userAddresses.get(key)
+    if (!address) {
+      throw new Error(`Unknown address for ${key}`)
+    }
+    return address
   }
   if (trimmed.startsWith("blob:")) {
     return Uint8Array.fromHex(trimmed.slice("blob:".length))
@@ -26,11 +34,11 @@ function parseParamValue(token: string): Packable {
   throw new Error(`Unknown value type: ${trimmed}`)
 }
 
-function parseParams(tokens: string[]): Packable[] {
-  return tokens.map(parseParamValue)
+function parseParams(world: BobineWorld, tokens: string[]): Packable[] {
+  return tokens.map((token) => parseParamValue(world, token))
 }
 
-function parseParamsTable(table: DataTable): Packable[] {
+function parseParamsTable(world: BobineWorld, table: DataTable): Packable[] {
   const rows = table.raw()
   if (rows.length === 0) {
     return []
@@ -44,7 +52,7 @@ function parseParamsTable(table: DataTable): Packable[] {
     tokens.push(row[0])
   }
 
-  return parseParams(tokens)
+  return parseParams(world, tokens)
 }
 
 type ModuleExecution = {
@@ -68,7 +76,7 @@ async function executeModule(
       "params",
       new Blob([Writable.writeToBytesOrThrow(new Packed(params))]),
     )
-    body.append("effort", new Blob([await generate(10n ** 6n)]))
+    body.append("effort", new Blob([await generate(2n ** 20n)]))
 
     const response = await fetch(new URL("/api/execute", world.serverUrl), {
       method: "POST",
@@ -137,7 +145,7 @@ async function callContract(
       "params",
       new Blob([Writable.writeToBytesOrThrow(new Packed(params))]),
     )
-    body.append("effort", new Blob([await generate(10n ** 6n)]))
+    body.append("effort", new Blob([await generate(2n ** 20n)]))
 
     const response = await fetch(new URL("/api/execute", world.serverUrl), {
       method: "POST",
@@ -195,6 +203,88 @@ async function callContract(
   }
 }
 
+async function invokeContractThroughAuth(
+  world: BobineWorld,
+  contractName: string,
+  method: string,
+  params: Packable[],
+): Promise<void> {
+  if (!world.sessionKeys) {
+    throw new Error("No session keys found")
+  }
+
+  const authModuleName = world.sessionKeys.authModuleName
+  const authModuleAddress = world.getProducedModuleAddress(authModuleName)
+  const contractAddress = world.getProducedModuleAddress(contractName)
+
+  try {
+    const sessionBytes = Writable.writeToBytesOrThrow(
+      new Packed([authModuleAddress, world.sessionKeys.publicKey]),
+    )
+    const addressBytes = new Uint8Array(
+      await crypto.subtle.digest("SHA-256", sessionBytes),
+    )
+    const address = addressBytes.toHex()
+
+    const nonceResult = await executeModule(
+      world,
+      authModuleAddress,
+      "get_nonce",
+      [address],
+    )
+
+    if (!nonceResult.ok || typeof nonceResult.returned !== "bigint") {
+      throw new Error(nonceResult.error || "Failed to fetch nonce")
+    }
+
+    const message = Writable.writeToBytesOrThrow(
+      new Packed([
+        AUTH_DOMAIN_ID,
+        contractAddress,
+        method,
+        params,
+        nonceResult.returned,
+      ]),
+    )
+
+    const signature = new Uint8Array(
+      await crypto.subtle.sign(
+        "Ed25519",
+        world.sessionKeys.privateKey,
+        message,
+      ),
+    )
+
+    const callResult = await executeModule(world, authModuleAddress, "call", [
+      contractAddress,
+      method,
+      params,
+      world.sessionKeys.publicKey,
+      signature,
+    ])
+
+    world.lastExecutionResult = {
+      success: callResult.ok,
+      logs: callResult.logs,
+      returned: callResult.returned,
+      error: callResult.ok ? undefined : callResult.error,
+    }
+
+    console.log(`✅ Invoked ${method} on ${contractName} through auth`)
+    if (callResult.logs.length > 0) {
+      console.log("   Logs:", callResult.logs.join(", "))
+    }
+  } catch (error) {
+    world.lastExecutionResult = {
+      success: false,
+      logs: [],
+      returned: null,
+      error: String(error),
+    }
+    console.log(`❌ Authenticated invocation failed: ${error}`)
+  }
+}
+
 When(
   "I call {string} method {string}",
   async function (this: BobineWorld, contractName: string, method: string) {
@@ -206,80 +296,37 @@ When(
   "I invoke {string} method {string} through auth",
   { timeout: 60 * 1000 },
   async function (this: BobineWorld, contractName: string, method: string) {
-    if (!this.sessionKeys) {
-      throw new Error("No session keys found")
-    }
+    await invokeContractThroughAuth(this, contractName, method, [])
+  },
+)
 
-    const authModuleName = this.sessionKeys.authModuleName
-    const authModuleAddress = this.getProducedModuleAddress(authModuleName)
-    const contractAddress = this.getProducedModuleAddress(contractName)
+When(
+  "I invoke {string} method {string} through auth with param {string}",
+  { timeout: 60 * 1000 },
+  async function (
+    this: BobineWorld,
+    contractName: string,
+    method: string,
+    paramStr: string,
+  ) {
+    const trimmed = paramStr.trim()
+    const params =
+      !trimmed || trimmed === "[]" ? [] : parseParams(this, [trimmed])
+    await invokeContractThroughAuth(this, contractName, method, params)
+  },
+)
 
-    try {
-      const sessionBytes = Writable.writeToBytesOrThrow(
-        new Packed([authModuleAddress, this.sessionKeys.publicKey]),
-      )
-      const addressBytes = new Uint8Array(
-        await crypto.subtle.digest("SHA-256", sessionBytes),
-      )
-      const address = addressBytes.toHex()
-
-      const nonceResult = await executeModule(
-        this,
-        authModuleAddress,
-        "get_nonce",
-        [address],
-      )
-
-      if (!nonceResult.ok || typeof nonceResult.returned !== "bigint") {
-        throw new Error(nonceResult.error || "Failed to fetch nonce")
-      }
-
-      const message = Writable.writeToBytesOrThrow(
-        new Packed([
-          AUTH_DOMAIN_ID,
-          contractAddress,
-          method,
-          [],
-          nonceResult.returned,
-        ]),
-      )
-
-      const signature = new Uint8Array(
-        await crypto.subtle.sign(
-          "Ed25519",
-          this.sessionKeys.privateKey,
-          message,
-        ),
-      )
-
-      const callResult = await executeModule(this, authModuleAddress, "call", [
-        contractAddress,
-        method,
-        [],
-        this.sessionKeys.publicKey,
-        signature,
-      ])
-
-      this.lastExecutionResult = {
-        success: callResult.ok,
-        logs: callResult.logs,
-        returned: callResult.returned,
-        error: callResult.ok ? undefined : callResult.error,
-      }
-
-      console.log(`✅ Invoked ${method} on ${contractName} through auth`)
-      if (callResult.logs.length > 0) {
-        console.log("   Logs:", callResult.logs.join(", "))
-      }
-    } catch (error) {
-      this.lastExecutionResult = {
-        success: false,
-        logs: [],
-        returned: null,
-        error: String(error),
-      }
-      console.log(`❌ Authenticated invocation failed: ${error}`)
-    }
+When(
+  "I invoke {string} method {string} through auth with params:",
+  { timeout: 60 * 1000 },
+  async function (
+    this: BobineWorld,
+    contractName: string,
+    method: string,
+    table: DataTable,
+  ) {
+    const params = parseParamsTable(this, table)
+    await invokeContractThroughAuth(this, contractName, method, params)
   },
 )
 
@@ -292,7 +339,8 @@ When(
     paramStr: string,
   ) {
     const trimmed = paramStr.trim()
-    const params = !trimmed || trimmed === "[]" ? [] : parseParams([trimmed])
+    const params =
+      !trimmed || trimmed === "[]" ? [] : parseParams(this, [trimmed])
     await callContract(this, contractName, method, params)
   },
 )
@@ -305,7 +353,7 @@ When(
     method: string,
     table: DataTable,
   ) {
-    const params = parseParamsTable(table)
+    const params = parseParamsTable(this, table)
     await callContract(this, contractName, method, params)
   },
 )
