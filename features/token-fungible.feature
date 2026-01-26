@@ -18,16 +18,16 @@ Feature: Token Fungible Contract
 
   Scenario: Initial state after initialization
     Given I have keys for "Bob"
-    When I call "token_fungible" method "get_total_supply"
+    When I call "token_fungible" method "total_supply"
     Then the execution should succeed
     And the returned value should be "bigint:0"
-    When I call "token_fungible" method "get_balance" with param "address:Alice"
+    When I call "token_fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:0"
-    When I call "token_fungible" method "get_balance" with param "address:Bob"
+    When I call "token_fungible" method "balance" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be "bigint:0"
-    When I call "token_fungible" method "get_allowance" with params:
+    When I call "token_fungible" method "allowance" with params:
       | address:Alice |
       | address:Bob |
     Then the execution should succeed
@@ -38,10 +38,10 @@ Feature: Token Fungible Contract
       | address:Alice |
       | bigint:100 |
     Then the execution should succeed
-    When I call "token_fungible" method "get_balance" with param "address:Alice"
+    When I call "token_fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:100"
-    When I call "token_fungible" method "get_total_supply"
+    When I call "token_fungible" method "total_supply"
     Then the execution should succeed
     And the returned value should be "bigint:100"
 
@@ -63,13 +63,13 @@ Feature: Token Fungible Contract
       | address:Bob |
       | bigint:40 |
     Then the execution should succeed
-    When I call "token_fungible" method "get_balance" with param "address:Alice"
+    When I call "token_fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:60"
-    When I call "token_fungible" method "get_balance" with param "address:Bob"
+    When I call "token_fungible" method "balance" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be "bigint:40"
-    When I call "token_fungible" method "get_total_supply"
+    When I call "token_fungible" method "total_supply"
     Then the execution should succeed
     And the returned value should be "bigint:100"
 
@@ -84,13 +84,13 @@ Feature: Token Fungible Contract
       | address:Bob |
       | bigint:25 |
     Then the execution should fail
-    When I call "token_fungible" method "get_balance" with param "address:Alice"
+    When I call "token_fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:10"
-    When I call "token_fungible" method "get_balance" with param "address:Bob"
+    When I call "token_fungible" method "balance" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be "bigint:0"
-    When I call "token_fungible" method "get_total_supply"
+    When I call "token_fungible" method "total_supply"
     Then the execution should succeed
     And the returned value should be "bigint:10"
 
@@ -106,7 +106,7 @@ Feature: Token Fungible Contract
       | address:Bob |
       | bigint:30 |
     Then the execution should succeed
-    When I call "token_fungible" method "get_allowance" with params:
+    When I call "token_fungible" method "allowance" with params:
       | address:Alice |
       | address:Bob |
     Then the execution should succeed
@@ -117,18 +117,18 @@ Feature: Token Fungible Contract
       | address:Charlie |
       | bigint:20 |
     Then the execution should succeed
-    When I call "token_fungible" method "get_allowance" with params:
+    When I call "token_fungible" method "allowance" with params:
       | address:Alice |
       | address:Bob |
     Then the execution should succeed
     And the returned value should be "bigint:10"
-    When I call "token_fungible" method "get_balance" with param "address:Alice"
+    When I call "token_fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:80"
-    When I call "token_fungible" method "get_balance" with param "address:Charlie"
+    When I call "token_fungible" method "balance" with param "address:Charlie"
     Then the execution should succeed
     And the returned value should be "bigint:20"
-    When I call "token_fungible" method "get_total_supply"
+    When I call "token_fungible" method "total_supply"
     Then the execution should succeed
     And the returned value should be "bigint:100"
 
@@ -151,7 +151,7 @@ Feature: Token Fungible Contract
       | address:Bob |
       | bigint:7 |
     Then the execution should succeed
-    When I call "token_fungible" method "get_allowance" with params:
+    When I call "token_fungible" method "allowance" with params:
       | address:Alice |
       | address:Bob |
     Then the execution should succeed
@@ -174,15 +174,15 @@ Feature: Token Fungible Contract
       | address:Bob |
       | bigint:15 |
     Then the execution should fail
-    When I call "token_fungible" method "get_allowance" with params:
+    When I call "token_fungible" method "allowance" with params:
       | address:Alice |
       | address:Bob |
     Then the execution should succeed
     And the returned value should be "bigint:10"
-    When I call "token_fungible" method "get_balance" with param "address:Alice"
+    When I call "token_fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:50"
-    When I call "token_fungible" method "get_balance" with param "address:Bob"
+    When I call "token_fungible" method "balance" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be "bigint:0"
 
@@ -193,10 +193,10 @@ Feature: Token Fungible Contract
     Then the execution should succeed
     When I invoke "token_fungible" method "burn" through auth with param "bigint:40"
     Then the execution should succeed
-    When I call "token_fungible" method "get_balance" with param "address:Alice"
+    When I call "token_fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:60"
-    When I call "token_fungible" method "get_total_supply"
+    When I call "token_fungible" method "total_supply"
     Then the execution should succeed
     And the returned value should be "bigint:60"
 

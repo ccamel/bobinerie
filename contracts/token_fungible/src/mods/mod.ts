@@ -194,7 +194,7 @@ export function init(creator: textref): void {
  * @param target Address to query.
  * @returns Current balance (0 if absent).
  */
-export function get_balance(target: textref): bigintref {
+export function balance(target: textref): bigintref {
   return balances.get(target)
 }
 
@@ -228,7 +228,7 @@ export function mint(
  *
  * @returns Total supply (0 if absent).
  */
-export function get_total_supply(): bigintref {
+export function total_supply(): bigintref {
   return supply.get()
 }
 
@@ -239,7 +239,7 @@ export function get_total_supply(): bigintref {
  * @param spender Address allowed to spend.
  * @returns Remaining allowance (0 if absent).
  */
-export function get_allowance(owner: textref, spender: textref): bigintref {
+export function allowance(owner: textref, spender: textref): bigintref {
   return allowances.get(owner, spender)
 }
 
