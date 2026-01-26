@@ -32,11 +32,13 @@ namespace sessions {
 }
 
 namespace owner {
+  const ZERO_ADDRESS =
+    "0000000000000000000000000000000000000000000000000000000000000000"
+
   export function get(): textref {
     const found = storage.get(texts.fromString("owner"))
 
-    if (!found)
-      return texts.fromString("0000000000000000000000000000000000000000")
+    if (!found) return texts.fromString(ZERO_ADDRESS)
 
     return packs.get<textref>(found, 0)
   }
