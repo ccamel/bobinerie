@@ -35,6 +35,7 @@ export class BobineWorld extends World {
   public sessionKeys?: SessionKeys
   public authModuleName?: string
   public userKeys: Map<string, UserKeyPair> = new Map()
+  public userAddresses: Map<string, string> = new Map()
 
   reset(): void {
     this.contractStates.clear()
@@ -42,6 +43,7 @@ export class BobineWorld extends World {
     this.sessionKeys = undefined
     this.authModuleName = undefined
     this.userKeys.clear()
+    this.userAddresses.clear()
   }
 
   getContract(name: string): ContractState {

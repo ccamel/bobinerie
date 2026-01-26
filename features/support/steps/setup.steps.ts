@@ -39,7 +39,7 @@ async function produceWasmModule(
       "salt",
       new Blob([Writable.writeToBytesOrThrow(new Packed(salt))]),
     )
-    body.append("effort", new Blob([await generate(10n ** 6n)]))
+    body.append("effort", new Blob([await generate(2n ** 20n)]))
 
     const response = await fetch(new URL("/api/create", world.serverUrl), {
       method: "POST",
@@ -174,6 +174,32 @@ Given(
       authModuleName: this.authModuleName,
     }
 
+    const authModuleAddress = this.getProducedModuleAddress(this.authModuleName)
+    const sessionBytes = Writable.writeToBytesOrThrow(
+      new Packed([authModuleAddress, keyPair.publicKey]),
+    )
+    const addressBytes = new Uint8Array(
+      await crypto.subtle.digest("SHA-256", sessionBytes),
+    )
+    this.userAddresses.set(userName, addressBytes.toHex())
+
     console.log(`🔐 Using keys for ${userName}`)
+  },
+)
+
+Given(
+  "I set contract {string} address to last returned value",
+  function (this: BobineWorld, contractName: string) {
+    if (!this.lastExecutionResult) {
+      throw new Error("No execution result found")
+    }
+
+    const returned = this.lastExecutionResult.returned
+    if (typeof returned !== "string") {
+      throw new Error("Last returned value is not a contract address")
+    }
+
+    this.markProduced(contractName, returned)
+    console.log(`🔗 Using ${contractName} at ${returned}`)
   },
 )

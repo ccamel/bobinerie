@@ -5,13 +5,16 @@
 > 🧵 _La Bobinerie_ - Haberdashery of [Bobine](https://bobine.tech) modules: from useful, serious pieces to educational gems and esoteric oddities. Grab, deploy, fork at will.
 
 [![Open since 2025](https://img.shields.io/badge/Open%20since-2025-cyan?style=for-the-badge)](https://img.shields.io/github/v/release/ccamel/bobinerie)
+[![Awesome](https://img.shields.io/badge/AWESOME-BOBINE-7B3FE4?style=for-the-badge&logo=awesomelists&logoColor=white)](https://github.com/hazae41/awesome-bobine)
 [![Version](https://img.shields.io/github/v/release/ccamel/bobinerie?style=for-the-badge)](https://github.com/ccamel/bobinerie/releases)
-[![AssemblyScript](https://img.shields.io/badge/AssemblyScript-%23007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white)](https://www.assemblyscript.org/)
+
+[![AssemblyScript](https://img.shields.io/badge/Pure-AssemblyScript-007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white)](https://www.assemblyscript.org/)
 [![Commit Convention: DAFT](https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge)](https://x.com/hazae41/status/2001986156834267231)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
 [![Build](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?style=for-the-badge&label=build)](https://github.com/ccamel/bobinerie/actions/workflows/build.yml)
 [![Lint](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?style=for-the-badge&label=lint)](https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml)
 [![Deploy](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?style=for-the-badge&label=deploy)](https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ## Le Comptoir
 
@@ -27,6 +30,9 @@ Available now:
 
 - **[sigil](contracts/sigil/README.md)** ![creative](https://img.shields.io/badge/creative-FF9F1C)
   > Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
+
+- **[token_fungible](contracts/token_fungible/README.md)** ![defi](https://img.shields.io/badge/defi-6C63FF)
+  > A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).
 
 <!-- CONTRACTS:END -->
 
