@@ -24,8 +24,8 @@
     "fmt": "biome format --write .",
     "fmt:check": "biome format .",
     "lint:commits": "commitlint --from origin/main --to HEAD --verbose",
-    "test": "NODE_OPTIONS='--import tsx' cucumber-js --import features/support/index.ts",
-    "test:verbose": "NODE_OPTIONS='--import tsx' cucumber-js --import features/support/index.ts --format progress-bar --format json:reports/cucumber-report.json"
+    "test": "NODE_OPTIONS='--import tsx' cucumber-js --config cucumber.config.cjs",
+    "test:verbose": "NODE_OPTIONS='--import tsx' cucumber-js --config cucumber.config.cjs --format progress-bar --format json:reports/cucumber-report.json"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",

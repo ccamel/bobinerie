@@ -1,7 +1,7 @@
 import { DataTable, When } from "@cucumber/cucumber"
 import { Readable, Writable } from "@hazae41/binary"
-import { generate } from "../../../run/src/libs/effort/mod.ts"
-import { type Packable, Packed } from "../../../run/src/libs/packed/mod.ts"
+import { generate } from "../../../../libs/effort/mod.ts"
+import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
 import { BobineWorld } from "../world"
 
 const AUTH_DOMAIN_ID = "17fa1cb5-c5af-4cfd-9bea-1a36590b890d"

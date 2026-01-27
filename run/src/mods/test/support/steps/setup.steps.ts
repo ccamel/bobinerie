@@ -2,8 +2,8 @@ import { execSync } from "node:child_process"
 import { readFileSync } from "node:fs"
 import { Given } from "@cucumber/cucumber"
 import { Writable } from "@hazae41/binary"
-import { generate } from "../../../run/src/libs/effort/mod.ts"
-import { type Packable, Packed } from "../../../run/src/libs/packed/mod.ts"
+import { generate } from "../../../../libs/effort/mod.ts"
+import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
 import { BobineWorld } from "../world"
 
 type ProduceOptions = {
