@@ -3,6 +3,12 @@
 A simple name storage contract that remembers who you are.
 
 <!-- DEPLOYMENTS:START -->
+
+## Deployments
+
+- **garage-hazae41-bob0**: `49ce664357bd4a3c90ac47ae63441ceff70e22d3c3e530f593b8f32770fcdbc6`
+- **garage-ccamel-bob0**: `49ce664357bd4a3c90ac47ae63441ceff70e22d3c3e530f593b8f32770fcdbc6`
+
 <!-- DEPLOYMENTS:END -->
 
 ## What it does

@@ -3,6 +3,12 @@
 Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
 
 <!-- DEPLOYMENTS:START -->
+
+## Deployments
+
+- **garage-hazae41-bob0**: `17496dccca6b679db63719bbda2518564d3057f29ffe95c6af03028fd96630a5`
+- **garage-ccamel-bob0**: `17496dccca6b679db63719bbda2518564d3057f29ffe95c6af03028fd96630a5`
+
 <!-- DEPLOYMENTS:END -->
 
 ## Overview
