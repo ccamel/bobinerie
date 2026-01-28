@@ -2,6 +2,9 @@
 
 Per-account counter with Ed25519 session authentication.
 
+<!-- DEPLOYMENTS:START -->
+<!-- DEPLOYMENTS:END -->
+
 ## Overview
 
 Maintains isolated counters keyed by account address. Requires an Ed25519 session module for authentication and nonce management.

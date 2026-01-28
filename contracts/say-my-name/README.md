@@ -2,6 +2,9 @@
 
 A simple name storage contract that remembers who you are.
 
+<!-- DEPLOYMENTS:START -->
+<!-- DEPLOYMENTS:END -->
+
 ## What it does
 
 This contract stores a name in its persistent storage. Each time you call it:

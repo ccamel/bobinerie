@@ -2,6 +2,9 @@
 
 Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
 
+<!-- DEPLOYMENTS:START -->
+<!-- DEPLOYMENTS:END -->
+
 ## Overview
 
 Mint a deterministic on-chain SVG PFP (a "sigil") for a derived account address.

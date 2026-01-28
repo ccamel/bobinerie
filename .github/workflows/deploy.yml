@@ -99,3 +99,12 @@ jobs:
           git add deployment.json
           git diff --staged --quiet || git commit -m "p"
           git push
+
+      - name: Update contract documentation
+        run: npm run docs
+
+      - name: Commit README updates
+        run: |
+          git add contracts/*/README.md
+          git diff --staged --quiet || git commit -m "r"
+          git push

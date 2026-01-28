@@ -2,6 +2,9 @@
 
 A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).
 
+<!-- DEPLOYMENTS:START -->
+<!-- DEPLOYMENTS:END -->
+
 ## What you get
 
 - **Balances**: hold tokens and transfer them.
