@@ -15,12 +15,13 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   deploy:
     runs-on: ubuntu-22.04
     strategy:
+      max-parallel: 1
       matrix:
         environment:
           - garage-hazae41-bob0
@@ -42,15 +43,55 @@ jobs:
         run: |
           echo "SERVER=${{ secrets.BOBINE_SERVER }}" > .env
           touch .env.local
-        shell: bash
 
       - name: Compile contracts
         run: npm -s run prepack
 
+      - name: Initialize deployment.json
+        run: |
+          if [ ! -f deployment.json ]; then
+            echo '{"bobines":{}}' > deployment.json
+          fi
+          # Initialize bobine entry if not exists
+          BOBINE="${{ matrix.environment }}"
+          jq --arg bobine "$BOBINE" '.bobines[$bobine] // {"contracts":{}} | .bobines[$bobine] = {"contracts":{}}' deployment.json > deployment.tmp.json
+          mv deployment.tmp.json deployment.json
+
       - name: Deploy all contracts
         run: |
+          BOBINE="${{ matrix.environment }}"
           for dir in contracts/*/; do
             CONTRACT=$(basename $dir)
             echo "🚀 Producing $CONTRACT..."
-            CONTRACT=$CONTRACT npm -s run contract:produce || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
+
+            # Capture the deployment address (script outputs the address directly)
+            ADDRESS=$(CONTRACT=$CONTRACT npm -s run contract:produce) || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
+
+            # Update deployment.json
+            jq --arg bobine "$BOBINE" --arg contract "$CONTRACT" --arg address "$ADDRESS" \
+              '.bobines[$bobine].contracts[$contract] = {"address": $address}' \
+              deployment.json > deployment.tmp.json
+            mv deployment.tmp.json deployment.json
+
+            echo "✅ Deployed $CONTRACT at $ADDRESS"
           done
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - name: Commit deployment.json
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+
+          git add deployment.json
+          git diff --staged --quiet || git commit -m "p"
+          git push
