@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import process from "node:process"
 import { Project } from "ts-morph"
 
@@ -8,6 +8,7 @@ if (!contract) throw new Error("CONTRACT environment variable required")
 
 const srcPath = `./contracts/${contract}/src/mods/mod.ts`
 const readmePath = `./contracts/${contract}/README.md`
+const deploymentPath = "./deployment.json"
 
 const project = new Project()
 const sourceFile = project.addSourceFileAtPath(srcPath)
@@ -75,19 +76,64 @@ for (const fn of functions) {
   }
 }
 
+// Generate deployment addresses section
+let deploymentDocs = "\n"
+
+if (existsSync(deploymentPath)) {
+  const deployment = JSON.parse(readFileSync(deploymentPath, "utf-8"))
+
+  if (deployment.bobines) {
+    const addresses = []
+
+    for (const [bobine, data] of Object.entries(deployment.bobines)) {
+      if (data.contracts?.[contract]?.address) {
+        addresses.push({ bobine, address: data.contracts[contract].address })
+      }
+    }
+
+    if (addresses.length > 0) {
+      deploymentDocs += "## Deployments\n\n"
+      for (const { bobine, address } of addresses) {
+        deploymentDocs += `- **${bobine}**: \`${address}\`\n`
+      }
+      deploymentDocs += "\n"
+    }
+  }
+}
+
 const readme = readFileSync(readmePath, "utf-8")
 const startMarker = "<!-- METHODS:START -->"
 const endMarker = "<!-- METHODS:END -->"
+const deploymentStartMarker = "<!-- DEPLOYMENTS:START -->"
+const deploymentEndMarker = "<!-- DEPLOYMENTS:END -->"
 
 if (!readme.includes(startMarker) || !readme.includes(endMarker))
-  throw new Error("README must contain markers")
+  throw new Error("README must contain METHODS markers")
 
+// Update methods section
 const before = readme.substring(
   0,
   readme.indexOf(startMarker) + startMarker.length,
 )
 const after = readme.substring(readme.indexOf(endMarker))
 
-writeFileSync(readmePath, `${before}\n${docs}${after}`, "utf-8")
+let updatedReadme = `${before}\n${docs}${after}`
+
+// Update deployments section if markers exist
+if (
+  updatedReadme.includes(deploymentStartMarker) &&
+  updatedReadme.includes(deploymentEndMarker)
+) {
+  const deploymentBefore = updatedReadme.substring(
+    0,
+    updatedReadme.indexOf(deploymentStartMarker) + deploymentStartMarker.length,
+  )
+  const deploymentAfter = updatedReadme.substring(
+    updatedReadme.indexOf(deploymentEndMarker),
+  )
+  updatedReadme = `${deploymentBefore}\n${deploymentDocs}${deploymentAfter}`
+}
+
+writeFileSync(readmePath, updatedReadme, "utf-8")
 
 console.log(`✅ Generated docs for ${contract}`)
