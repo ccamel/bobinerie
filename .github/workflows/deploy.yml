@@ -47,6 +47,10 @@ jobs:
       - name: Compile contracts
         run: npm -s run prepack
 
+      - name: Pull latest deployment.json
+        run: |
+          git pull origin main || true
+
       - name: Initialize deployment.json
         run: |
           if [ ! -f deployment.json ]; then
@@ -54,7 +58,7 @@ jobs:
           fi
           # Initialize bobine entry if not exists
           BOBINE="${{ matrix.environment }}"
-          jq --arg bobine "$BOBINE" '.bobines[$bobine] // {"contracts":{}} | .bobines[$bobine] = {"contracts":{}}' deployment.json > deployment.tmp.json
+          jq --arg bobine "$BOBINE" '.bobines[$bobine] = (.bobines[$bobine] // {"contracts":{}})' deployment.json > deployment.tmp.json
           mv deployment.tmp.json deployment.json
 
       - name: Deploy all contracts

@@ -1,0 +1,20 @@
+{
+  "bobines": {
+    "garage-hazae41-bob0": {
+      "contracts": {
+        "counter": {
+          "address": "c6f1f6552341086e02553424d60534568b90353a766ed924712d4d8576577f7e"
+        },
+        "say-my-name": {
+          "address": "49ce664357bd4a3c90ac47ae63441ceff70e22d3c3e530f593b8f32770fcdbc6"
+        },
+        "sigil": {
+          "address": "17496dccca6b679db63719bbda2518564d3057f29ffe95c6af03028fd96630a5"
+        },
+        "token_fungible": {
+          "address": "da2ec9aa8b55a8a02fbf4743ebb5ed21c42005d094caa620f5ec54fc8040d25b"
+        }
+      }
+    }
+  }
+}
