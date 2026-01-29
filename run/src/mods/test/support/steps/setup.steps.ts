@@ -118,7 +118,7 @@ Given(
   "a produced fixture contract {string}",
   { timeout: 60 * 1000 },
   async function (this: BobineWorld, fixtureName: string) {
-    const wasmPath = `./features/support/fixtures/${fixtureName}.wasm`
+    const wasmPath = `./run/src/mods/test/support/fixtures/${fixtureName}.wasm`
     await produceWasmModule(this, fixtureName, wasmPath, [], {
       alreadyProducedLabel: "Fixture contract",
       producedLabel: "fixture contract",
