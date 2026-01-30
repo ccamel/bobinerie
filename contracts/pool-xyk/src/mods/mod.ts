@@ -717,7 +717,7 @@ export function balance_of(owner: textref): bigintref {
 
 /**
  * Calculate the output amount for a swap without executing it.
- * Uses the constant product formula: (x + Δx) * (y - Δy) = x * y
+ * Uses the constant product formula: `(x + Δx) * (y - Δy) = x * y`
  * Applies the pool's trading fee to the input amount.
  *
  * @param token_in Address of the token to swap in (must be token0 or token1)

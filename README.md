@@ -25,6 +25,9 @@ Available now:
 - **[counter](contracts/counter/README.md)** ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
   > Per-account counter with Ed25519 session authentication.
 
+- **[pool-xyk](contracts/pool-xyk/README.md)** ![defi](https://img.shields.io/badge/defi-6C63FF)
+  > XYK (constant-product) AMM pool for two fungible tokens: add/remove liquidity, swap, fee in bps.
+
 - **[say-my-name](contracts/say-my-name/README.md)** ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
   > A simple name storage contract that remembers who you are.
 
