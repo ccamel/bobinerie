@@ -32,7 +32,7 @@
     "@commitlint/cli": "^20.2.0",
     "@cucumber/cucumber": "^11.1.0",
     "@hazae41/stdbob": "^0.0.19",
-    "@types/node": "^22.10.5",
+    "@types/node": "^25.1.0",
     "assemblyscript": "^0.28.9",
     "deno": "^2.6.3",
     "ts-node": "^10.9.2",
