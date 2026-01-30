@@ -6,6 +6,8 @@ updates:
       interval: "daily"
     assignees:
       - ccamel
+    commit-message:
+      prefix: "u"
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -13,3 +15,5 @@ updates:
     assignees:
       - ccamel
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "u"
