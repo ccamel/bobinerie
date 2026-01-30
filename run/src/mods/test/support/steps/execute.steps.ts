@@ -19,6 +19,10 @@ function parseParamValue(world: BobineWorld, token: string): Packable {
     }
     return address
   }
+  if (trimmed.startsWith("contract:")) {
+    const key = trimmed.slice("contract:".length)
+    return world.getProducedModuleAddress(key)
+  }
   if (trimmed.startsWith("blob:")) {
     return Uint8Array.fromHex(trimmed.slice("blob:".length))
   }
@@ -62,6 +66,81 @@ type ModuleExecution = {
   error?: string
 }
 
+function isNullResponse(bytes: Uint8Array): boolean {
+  return (
+    bytes.length === 4 &&
+    bytes[0] === 110 &&
+    bytes[1] === 117 &&
+    bytes[2] === 108 &&
+    bytes[3] === 108
+  )
+}
+
+function parsePackedResponse(bytes: Uint8Array): {
+  logs: string[]
+  returned: Packable | null
+} {
+  if (isNullResponse(bytes)) {
+    return { logs: [], returned: null }
+  }
+
+  const result = Readable.readFromBytesOrThrow(Packed, bytes) as unknown[]
+  const [_logs, _reads, _writes, _returned, _sparks] = result as [
+    string[],
+    unknown,
+    unknown,
+    Packable,
+    unknown,
+  ]
+
+  return {
+    logs: _logs,
+    returned: _returned,
+  }
+}
+
+async function parseExecutionResponse(
+  response: Response,
+): Promise<ModuleExecution> {
+  const bytes = new Uint8Array(await response.arrayBuffer())
+  const fallbackText = new TextDecoder().decode(bytes).trim()
+
+  if (!response.ok) {
+    try {
+      const parsed = parsePackedResponse(bytes)
+      return {
+        ok: false,
+        logs: parsed.logs,
+        returned: parsed.returned,
+        error: fallbackText || `Status ${response.status}`,
+      }
+    } catch (_error) {
+      return {
+        ok: false,
+        logs: [],
+        returned: null,
+        error: fallbackText || `Status ${response.status}`,
+      }
+    }
+  }
+
+  try {
+    const parsed = parsePackedResponse(bytes)
+    return {
+      ok: true,
+      logs: parsed.logs,
+      returned: parsed.returned,
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      logs: [],
+      returned: null,
+      error: fallbackText || String(error),
+    }
+  }
+}
+
 async function executeModule(
   world: BobineWorld,
   moduleAddress: string,
@@ -76,45 +155,14 @@ async function executeModule(
       "params",
       new Blob([Writable.writeToBytesOrThrow(new Packed(params))]),
     )
-    body.append("effort", new Blob([await generate(2n ** 20n)]))
+    body.append("effort", new Blob([await generate(2n ** 25n)]))
 
     const response = await fetch(new URL("/api/execute", world.serverUrl), {
       method: "POST",
       headers: { Accept: "application/octet-stream" },
       body,
     })
-
-    const bytes = new Uint8Array(await response.arrayBuffer())
-
-    let logs: string[] = []
-    let returned: Packable | null = null
-
-    const isNull =
-      bytes.length === 4 &&
-      bytes[0] === 110 &&
-      bytes[1] === 117 &&
-      bytes[2] === 108 &&
-      bytes[3] === 108
-
-    if (!isNull) {
-      const result = Readable.readFromBytesOrThrow(Packed, bytes) as unknown[]
-      const [_logs, _reads, _writes, _returned, _sparks] = result as [
-        string[],
-        unknown,
-        unknown,
-        Packable,
-        unknown,
-      ]
-      logs = _logs
-      returned = _returned
-    }
-
-    return {
-      ok: response.ok,
-      logs,
-      returned,
-      error: response.ok ? undefined : `Status ${response.status}`,
-    }
+    return await parseExecutionResponse(response)
   } catch (error) {
     return {
       ok: false,
@@ -152,45 +200,17 @@ async function callContract(
       headers: { Accept: "application/octet-stream" },
       body,
     })
-
-    const bytes = new Uint8Array(await response.arrayBuffer())
-
-    let logs: string[] = []
-    let returned: Packable | undefined
-
-    const isNull =
-      bytes.length === 4 &&
-      bytes[0] === 110 &&
-      bytes[1] === 117 &&
-      bytes[2] === 108 &&
-      bytes[3] === 108
-
-    if (isNull) {
-      logs = []
-      returned = null
-    } else {
-      const result = Readable.readFromBytesOrThrow(Packed, bytes) as unknown[]
-      const [_logs, _reads, _writes, _returned, _sparks] = result as [
-        string[],
-        unknown,
-        unknown,
-        Packable,
-        unknown,
-      ]
-      logs = _logs
-      returned = _returned
-    }
-
+    const parsed = await parseExecutionResponse(response)
     world.lastExecutionResult = {
-      success: response.ok,
-      logs,
-      returned,
-      error: response.ok ? undefined : `Status ${response.status}`,
+      success: parsed.ok,
+      logs: parsed.logs,
+      returned: parsed.returned,
+      error: parsed.error,
     }
 
     console.log(`✅ Executed ${method} on ${contractName}`)
-    if (logs && Array.isArray(logs) && logs.length > 0) {
-      console.log("   Logs:", logs.join(", "))
+    if (parsed.logs && Array.isArray(parsed.logs) && parsed.logs.length > 0) {
+      console.log("   Logs:", parsed.logs.join(", "))
     }
   } catch (error) {
     world.lastExecutionResult = {
