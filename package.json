@@ -30,7 +30,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
     "@commitlint/cli": "^20.2.0",
-    "@cucumber/cucumber": "^11.1.0",
+    "@cucumber/cucumber": "^12.6.0",
     "@hazae41/stdbob": "^0.0.19",
     "@types/node": "^25.1.0",
     "assemblyscript": "^0.28.9",
