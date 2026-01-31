@@ -16,11 +16,14 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT"></a>
 </p>
 
+<p align="center">⸟</p>
+
 <p align="center">
-  <a href="https://github.com/ccamel/bobinerie/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?style=for-the-badge&label=build" alt="Build"></a>
-  <a href="https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?style=for-the-badge&label=lint" alt="Lint"></a>
-  <a href="https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?style=for-the-badge&label=deploy" alt="Deploy"></a>
-  <a href="https://github.com/ccamel/bobinerie/actions/workflows/e2e.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/e2e.yml?style=for-the-badge&label=e2e%20tests" alt="E2E Tests"></a>
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?label=build" alt="Build"></a>
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?label=lint" alt="Lint"></a>
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?label=deploy" alt="Deploy"></a>
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/e2e.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/e2e.yml?label=e2e%20tests" alt="E2E Tests"></a>
+  <a href="https://codecov.io/gh/ccamel/bobinerie" ><img src="https://codecov.io/gh/ccamel/bobinerie/graph/badge.svg?token=IV25dGbvWg" alt="Codecov"/></a>
 </p>
 
 ## Le Comptoir
