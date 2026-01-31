@@ -1,11 +1,66 @@
 import { strict as assert } from "node:assert"
-import { Then } from "@cucumber/cucumber"
+import { DataTable, Then } from "@cucumber/cucumber"
 import { BobineWorld } from "../world"
 
 function formatValue(value: unknown): string {
   return JSON.stringify(value, (_key, val) =>
     typeof val === "bigint" ? `bigint:${val.toString()}` : val,
   )
+}
+
+function parseExpectedValue(world: BobineWorld, token: string): unknown {
+  const trimmed = token.trim()
+  if (!trimmed || trimmed === "null") {
+    return null
+  }
+  if (trimmed === "true") {
+    return true
+  }
+  if (trimmed === "false") {
+    return false
+  }
+  if (trimmed.startsWith("address:")) {
+    const key = trimmed.slice("address:".length)
+    const address = world.userAddresses.get(key)
+    if (!address) {
+      throw new Error(`Unknown address for ${key}`)
+    }
+    return address
+  }
+  if (trimmed.startsWith("contract:")) {
+    const key = trimmed.slice("contract:".length)
+    return world.getProducedModuleAddress(key)
+  }
+  if (trimmed.startsWith("blob:")) {
+    return Uint8Array.fromHex(trimmed.slice("blob:".length))
+  }
+  if (trimmed.startsWith("bigint:")) {
+    return BigInt(trimmed.slice("bigint:".length))
+  }
+  if (trimmed.startsWith("number:")) {
+    return Number(trimmed.slice("number:".length))
+  }
+  if (trimmed.startsWith("text:")) {
+    return trimmed.slice("text:".length)
+  }
+  return trimmed
+}
+
+function parseExpectedTable(world: BobineWorld, table: DataTable): unknown[] {
+  const rows = table.raw()
+  if (rows.length === 0) {
+    return []
+  }
+
+  const tokens: string[] = []
+  for (const row of rows) {
+    if (row.length !== 1) {
+      throw new Error("Expected table must have exactly one column")
+    }
+    tokens.push(row[0])
+  }
+
+  return tokens.map((token) => parseExpectedValue(world, token))
 }
 
 Then("the execution should succeed", function (this: BobineWorld) {
@@ -16,7 +71,11 @@ Then("the execution should succeed", function (this: BobineWorld) {
   assert.strictEqual(
     this.lastExecutionResult.success,
     true,
-    `Execution failed: ${this.lastExecutionResult.error || "Unknown error"}`,
+    `Execution failed: ${this.lastExecutionResult.error || "Unknown error"}${
+      this.lastExecutionResult.logs.length > 0
+        ? ` (logs: ${this.lastExecutionResult.logs.join(", ")})`
+        : ""
+    }`,
   )
 
   console.log("✅ Execution succeeded")
@@ -100,6 +159,80 @@ Then(
     )
 
     console.log(`✅ Returned value matches: ${formatValue(expected)}`)
+  },
+)
+
+Then(
+  "the returned value should be:",
+  function (this: BobineWorld, table: DataTable) {
+    if (!this.lastExecutionResult) {
+      throw new Error("No execution result found")
+    }
+
+    const expected = parseExpectedTable(this, table)
+    const returned = this.lastExecutionResult.returned
+    const normalizedReturned =
+      Array.isArray(returned) &&
+      returned.every((entry) => Array.isArray(entry) && entry.length === 1) &&
+      expected.every((entry) => !Array.isArray(entry))
+        ? returned.map((entry) => (entry as unknown[])[0])
+        : Array.isArray(returned) &&
+            returned.length === 1 &&
+            Array.isArray(returned[0]) &&
+            expected.every((entry) => !Array.isArray(entry))
+          ? (returned[0] as unknown[])
+          : returned
+
+    assert.deepStrictEqual(
+      normalizedReturned,
+      expected,
+      `Expected returned value to be ${formatValue(expected)}, but got ${formatValue(normalizedReturned)}`,
+    )
+
+    console.log(`✅ Returned value matches: ${formatValue(expected)}`)
+  },
+)
+
+Then(
+  "the returned values should be in any order:",
+  function (this: BobineWorld, table: DataTable) {
+    if (!this.lastExecutionResult) {
+      throw new Error("No execution result found")
+    }
+
+    const expected = parseExpectedTable(this, table)
+    const returned = this.lastExecutionResult.returned
+    const normalizedReturned =
+      Array.isArray(returned) &&
+      returned.length === 1 &&
+      Array.isArray(returned[0]) &&
+      expected.every((entry) => !Array.isArray(entry))
+        ? (returned[0] as unknown[])
+        : returned
+
+    if (!Array.isArray(normalizedReturned)) {
+      assert.fail(
+        `Expected returned value to be an array, but got ${formatValue(normalizedReturned)}`,
+      )
+    }
+
+    const serialize = (value: unknown) =>
+      typeof value === "bigint"
+        ? `bigint:${value.toString()}`
+        : JSON.stringify(value)
+
+    const expectedSorted = expected.map(serialize).sort()
+    const returnedSorted = normalizedReturned.map(serialize).sort()
+
+    assert.deepStrictEqual(
+      returnedSorted,
+      expectedSorted,
+      `Expected returned values (any order) to be ${JSON.stringify(expectedSorted)}, but got ${JSON.stringify(returnedSorted)}`,
+    )
+
+    console.log(
+      `✅ Returned values match (any order): ${JSON.stringify(expectedSorted)}`,
+    )
   },
 )
 

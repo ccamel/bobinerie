@@ -115,6 +115,25 @@ Given(
 )
 
 Given(
+  "a produced contract {string} for {string}",
+  { timeout: 60 * 1000 },
+  async function (this: BobineWorld, contractName: string, userName: string) {
+    const address = this.userAddresses.get(userName)
+
+    if (!address) {
+      throw new Error(
+        `No address for ${userName}. Call "I have keys for \\"${userName}\\"" first`,
+      )
+    }
+
+    await produceContractWithSalt(this, contractName, [address], {
+      successSuffix: `for ${userName}`,
+      errorSuffix: `for ${userName}`,
+    })
+  },
+)
+
+Given(
   "a produced fixture contract {string}",
   { timeout: 60 * 1000 },
   async function (this: BobineWorld, fixtureName: string) {
