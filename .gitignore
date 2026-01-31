@@ -12,3 +12,5 @@
 /.vscode
 /reports
 *.log
+
+/coverage
