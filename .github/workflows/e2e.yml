@@ -2,8 +2,10 @@ name: E2E Tests
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 3 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "contracts/**"
 
 concurrency:
   group: e2e-${{ github.ref }}
@@ -11,8 +13,6 @@ concurrency:
 
 permissions:
   contents: read
-
-
 
 jobs:
   e2e:
