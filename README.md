@@ -20,6 +20,7 @@
   <a href="https://github.com/ccamel/bobinerie/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?style=for-the-badge&label=build" alt="Build"></a>
   <a href="https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?style=for-the-badge&label=lint" alt="Lint"></a>
   <a href="https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?style=for-the-badge&label=deploy" alt="Deploy"></a>
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/e2e.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/e2e.yml?style=for-the-badge&label=e2e%20tests" alt="E2E Tests"></a>
 </p>
 
 ## Le Comptoir
