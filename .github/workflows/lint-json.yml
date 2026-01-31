@@ -1,14 +1,18 @@
-name: Lint YAML
+name: Lint JSON
 
 on:
   workflow_call:
   push:
     branches: [main]
+    paths:
+      - "**.json"
   pull_request:
     branches: [main]
+    paths:
+      - "**.json"
 
 concurrency:
-  group: lint-yaml-${{ github.ref }}
+  group: lint-json-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:

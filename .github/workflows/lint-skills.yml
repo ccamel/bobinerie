@@ -4,8 +4,12 @@ on:
   workflow_call:
   push:
     branches: [main]
+    paths:
+      - ".github/skills/**"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/skills/**"
 
 concurrency:
   group: lint-skills-${{ github.ref }}

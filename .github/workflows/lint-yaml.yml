@@ -4,8 +4,16 @@ on:
   workflow_call:
   push:
     branches: [main]
+    paths:
+      - "**.yml"
+      - "**.yaml"
+      - ".yamllint.yaml"
   pull_request:
     branches: [main]
+    paths:
+      - "**.yml"
+      - "**.yaml"
+      - ".yamllint.yaml"
 
 concurrency:
   group: lint-yaml-${{ github.ref }}

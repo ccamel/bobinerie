@@ -4,8 +4,14 @@ on:
   workflow_call:
   push:
     branches: [main]
+    paths:
+      - "**.md"
+      - ".markdownlint.yaml"
   pull_request:
     branches: [main]
+    paths:
+      - "**.md"
+      - ".markdownlint.yaml"
 
 concurrency:
   group: lint-markdown-${{ github.ref }}
@@ -24,4 +30,4 @@ jobs:
       - name: Lint markdown files
         uses: DavidAnson/markdownlint-cli2-action@v22
         with:
-          globs: '**/*.md'
+          globs: "**/*.md"
