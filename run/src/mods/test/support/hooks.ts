@@ -1,6 +1,8 @@
 import { type ChildProcess, spawn } from "node:child_process"
 import { once } from "node:events"
+import { existsSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
+import { resolve } from "node:path"
 import { After, AfterAll, Before, BeforeAll, Status } from "@cucumber/cucumber"
 import { BOBINE_PORT, BobineWorld } from "./world"
 
@@ -12,6 +14,29 @@ const BOBINE_ED25519_PRIVATE_KEY_HEX =
 const BOBINE_ED25519_PUBLIC_KEY_HEX =
   "5a7f02ea2f4369c0de9cc8e0f2f7dd08ffee5395bb75bc736b67e9f791bc11aa"
 const BOBINE_URL = `http://localhost:${BOBINE_PORT}`
+const BOBINE_ENTRY_PATH = resolve(
+  process.cwd(),
+  "node_modules",
+  "@hazae41",
+  "bobine",
+  "out",
+  "mod.js"
+)
+
+function resolveBobineCommand(): { command: string; args: string[] } {
+  const baseArgs = ["serve", `--port=${BOBINE_PORT}`, "--dev"]
+  const override = process.env.BOBINE_BIN
+  if (override) {
+    return { command: override, args: baseArgs }
+  }
+  if (existsSync(BOBINE_ENTRY_PATH)) {
+    return {
+      command: "deno",
+      args: ["run", "-A", BOBINE_ENTRY_PATH, ...baseArgs],
+    }
+  }
+  return { command: "bobine", args: baseArgs }
+}
 
 /**
  * Start Bobine instance before all tests
@@ -22,7 +47,9 @@ BeforeAll({ timeout: 30000 }, async () => {
   await mkdir(BOBINE_FOLDER, { recursive: true })
   await mkdir(`${BOBINE_FOLDER}/scripts`, { recursive: true })
 
-  bobineProcess = spawn("bobine", ["serve", `--port=${BOBINE_PORT}`, "--dev"], {
+  const { command, args } = resolveBobineCommand()
+
+  bobineProcess = spawn(command, args, {
     stdio: "pipe",
     detached: true,
     env: {
