@@ -325,6 +325,12 @@ Feature: Pool XYK Contract
     And the returned values should be in any order:
       | bigint:91 |
       | bigint:110 |
+    When I call "pool-xyk" method "total_supply"
+    Then the execution should succeed
+    And the returned value should be "bigint:100"
+    When I call "pool-xyk" method "balance_of" with param "address:Alice"
+    Then the execution should succeed
+    And the returned value should be "bigint:100"
 
   Scenario: Swap exact in fails when min_out is too high
     Given I have keys for "Alice"
