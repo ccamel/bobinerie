@@ -1,6 +1,5 @@
 import { DataTable, When } from "@cucumber/cucumber"
 import { Readable, Writable } from "@hazae41/binary"
-import { generate } from "../../../../libs/effort/mod.ts"
 import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
 import { BobineWorld } from "../world"
 
@@ -155,7 +154,7 @@ async function executeModule(
       "params",
       new Blob([Writable.writeToBytesOrThrow(new Packed(params))]),
     )
-    body.append("effort", new Blob([await generate(2n ** 25n)]))
+    body.append("effort", new Blob([world.nextSpark()]))
 
     const response = await fetch(new URL("/api/execute", world.serverUrl), {
       method: "POST",
@@ -193,7 +192,7 @@ async function callContract(
       "params",
       new Blob([Writable.writeToBytesOrThrow(new Packed(params))]),
     )
-    body.append("effort", new Blob([await generate(2n ** 20n)]))
+    body.append("effort", new Blob([world.nextSpark()]))
 
     const response = await fetch(new URL("/api/execute", world.serverUrl), {
       method: "POST",

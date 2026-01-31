@@ -4,7 +4,7 @@ import { existsSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { resolve } from "node:path"
 import { After, AfterAll, Before, BeforeAll, Status } from "@cucumber/cucumber"
-import { BOBINE_PORT, BobineWorld } from "./world"
+import { BOBINE_PORT, BobineWorld, getSparkUsage } from "./world"
 
 let bobineProcess: ChildProcess | undefined
 
@@ -93,6 +93,8 @@ AfterAll(async () => {
   await stopBobineProcess()
 
   console.log("✅ Bobine instance stopped")
+  const sparkUsage = getSparkUsage()
+  console.log(`🧨 Sparks consumed: ${sparkUsage.used}/${sparkUsage.total}`)
 })
 
 /**

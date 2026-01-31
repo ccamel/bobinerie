@@ -2,7 +2,6 @@ import { execSync } from "node:child_process"
 import { readFileSync } from "node:fs"
 import { Given } from "@cucumber/cucumber"
 import { Writable } from "@hazae41/binary"
-import { generate } from "../../../../libs/effort/mod.ts"
 import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
 import { BobineWorld } from "../world"
 
@@ -39,7 +38,7 @@ async function produceWasmModule(
       "salt",
       new Blob([Writable.writeToBytesOrThrow(new Packed(salt))]),
     )
-    body.append("effort", new Blob([await generate(2n ** 20n)]))
+    body.append("effort", new Blob([world.nextSpark()]))
 
     const response = await fetch(new URL("/api/create", world.serverUrl), {
       method: "POST",

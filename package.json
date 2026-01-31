@@ -14,6 +14,7 @@
     "contracts:produce": "for dir in contracts/*/; do CONTRACT=$(basename \"$dir\") npm run contract:produce || exit 1; done",
     "execute": "deno run -A ./run/src/mods/execute/mod.ts",
     "execute:sign": "deno run -A ./run/src/mods/execute/sign/mod.ts",
+    "sparks:generate": "deno run -A ./run/src/mods/tools/generate_sparks.ts",
     "keygen": "deno run -A ./run/src/mods/keygen/mod.ts",
     "docs": "npm run contracts:docs && npm run docs:catalog",
     "contract:docs": ": \"${CONTRACT:?❌ CONTRACT is required (e.g. CONTRACT=mycontract)}\" && deno run -A ./run/src/mods/docs/contract/mod.ts",
