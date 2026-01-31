@@ -32,6 +32,9 @@
         },
         "token_fungible": {
           "address": "da2ec9aa8b55a8a02fbf4743ebb5ed21c42005d094caa620f5ec54fc8040d25b"
+        },
+        "pool-xyk": {
+          "address": "360a1f069271b93fbd8eb62df02d245cdacf0330813ea7a7c7e123f42ce1f678"
         }
       }
     }
