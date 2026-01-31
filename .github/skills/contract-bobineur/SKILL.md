@@ -1,11 +1,11 @@
 ---
 name: contract-bobineur
 description: >
-    Design, write, and maintain Bobine smart contracts. Use this skill when you need
-    to implement or change contract behavior, public APIs, or on-chain data formats;
-    refactor for simplicity; fix bugs; review contract code for correctness; or
-    prepare a contract for release (docs, consistency, conventions). Applies a
-    minimalist, direct style and avoids explanatory comments inside functions.
+  Design, write, and maintain Bobine smart contracts. Use this skill when you need
+  to implement or change contract behavior, public APIs, or on-chain data formats;
+  refactor for simplicity; fix bugs; review contract code for correctness; or
+  prepare a contract for release (docs, consistency, conventions). Applies a
+  minimalist, direct style and avoids explanatory comments inside functions.
 ---
 
 # Contract Bobineur
@@ -52,6 +52,11 @@ If Context7 is unavailable:
 - Prefer existing patterns over new abstractions.
 - Do not guess semantics or invent missing rules.
 - If intent or guarantees are unclear, stop and ask.
+
+## Specific Coding Standards
+
+- **Textref Constants**: Must be implemented as constants assigned to fat arrow functions (e.g., `const myConstant = () => ...`).
+- **Exposed API Functions**: Function names exposed in the API must follow Snake Case (e.g., `my_function_name`).
 
 ## Related documents
 
