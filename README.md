@@ -4,17 +4,23 @@
 
 > 🧵 _La Bobinerie_ - Haberdashery of [Bobine](https://bobine.tech) modules: from useful, serious pieces to educational gems and esoteric oddities. Grab, deploy, fork at will.
 
-[![Open since 2025](https://img.shields.io/badge/Open%20since-2025-cyan?style=for-the-badge)](https://img.shields.io/github/v/release/ccamel/bobinerie)
-[![Awesome](https://img.shields.io/badge/AWESOME-BOBINE-7B3FE4?style=for-the-badge&logo=awesomelists&logoColor=white)](https://github.com/hazae41/awesome-bobine)
-[![Version](https://img.shields.io/github/v/release/ccamel/bobinerie?style=for-the-badge)](https://github.com/ccamel/bobinerie/releases)
+<p align="center">
+  <a href="https://img.shields.io/github/v/release/ccamel/bobinerie"><img src="https://img.shields.io/badge/Open%20since-2025-cyan?style=for-the-badge" alt="Open since 2025"></a>
+  <a href="https://github.com/hazae41/awesome-bobine"><img src="https://img.shields.io/badge/AWESOME-BOBINE-7B3FE4?style=for-the-badge&logo=awesomelists&logoColor=white" alt="Awesome"></a>
+  <a href="https://github.com/ccamel/bobinerie/releases"><img src="https://img.shields.io/github/v/release/ccamel/bobinerie?style=for-the-badge" alt="Version"></a>
+</p>
 
-[![AssemblyScript](https://img.shields.io/badge/Pure-AssemblyScript-007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white)](https://www.assemblyscript.org/)
-[![Commit Convention: DAFT](https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge)](https://x.com/hazae41/status/2001986156834267231)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+<p align="center">
+  <a href="https://www.assemblyscript.org/"><img src="https://img.shields.io/badge/Pure-AssemblyScript-007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white" alt="AssemblyScript"></a>
+  <a href="https://x.com/hazae41/status/2001986156834267231"><img src="https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge" alt="Commit Convention: DAFT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT"></a>
+</p>
 
-[![Build](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?style=for-the-badge&label=build)](https://github.com/ccamel/bobinerie/actions/workflows/build.yml)
-[![Lint](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?style=for-the-badge&label=lint)](https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml)
-[![Deploy](https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?style=for-the-badge&label=deploy)](https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml)
+<p align="center">
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/build.yml?style=for-the-badge&label=build" alt="Build"></a>
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/lint-code.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/lint-code.yml?style=for-the-badge&label=lint" alt="Lint"></a>
+  <a href="https://github.com/ccamel/bobinerie/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/ccamel/bobinerie/deploy.yml?style=for-the-badge&label=deploy" alt="Deploy"></a>
+</p>
 
 ## Le Comptoir
 
@@ -45,13 +51,18 @@ Available now:
 
 ```txt
 bobinerie/
-├── contracts/           # All the smart contracts
-│   └── say-my-name/    # Example: name storage
-│       ├── src/
-│       │   └── mod.ts
-│       └── out/        # Compiled outputs (WASM + types)
-├── run/                # Deployment & execution scripts
-└── package.json        # Build scripts
+├── contracts/               # All the smart contracts
+│   └── say-my-name/         # A single contract
+│       ├── contract.feature # BDD tests (specifications)
+│       ├── out/             # Compiled outputs (WASM + types)
+│       ├── README.md        # Contract documentation
+│       ├── src
+│       │   ├── mod.ts
+│       │   └── mods
+│       │       └── mod.ts
+│       └── tsconfig.json
+├── run/                     # Deployment & execution scripts
+└── package.json             # Build scripts
 ```
 
 ### Setup
