@@ -101,6 +101,8 @@ Other common tasks:
 - Build a single contract: `CONTRACT=say-my-name npm run contract:build`
 - Produce all contracts: `npm run produce`
 - Generate docs: `npm run docs`
+- Run tests: `npm run test`
+- Run tests with coverage: `npm run test:coverage` (measures test infrastructure, not WASM contract code)
 
 Execute a contract method:
 
@@ -113,8 +115,10 @@ npm run execute 3ca2c27f... sayMyName text:"Alice"
 Got a useful contract? A intriguing experiment? Put it on the shelves.
 
 1. Create your contract in `contracts/your-contract-name/`
-2. Test it thoroughly
-3. Add a brief description in the shop section
-4. Submit a PR
+2. Write comprehensive BDD tests in `contracts/your-contract-name/contract.feature`
+3. Add JSDoc documentation to all exported functions
+4. Run `npm run docs` to generate the README
+5. Add a brief description in the shop section (catalog)
+6. Submit a PR
 
 All contributions welcome, from serious primitives to silly meme contracts.
