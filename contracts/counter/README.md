@@ -19,7 +19,7 @@ Maintains isolated counters keyed by account address. Requires an Ed25519 sessio
 
 <!-- METHODS:START -->
 
-### `add(session)`
+### 🔹 `add(session)`
 
 Atomically increments the counter for the caller.
 
@@ -31,19 +31,7 @@ Atomically increments the counter for the caller.
 
 Incremented counter value
 
-### `value(session)`
-
-Read the caller counter value.
-
-**Parameters:**
-
-- `session` - Session packref [ed25519_module_address, pubkey]
-
-**Returns:**
-
-Counter value
-
-### `reset(session)`
+### 🔹 `reset(session)`
 
 Reset the caller counter to zero.
 
@@ -54,6 +42,18 @@ Reset the caller counter to zero.
 **Returns:**
 
 Reset counter value
+
+### 🔹 `value(session)`
+
+Read the caller counter value.
+
+**Parameters:**
+
+- `session` - Session packref [ed25519_module_address, pubkey]
+
+**Returns:**
+
+Counter value
 
 <!-- METHODS:END -->
 

@@ -25,7 +25,7 @@ Mint a deterministic on-chain SVG PFP (a "sigil") for a derived account address.
 
 <!-- METHODS:START -->
 
-### `address(session)`
+### 🔹 `address(session)`
 
 Derive the address for a given session capability.
 
@@ -37,7 +37,31 @@ Derive the address for a given session capability.
 
 Derived address as textref
 
-### `get(address)`
+### 🔹 `bless(target)`
+
+Bless a target sigil (increments count and updates rolling mix).
+
+**Parameters:**
+
+- `target` - The address to bless
+
+**Returns:**
+
+"blessed" if the roll hits, otherwise "ok"
+
+### 🔹 `burn(session)`
+
+Burn the caller's sigil and increment the burn counter.
+
+**Parameters:**
+
+- `session` - Session packref [ed25519_module_address, pubkey]
+
+**Returns:**
+
+Updated burn count
+
+### 🔹 `get(address)`
 
 Get the avatar SVG for a given address.
 
@@ -49,7 +73,7 @@ Get the avatar SVG for a given address.
 
 SVG string as textref
 
-### `mint(session, tag)`
+### 🔹 `mint(session, tag)`
 
 Mint an avatar for the authenticated session with a custom tag.
 
@@ -62,19 +86,7 @@ Mint an avatar for the authenticated session with a custom tag.
 
 SVG string as textref
 
-### `burn(session)`
-
-Burn the caller's sigil and increment the burn counter.
-
-**Parameters:**
-
-- `session` - Session packref [ed25519_module_address, pubkey]
-
-**Returns:**
-
-Updated burn count
-
-### `reroll(session, tag)`
+### 🔹 `reroll(session, tag)`
 
 Burn then mint a fresh sigil (increments the burn counter once).
 
@@ -87,19 +99,7 @@ Burn then mint a fresh sigil (increments the burn counter once).
 
 SVG string as textref
 
-### `bless(target)`
-
-Bless a target sigil (increments count and updates rolling mix).
-
-**Parameters:**
-
-- `target` - The address to bless
-
-**Returns:**
-
-"blessed" if the roll hits, otherwise "ok"
-
-### `vibes(target)`
+### 🔹 `vibes(target)`
 
 Read the collective blessing progress for a target sigil.
 

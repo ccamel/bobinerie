@@ -22,66 +22,7 @@ A minimal fungible token module for Bobine, designed to be a boring, reliable bu
 
 <!-- METHODS:START -->
 
-### `clone(creator)`
-
-Clone this module (same code) and set `creator` as the new module creator.
-
-This returns the address/id of the newly created module.
-
-**Parameters:**
-
-- `creator` - The address that will be stored as the owner when the cloned module is initialized.
-
-**Returns:**
-
-The new module address/id.
-
-### `init(creator)`
-
-Initialize the token instance.
-
-This function is intended to be called once, right after deployment.
-It performs a deterministic self-check to ensure the module address matches
-the code + creator tuple, then stores the owner.
-
-**Parameters:**
-
-- `creator` - The address that becomes the token owner (allowed to mint).
-
-### `balance(target)`
-
-Read the token balance of an address.
-
-**Parameters:**
-
-- `target` - Address to query.
-
-**Returns:**
-
-Current balance (0 if absent).
-
-### `mint(session, target, amount)`
-
-Mint tokens to an address.
-
-Only the token owner can mint. The caller is derived from the provided session.
-This increases both the recipient balance and the total supply.
-
-**Parameters:**
-
-- `session` - A valid session whose verified identity is the caller.
-- `target` - Recipient address.
-- `amount` - Amount to mint.
-
-### `total_supply()`
-
-Read the total token supply.
-
-**Returns:**
-
-Total supply (0 if absent).
-
-### `allowance(owner, spender)`
+### 🔹 `allowance(owner, spender)`
 
 Read the remaining allowance from an owner to a spender.
 
@@ -94,7 +35,7 @@ Read the remaining allowance from an owner to a spender.
 
 Remaining allowance (0 if absent).
 
-### `approve(session, spender, amount)`
+### 🔹 `approve(session, spender, amount)`
 
 Set the allowance for a spender.
 
@@ -108,21 +49,19 @@ non-zero value is rejected. Set it to 0 first, then set the new value.
 - `spender` - Address allowed to spend.
 - `amount` - New allowance amount.
 
-### `transfer_from(session, owner, target, amount)`
+### 🔹 `balance(target)`
 
-Transfer tokens on behalf of an owner, consuming allowance.
-
-The caller (derived from the session) is the spender.
-This decreases the allowance (owner -> spender) and moves balance from owner to target.
+Read the token balance of an address.
 
 **Parameters:**
 
-- `session` - A valid session whose verified identity is the spender.
-- `owner` - Address whose funds are moved.
-- `target` - Recipient address.
-- `amount` - Amount to transfer.
+- `target` - Address to query.
 
-### `burn(session, amount)`
+**Returns:**
+
+Current balance (0 if absent).
+
+### 🔹 `burn(session, amount)`
 
 Burn tokens from the caller.
 
@@ -134,7 +73,54 @@ This decreases both the caller balance and the total supply.
 - `session` - A valid session whose verified identity is the caller.
 - `amount` - Amount to burn.
 
-### `transfer(session, target, amount)`
+### 🔹 `clone(creator)`
+
+Clone this module (same code) and set `creator` as the new module creator.
+
+This returns the address/id of the newly created module.
+
+**Parameters:**
+
+- `creator` - The address that will be stored as the owner when the cloned module is initialized.
+
+**Returns:**
+
+The new module address/id.
+
+### 🔹 `init(creator)`
+
+Initialize the token instance.
+
+This function is intended to be called once, right after deployment.
+It performs a deterministic self-check to ensure the module address matches
+the code + creator tuple, then stores the owner.
+
+**Parameters:**
+
+- `creator` - The address that becomes the token owner (allowed to mint).
+
+### 🔹 `mint(session, target, amount)`
+
+Mint tokens to an address.
+
+Only the token owner can mint. The caller is derived from the provided session.
+This increases both the recipient balance and the total supply.
+
+**Parameters:**
+
+- `session` - A valid session whose verified identity is the caller.
+- `target` - Recipient address.
+- `amount` - Amount to mint.
+
+### 🔹 `total_supply()`
+
+Read the total token supply.
+
+**Returns:**
+
+Total supply (0 if absent).
+
+### 🔹 `transfer(session, target, amount)`
 
 Transfer tokens from the caller to a target.
 
@@ -144,6 +130,20 @@ This moves balance from caller to target.
 **Parameters:**
 
 - `session` - A valid session whose verified identity is the caller.
+- `target` - Recipient address.
+- `amount` - Amount to transfer.
+
+### 🔹 `transfer_from(session, owner, target, amount)`
+
+Transfer tokens on behalf of an owner, consuming allowance.
+
+The caller (derived from the session) is the spender.
+This decreases the allowance (owner -> spender) and moves balance from owner to target.
+
+**Parameters:**
+
+- `session` - A valid session whose verified identity is the spender.
+- `owner` - Address whose funds are moved.
 - `target` - Recipient address.
 - `amount` - Amount to transfer.
 

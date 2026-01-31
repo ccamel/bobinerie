@@ -56,11 +56,12 @@ const functions = sourceFile
 
     return { name, params, description, paramDocs, returnDoc }
   })
+  .sort((a, b) => a.name.localeCompare(b.name))
 
 let docs = "\n"
 
 for (const fn of functions) {
-  docs += `### \`${fn.name}(${fn.params.join(", ")})\`\n\n`
+  docs += `### 🔹 \`${fn.name}(${fn.params.join(", ")})\`\n\n`
 
   if (fn.description) docs += `${fn.description}\n\n`
 
