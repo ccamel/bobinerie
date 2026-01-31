@@ -20,7 +20,7 @@ const BOBINE_ENTRY_PATH = resolve(
   "@hazae41",
   "bobine",
   "out",
-  "mod.js"
+  "mod.js",
 )
 
 function resolveBobineCommand(): { command: string; args: string[] } {
@@ -98,9 +98,10 @@ AfterAll(async () => {
 /**
  * Reset world state before each scenario
  */
-Before(function (this: BobineWorld) {
+Before(function (this: BobineWorld, { pickle, gherkinDocument }) {
   this.reset()
-  console.log("📽️ Scenario starting")
+  const featureName = gherkinDocument?.feature?.name ?? "Unknown feature"
+  console.log(`📽️ Scenario starting: ${featureName} / ${pickle.name}`)
 })
 
 /**
