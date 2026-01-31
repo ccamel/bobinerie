@@ -2,7 +2,7 @@
 
 ![Bobinerie Banner](banner.webp)
 
-> 🧵 _La Bobinerie_ - Haberdashery of [Bobine](https://bobine.tech) modules: from useful, serious pieces to educational gems and esoteric oddities. Grab, deploy, fork at will.
+> 🧵 _La Bobinerie_ - Haberdashery of [Bobine](https://bobine.tech) modules: serious primitives, educational gems, and esoteric oddities. Grab, deploy, fork at will.
 
 <p align="center">
   <a href="https://img.shields.io/github/v/release/ccamel/bobinerie"><img src="https://img.shields.io/badge/Open%20since-2025-cyan?style=for-the-badge" alt="Open since 2025"></a>
@@ -112,13 +112,12 @@ npm run execute 3ca2c27f... sayMyName text:"Alice"
 
 ## Avis aux artisans
 
-Got a useful contract? A intriguing experiment? Put it on the shelves.
+Got a useful contract? An intriguing experiment? Put it on the shelves.
 
 1. Create your contract in `contracts/your-contract-name/`
-2. Write comprehensive BDD tests in `contracts/your-contract-name/contract.feature`
-3. Add JSDoc documentation to all exported functions
-4. Run `npm run docs` to generate the README
-5. Add a brief description in the shop section (catalog)
-6. Submit a PR
+2. Write comprehensive [cucumber BDD](https://cucumber.io/) tests in `contracts/your-contract-name/contract.feature`
+3. Add [JSDoc](https://jsdoc.app/) documentation to all public API functions
+4. Run `npm run docs` to generate the READMEs
+5. Submit a PR
 
 All contributions welcome, from serious primitives to silly meme contracts.
