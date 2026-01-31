@@ -12,9 +12,12 @@ concurrency:
 permissions:
   contents: read
 
+
+
 jobs:
   e2e:
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v6

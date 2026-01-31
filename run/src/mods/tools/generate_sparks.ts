@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer"
-import { generate } from "../../../libs/effort/mod.ts"
+import { generate } from "../../libs/effort/mod.ts"
 
 type SparkPool = {
   effortTarget: string
@@ -51,17 +51,16 @@ const start = Date.now()
 
 const sparks: string[] = []
 for (let i = 0; i < count; i++) {
-  const effort = await generate(effortTarget)
-  sparks.push(Buffer.from(effort).toString("hex"))
-
-  const done = i + 1
+  const done = i
   const percent = ((done / count) * 100).toFixed(1)
   const elapsed = (Date.now() - start) / 1000
   const rate = done / Math.max(elapsed, 0.001)
   const remaining = (count - done) / rate
-
   const line = `⛏️  ${done}/${count} (${percent}%) | ${rate.toFixed(2)} sparks/s | ETA ${remaining.toFixed(1)}s`
   await Deno.stdout.write(new TextEncoder().encode(`\r${line}`))
+
+  const effort = await generate(effortTarget)
+  sparks.push(Buffer.from(effort).toString("hex"))
 }
 
 console.log()

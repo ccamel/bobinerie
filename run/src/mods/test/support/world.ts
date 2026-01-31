@@ -1,5 +1,5 @@
-import type { ChildProcess } from "node:child_process"
 import { Buffer } from "node:buffer"
+import type { ChildProcess } from "node:child_process"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { setWorldConstructor, World } from "@cucumber/cucumber"
@@ -39,43 +39,28 @@ function loadSparkPool(): string[] {
   return parsed.sparks
 }
 
-const SPARK_POOL = loadSparkPool()
-let sparkIndex = 0
-export function getSparkUsage(): { used: number; total: number } {
-  return { used: sparkIndex, total: SPARK_POOL.length }
-}
+type SparkUsage = { used: number; total: number }
 
-function takeSpark(): Uint8Array {
-  if (sparkIndex >= SPARK_POOL.length) {
-    throw new Error(
-      `Spark pool exhausted at index ${sparkIndex}. Generate more in ${SPARKS_PATH}.`,
-    )
-  }
-  const hex = SPARK_POOL[sparkIndex]
-  sparkIndex += 1
-  return Buffer.from(hex, "hex")
-}
-
-export interface ContractState {
+export type ContractState = {
   name: string
   produced: boolean
   moduleAddress?: string
 }
 
-export interface ExecutionResult {
+export type ExecutionResult = {
   success: boolean
   logs: string[]
   returned: unknown
   error?: string
 }
 
-export interface SessionKeys {
+export type SessionKeys = {
   publicKey: Uint8Array
   privateKey: CryptoKey
   authModuleName: string
 }
 
-export interface UserKeyPair {
+export type UserKeyPair = {
   publicKey: Uint8Array
   privateKey: CryptoKey
 }
@@ -89,6 +74,13 @@ export class BobineWorld extends World {
   public authModuleName?: string
   public userKeys: Map<string, UserKeyPair> = new Map()
   public userAddresses: Map<string, string> = new Map()
+  private sparkPool: string[]
+  private sparkIndex = 0
+
+  constructor(options: ConstructorParameters<typeof World>[0]) {
+    super(options)
+    this.sparkPool = loadSparkPool()
+  }
 
   reset(): void {
     this.contractStates.clear()
@@ -100,7 +92,18 @@ export class BobineWorld extends World {
   }
 
   nextSpark(): Uint8Array {
-    return takeSpark()
+    if (this.sparkIndex >= this.sparkPool.length) {
+      throw new Error(
+        `Spark pool exhausted at index ${this.sparkIndex}. Generate more in ${SPARKS_PATH}.`,
+      )
+    }
+    const hex = this.sparkPool[this.sparkIndex]
+    this.sparkIndex += 1
+    return Buffer.from(hex, "hex")
+  }
+
+  getSparkUsage(): SparkUsage {
+    return { used: this.sparkIndex, total: this.sparkPool.length }
   }
 
   getContract(name: string): ContractState {
