@@ -8,12 +8,11 @@ On-chain Forth interpreter contract for Bobine.
 
 ## Overview
 
-This contract is being implemented incrementally.
-
-Current scope:
+This module implements a Forth interpreter that can be used to execute Forth programs on-chain. It includes the following features:
 
 - deterministic module self-check at initialization
 - clone entrypoint to instantiate creator-bound module instances
+- linear Forth tokenizer/classifier (numbers vs dictionary words)
 
 ## Methods
 
@@ -31,12 +30,14 @@ Clone this module (same code) and set `creator` as the new module creator.
 
 The new module address/id.
 
-### 🔹 `init(creator)`
+### 🔹 `init(creator, program)`
 
-Initialize the forth module instance by checking creator-derived self address.
+Initialize the forth module instance by checking creator-derived self address
+and validating/tokenizing the provided Forth program.
 
 **Parameters:**
 
 - `creator` - Creator address.
+- `program` - Forth source code.
 
 <!-- METHODS:END -->
