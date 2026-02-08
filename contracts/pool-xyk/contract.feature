@@ -26,6 +26,8 @@ Feature: Pool XYK Contract
     When I call "$pool-xyk" method "tokens"
     Then the execution should succeed
     And the returned value should be:
+      | text:bobine.pool-xyk/tokens_view |
+      | bigint:1 |
       | text:TokenA |
       | text:TokenB |
     When I call "$pool-xyk" method "fee_bps"
@@ -43,6 +45,8 @@ Feature: Pool XYK Contract
     When I call "$pool-xyk" method "tokens"
     Then the execution should succeed
     And the returned value should be:
+      | text:bobine.pool-xyk/tokens_view |
+      | bigint:1 |
       | text:TokenA |
       | text:TokenZ |
     When I call "$pool-xyk" method "fee_bps"
@@ -171,12 +175,16 @@ Feature: Pool XYK Contract
       | address:Alice |
     Then the execution should succeed
     And the returned value should be:
+      | text:bobine.pool-xyk/add_liquidity_view |
+      | bigint:1 |
       | bigint:100 |
       | bigint:100 |
       | bigint:100 |
     When I call "$pool-xyk" method "reserves"
     Then the execution should succeed
     And the returned value should be:
+      | text:bobine.pool-xyk/reserves_view |
+      | bigint:1 |
       | bigint:100 |
       | bigint:100 |
     When I call "$pool-xyk" method "total_supply"
@@ -237,11 +245,15 @@ Feature: Pool XYK Contract
       | address:Alice |
     Then the execution should succeed
     And the returned value should be:
+      | text:bobine.pool-xyk/remove_liquidity_view |
+      | bigint:1 |
       | bigint:40 |
       | bigint:40 |
     When I call "$pool-xyk" method "reserves"
     Then the execution should succeed
     And the returned value should be:
+      | text:bobine.pool-xyk/reserves_view |
+      | bigint:1 |
       | bigint:60 |
       | bigint:60 |
     When I call "$pool-xyk" method "total_supply"
@@ -302,6 +314,8 @@ Feature: Pool XYK Contract
       | address:Alice |
     Then the execution should succeed
     And the returned value should be:
+      | text:bobine.pool-xyk/swap_exact_in_view |
+      | bigint:1 |
       | $token_b |
       | bigint:9 |
     When I call "$pool-xyk" method "reserves"

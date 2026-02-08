@@ -13,16 +13,28 @@ import {
 } from "@hazae41/stdbob"
 
 const DOMAIN = "bobine.multisig"
+const CPES_VERSION_U32: u32 = 1
 
-const version = (): bigintref => bigints.one()
-const domainTag = (suffix: string): textref =>
+const VERSION = (): bigintref => bigints.one()
+const DOMAIN_TAG = (suffix: string): textref =>
   texts.fromString(`${DOMAIN}/${suffix}`)
 
-const statusOpen = (): bigintref => bigints.zero()
-const statusExecuted = (): bigintref => bigints.one()
-const statusClosed = (): bigintref => bigints.two()
+const STATUS_OPEN = (): bigintref => bigints.zero()
+const STATUS_EXECUTED = (): bigintref => bigints.one()
+const STATUS_CLOSED = (): bigintref => bigints.two()
 
-const updatePolicyMethod = (): textref => texts.fromString("update_policy")
+const UPDATE_POLICY_METHOD = (): textref => texts.fromString("update_policy")
+const ZERO_SEPARATOR = (): blobref => {
+  const bytes = new Uint8Array(1)
+  bytes[0] = 0
+  return blobs.save(bytes.buffer)
+}
+const VERSION_BYTES = (): blobref => {
+  const buffer = new ArrayBuffer(4)
+  const view = new DataView(buffer)
+  view.setUint32(0, CPES_VERSION_U32, false)
+  return blobs.save(buffer)
+}
 
 function bigintFromI32(value: i32): bigintref {
   return bigints.fromInt64(value as i64)
@@ -34,6 +46,18 @@ function fail(message: string): void {
 
 function samePack(left: packref, right: packref): bool {
   return blobs.equals(blobs.encode(left), blobs.encode(right))
+}
+
+function canonicalHash(typeName: string, payload: blobref): blobref {
+  const domainBytes = texts.toUtf8(texts.fromString(DOMAIN))
+  const typeBytes = texts.toUtf8(texts.fromString(typeName))
+  const part0 = blobs.concat(domainBytes, ZERO_SEPARATOR())
+  const part1 = blobs.concat(part0, typeBytes)
+  const part2 = blobs.concat(part1, ZERO_SEPARATOR())
+  const part3 = blobs.concat(part2, VERSION_BYTES())
+  const part4 = blobs.concat(part3, ZERO_SEPARATOR())
+  const frame = blobs.concat(part4, payload)
+  return sha256.digest(frame)
 }
 
 function signerHex(signer: textref): string {
@@ -211,8 +235,8 @@ function assertSigner(signers: packref, address: textref): void {
   if (!isSigner(signers, address)) fail("Unauthorized")
 }
 
-namespace sessions {
-  const verifyMethod = (): textref => texts.fromString("verify")
+namespace session$ {
+  const VERIFY_METHOD = (): textref => texts.fromString("verify")
 
   export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
@@ -221,7 +245,7 @@ namespace sessions {
   export function assert(session: packref): textref {
     const module = packs.get<textref>(session, 0)
     const verified = packs.get<bool>(
-      modules.call(module, verifyMethod(), packs.create1(session)),
+      modules.call(module, VERIFY_METHOD(), packs.create1(session)),
       0,
     )
 
@@ -231,18 +255,18 @@ namespace sessions {
   }
 }
 
-namespace keys$ {
-  const policyKey = (): textref => texts.fromString(`${DOMAIN}/state/policy`)
-  const nonceKey = (): textref => texts.fromString(`${DOMAIN}/state/nonce`)
+namespace key$ {
+  const POLICY_KEY = (): textref => texts.fromString(`${DOMAIN}/state/policy`)
+  const NONCE_KEY = (): textref => texts.fromString(`${DOMAIN}/state/nonce`)
 
-  const proposalPrefix = (): textref =>
+  const PROPOSAL_PREFIX = (): textref =>
     texts.fromString(`${DOMAIN}/state/proposal/`)
-  const approvalPrefix = (): textref =>
+  const APPROVAL_PREFIX = (): textref =>
     texts.fromString(`${DOMAIN}/state/approval/`)
-  const executionResultPrefix = (): textref =>
+  const EXECUTION_RESULT_PREFIX = (): textref =>
     texts.fromString(`${DOMAIN}/state/execution_result/`)
 
-  const activeProposalKey = (): textref =>
+  const ACTIVE_PROPOSAL_KEY = (): textref =>
     texts.fromString(`${DOMAIN}/state/execution_context/active_proposal`)
 
   function fromBlob(prefix: textref, id: blobref): textref {
@@ -250,36 +274,36 @@ namespace keys$ {
   }
 
   export function policy(): textref {
-    return policyKey()
+    return POLICY_KEY()
   }
 
   export function nonce(): textref {
-    return nonceKey()
+    return NONCE_KEY()
   }
 
   export function proposal(proposalId: blobref): textref {
-    return fromBlob(proposalPrefix(), proposalId)
+    return fromBlob(PROPOSAL_PREFIX(), proposalId)
   }
 
   export function approval(approvalId: blobref): textref {
-    return fromBlob(approvalPrefix(), approvalId)
+    return fromBlob(APPROVAL_PREFIX(), approvalId)
   }
 
   export function executionResult(executionResultId: blobref): textref {
-    return fromBlob(executionResultPrefix(), executionResultId)
+    return fromBlob(EXECUTION_RESULT_PREFIX(), executionResultId)
   }
 
   export function activeProposal(): textref {
-    return activeProposalKey()
+    return ACTIVE_PROPOSAL_KEY()
   }
 }
 
-namespace ids$ {
+namespace id$ {
   export function nextProposalNonce(): bigintref {
-    const found = storage.get(keys$.nonce())
+    const found = storage.get(key$.nonce())
     const current = found ? packs.get<bigintref>(found, 0) : bigints.zero()
 
-    storage.set(keys$.nonce(), bigints.inc(current))
+    storage.set(key$.nonce(), bigints.inc(current))
 
     return current
   }
@@ -289,57 +313,35 @@ namespace ids$ {
     call: packref,
     nonce: bigintref,
   ): blobref {
-    return sha256.digest(
-      blobs.encode(
-        packs.create6(
-          domainTag("proposal_id"),
-          version(),
-          modules.self(),
-          nonce,
-          proposer,
-          call,
-        ),
-      ),
+    const callHash = sha256.digest(blobs.encode(call))
+    const payload = blobs.encode(
+      packs.create4(modules.self(), nonce, proposer, callHash),
     )
+    return canonicalHash("proposal_id", payload)
   }
 
   export function approval(proposalId: blobref, signer: textref): blobref {
-    return sha256.digest(
-      blobs.encode(
-        packs.create5(
-          domainTag("approval_id"),
-          version(),
-          modules.self(),
-          proposalId,
-          signer,
-        ),
-      ),
+    const payload = blobs.encode(
+      packs.create3(modules.self(), proposalId, signer),
     )
+    return canonicalHash("approval_id", payload)
   }
 
   export function executionResult(proposalId: blobref): blobref {
-    return sha256.digest(
-      blobs.encode(
-        packs.create4(
-          domainTag("execution_result_id"),
-          version(),
-          modules.self(),
-          proposalId,
-        ),
-      ),
-    )
+    const payload = blobs.encode(packs.create2(modules.self(), proposalId))
+    return canonicalHash("execution_result_id", payload)
   }
 }
 
 namespace policy$ {
-  const tag = (): textref => domainTag("policy")
+  const TAG = (): textref => DOMAIN_TAG("policy")
 
   export function assertUninitialized(): void {
-    if (storage.get(keys$.policy())) fail("Already initialized")
+    if (storage.get(key$.policy())) fail("Already initialized")
   }
 
   export function getTuple(): packref {
-    const found = storage.get(keys$.policy())
+    const found = storage.get(key$.policy())
 
     if (!found) fail("Not initialized")
 
@@ -360,13 +362,13 @@ namespace policy$ {
 
   export function canonicalize(input: packref): packref {
     if (!input) fail("Invalid policy")
-    if (packs.length(input) !== 4) fail("Invalid policy")
+    if (packs.length(input) < 4) fail("Invalid policy")
 
     const foundTag = packs.get<textref>(input, 0)
     const foundVersion = packs.get<bigintref>(input, 1)
 
-    if (!texts.equals(foundTag, tag())) fail("Invalid policy")
-    if (!bigints.eq(foundVersion, version())) fail("Invalid policy")
+    if (!texts.equals(foundTag, TAG())) fail("Invalid policy")
+    if (!bigints.eq(foundVersion, VERSION())) fail("Invalid policy")
 
     const foundThreshold = packs.get<bigintref>(input, 2)
     const foundSigners = packs.get<packref>(input, 3)
@@ -382,26 +384,26 @@ namespace policy$ {
 
     const normalizedSigners = packFromSignerHexes(signerHexes)
 
-    return packs.create4(tag(), version(), foundThreshold, normalizedSigners)
+    return packs.create4(TAG(), VERSION(), foundThreshold, normalizedSigners)
   }
 
   export function set(canonical: packref): void {
-    storage.set(keys$.policy(), canonical)
+    storage.set(key$.policy(), canonical)
   }
 }
 
-namespace calls$ {
-  const tag = (): textref => domainTag("call")
+namespace call$ {
+  const TAG = (): textref => DOMAIN_TAG("call")
 
   export function assertCanonical(call: packref): void {
     if (!call) fail("Invalid call")
-    if (packs.length(call) !== 5) fail("Invalid call")
+    if (packs.length(call) < 5) fail("Invalid call")
 
     const foundTag = packs.get<textref>(call, 0)
     const foundVersion = packs.get<bigintref>(call, 1)
 
-    if (!texts.equals(foundTag, tag())) fail("Invalid call")
-    if (!bigints.eq(foundVersion, version())) fail("Invalid call")
+    if (!texts.equals(foundTag, TAG())) fail("Invalid call")
+    if (!bigints.eq(foundVersion, VERSION())) fail("Invalid call")
 
     const params = packs.get<packref>(call, 4)
 
@@ -421,8 +423,8 @@ namespace calls$ {
   }
 }
 
-namespace proposals$ {
-  const tag = (): textref => domainTag("proposal")
+namespace proposal$ {
+  const TAG = (): textref => DOMAIN_TAG("proposal")
 
   export function create(
     proposalId: blobref,
@@ -434,8 +436,8 @@ namespace proposals$ {
     signers: packref,
   ): packref {
     return packs.create9(
-      tag(),
-      version(),
+      TAG(),
+      VERSION(),
       proposalId,
       call,
       proposer,
@@ -448,21 +450,21 @@ namespace proposals$ {
 
   export function assertCanonical(tuple: packref): void {
     if (!tuple) fail("Invalid proposal")
-    if (packs.length(tuple) !== 9) fail("Invalid proposal")
+    if (packs.length(tuple) < 9) fail("Invalid proposal")
 
     const foundTag = packs.get<textref>(tuple, 0)
     const foundVersion = packs.get<bigintref>(tuple, 1)
 
-    if (!texts.equals(foundTag, tag())) fail("Invalid proposal")
-    if (!bigints.eq(foundVersion, version())) fail("Invalid proposal")
+    if (!texts.equals(foundTag, TAG())) fail("Invalid proposal")
+    if (!bigints.eq(foundVersion, VERSION())) fail("Invalid proposal")
   }
 
   export function has(proposalId: blobref): bool {
-    return !!storage.get(keys$.proposal(proposalId))
+    return !!storage.get(key$.proposal(proposalId))
   }
 
   export function get(proposalId: blobref): packref {
-    const found = storage.get(keys$.proposal(proposalId))
+    const found = storage.get(key$.proposal(proposalId))
 
     if (!found) fail("Proposal not found")
 
@@ -475,7 +477,7 @@ namespace proposals$ {
 
   export function set(proposalId: blobref, tuple: packref): void {
     assertCanonical(tuple)
-    storage.set(keys$.proposal(proposalId), tuple)
+    storage.set(key$.proposal(proposalId), tuple)
   }
 
   export function proposalId(tuple: packref): blobref {
@@ -507,9 +509,9 @@ namespace proposals$ {
   }
 }
 
-namespace approvals$ {
+namespace approval$ {
   function key(proposalId: blobref, signer: textref): textref {
-    return keys$.approval(ids$.approval(proposalId, signer))
+    return key$.approval(id$.approval(proposalId, signer))
   }
 
   export function has(proposalId: blobref, signer: textref): bool {
@@ -533,7 +535,7 @@ namespace approvals$ {
   }
 
   export function listFromProposal(proposal: packref): packref {
-    const signers = proposals$.signers(proposal)
+    const signers = proposal$.signers(proposal)
     const signersLength = packs.length(signers)
 
     const approvedSignerHexes: string[] = []
@@ -541,7 +543,7 @@ namespace approvals$ {
     for (let i = 0; i < signersLength; i++) {
       const signer = packs.get<textref>(signers, i)
 
-      if (has(proposals$.proposalId(proposal), signer)) {
+      if (has(proposal$.proposalId(proposal), signer)) {
         approvedSignerHexes.push(signerHex(signer))
       }
     }
@@ -552,19 +554,19 @@ namespace approvals$ {
   }
 }
 
-namespace executionContext$ {
-  const emptyBlob = (): blobref => blobs.save(new ArrayBuffer(0))
+namespace execution_context$ {
+  const EMPTY_BLOB = (): blobref => blobs.save(new ArrayBuffer(0))
 
   export function setActive(proposalId: blobref): void {
-    storage.set(keys$.activeProposal(), proposalId)
+    storage.set(key$.activeProposal(), proposalId)
   }
 
   export function clearActive(): void {
-    storage.set(keys$.activeProposal(), emptyBlob())
+    storage.set(key$.activeProposal(), EMPTY_BLOB())
   }
 
   function getActive(): blobref {
-    const found = storage.get(keys$.activeProposal())
+    const found = storage.get(key$.activeProposal())
 
     if (!found) return null
 
@@ -580,17 +582,17 @@ namespace executionContext$ {
 
     if (!activeProposalId) fail("Unauthorized")
 
-    const proposal = proposals$.get(activeProposalId)
-    const call = proposals$.call(proposal)
+    const proposal = proposal$.get(activeProposalId)
+    const call = proposal$.call(proposal)
 
-    calls$.assertCanonical(call)
+    call$.assertCanonical(call)
 
-    if (!texts.equals(calls$.module(call), modules.self())) fail("Unauthorized")
+    if (!texts.equals(call$.module(call), modules.self())) fail("Unauthorized")
 
-    if (!texts.equals(calls$.method(call), updatePolicyMethod()))
+    if (!texts.equals(call$.method(call), UPDATE_POLICY_METHOD()))
       fail("Unauthorized")
 
-    const params = calls$.params(call)
+    const params = call$.params(call)
 
     if (packs.length(params) !== 1) fail("Unauthorized")
 
@@ -600,19 +602,19 @@ namespace executionContext$ {
   }
 }
 
-namespace executionResult$ {
-  const tag = (): textref => domainTag("execution_result")
+namespace execution_result$ {
+  const TAG = (): textref => DOMAIN_TAG("execution_result")
 
   export function set(proposalId: blobref, result: packref): void {
     storage.set(
-      keys$.executionResult(ids$.executionResult(proposalId)),
-      packs.create3(tag(), version(), result),
+      key$.executionResult(id$.executionResult(proposalId)),
+      packs.create3(TAG(), VERSION(), result),
     )
   }
 
   export function get(proposalId: blobref): packref {
     const found = storage.get(
-      keys$.executionResult(ids$.executionResult(proposalId)),
+      key$.executionResult(id$.executionResult(proposalId)),
     )
 
     if (!found) fail("Missing execution result")
@@ -620,13 +622,13 @@ namespace executionResult$ {
     const tuple = packs.get<packref>(found, 0)
 
     if (!tuple) fail("Missing execution result")
-    if (packs.length(tuple) !== 3) fail("Missing execution result")
+    if (packs.length(tuple) < 3) fail("Missing execution result")
 
     const foundTag = packs.get<textref>(tuple, 0)
     const foundVersion = packs.get<bigintref>(tuple, 1)
 
-    if (!texts.equals(foundTag, tag())) fail("Missing execution result")
-    if (!bigints.eq(foundVersion, version())) fail("Missing execution result")
+    if (!texts.equals(foundTag, TAG())) fail("Missing execution result")
+    if (!bigints.eq(foundVersion, VERSION())) fail("Missing execution result")
 
     return packs.get<packref>(tuple, 2)
   }
@@ -676,30 +678,30 @@ export function policy(): packref {
  * @returns Deterministic proposal id (blobref).
  */
 export function propose(session: packref, call: packref): blobref {
-  const caller = sessions.assert(session)
+  const caller = session$.assert(session)
   const currentPolicy = policy$.getTuple()
 
   assertSigner(policy$.signers(currentPolicy), caller)
 
-  calls$.assertCanonical(call)
+  call$.assertCanonical(call)
 
-  const nonce = ids$.nextProposalNonce()
-  const proposalId = ids$.proposal(caller, call, nonce)
+  const nonce = id$.nextProposalNonce()
+  const proposalId = id$.proposal(caller, call, nonce)
 
-  if (proposals$.has(proposalId)) fail("Proposal already exists")
+  if (proposal$.has(proposalId)) fail("Proposal already exists")
 
-  const proposal = proposals$.create(
+  const proposal = proposal$.create(
     proposalId,
     call,
     caller,
     bigints.one(),
-    statusOpen(),
+    STATUS_OPEN(),
     policy$.threshold(currentPolicy),
     policy$.signers(currentPolicy),
   )
 
-  proposals$.set(proposalId, proposal)
-  approvals$.set(proposalId, caller, true)
+  proposal$.set(proposalId, proposal)
+  approval$.set(proposalId, caller, true)
 
   return proposalId
 }
@@ -714,31 +716,31 @@ export function propose(session: packref, call: packref): blobref {
  * @returns Updated approval count.
  */
 export function approve(session: packref, proposalId: blobref): bigintref {
-  const caller = sessions.assert(session)
-  const proposal = proposals$.get(proposalId)
+  const caller = session$.assert(session)
+  const proposal = proposal$.get(proposalId)
 
-  if (!bigints.eq(proposals$.status(proposal), statusOpen()))
+  if (!bigints.eq(proposal$.status(proposal), STATUS_OPEN()))
     fail("Proposal is not open")
 
-  assertSigner(proposals$.signers(proposal), caller)
+  assertSigner(proposal$.signers(proposal), caller)
 
-  if (approvals$.has(proposalId, caller))
-    return proposals$.approvalsCount(proposal)
+  if (approval$.has(proposalId, caller))
+    return proposal$.approvalsCount(proposal)
 
-  approvals$.set(proposalId, caller, true)
+  approval$.set(proposalId, caller, true)
 
-  const updatedApprovalCount = bigints.inc(proposals$.approvalsCount(proposal))
+  const updatedApprovalCount = bigints.inc(proposal$.approvalsCount(proposal))
 
-  proposals$.set(
+  proposal$.set(
     proposalId,
-    proposals$.create(
+    proposal$.create(
       proposalId,
-      proposals$.call(proposal),
-      proposals$.proposer(proposal),
+      proposal$.call(proposal),
+      proposal$.proposer(proposal),
       updatedApprovalCount,
-      proposals$.status(proposal),
-      proposals$.threshold(proposal),
-      proposals$.signers(proposal),
+      proposal$.status(proposal),
+      proposal$.threshold(proposal),
+      proposal$.signers(proposal),
     ),
   )
 
@@ -755,49 +757,49 @@ export function approve(session: packref, proposalId: blobref): bigintref {
  * @returns Result of the executed call.
  */
 export function execute(proposalId: blobref): packref {
-  const proposal = proposals$.get(proposalId)
-  const status = proposals$.status(proposal)
+  const proposal = proposal$.get(proposalId)
+  const status = proposal$.status(proposal)
 
-  if (bigints.eq(status, statusExecuted()))
-    return executionResult$.get(proposalId)
-  if (bigints.eq(status, statusClosed())) fail("Proposal is closed")
+  if (bigints.eq(status, STATUS_EXECUTED()))
+    return execution_result$.get(proposalId)
+  if (bigints.eq(status, STATUS_CLOSED())) fail("Proposal is closed")
 
   if (
     bigints.lt(
-      proposals$.approvalsCount(proposal),
-      proposals$.threshold(proposal),
+      proposal$.approvalsCount(proposal),
+      proposal$.threshold(proposal),
     )
   )
     fail("Insufficient approvals")
 
-  const call = proposals$.call(proposal)
+  const call = proposal$.call(proposal)
 
-  calls$.assertCanonical(call)
+  call$.assertCanonical(call)
 
-  executionContext$.setActive(proposalId)
+  execution_context$.setActive(proposalId)
 
   const result = modules.call(
-    calls$.module(call),
-    calls$.method(call),
-    calls$.params(call),
+    call$.module(call),
+    call$.method(call),
+    call$.params(call),
   )
 
-  executionContext$.clearActive()
+  execution_context$.clearActive()
 
-  proposals$.set(
+  proposal$.set(
     proposalId,
-    proposals$.create(
+    proposal$.create(
       proposalId,
       call,
-      proposals$.proposer(proposal),
-      proposals$.approvalsCount(proposal),
-      statusExecuted(),
-      proposals$.threshold(proposal),
-      proposals$.signers(proposal),
+      proposal$.proposer(proposal),
+      proposal$.approvalsCount(proposal),
+      STATUS_EXECUTED(),
+      proposal$.threshold(proposal),
+      proposal$.signers(proposal),
     ),
   )
 
-  executionResult$.set(proposalId, result)
+  execution_result$.set(proposalId, result)
 
   return result
 }
@@ -811,24 +813,24 @@ export function execute(proposalId: blobref): packref {
  * @param proposalId Proposal id.
  */
 export function close(session: packref, proposalId: blobref): void {
-  const caller = sessions.assert(session)
-  const proposal = proposals$.get(proposalId)
+  const caller = session$.assert(session)
+  const proposal = proposal$.get(proposalId)
 
-  assertSigner(proposals$.signers(proposal), caller)
+  assertSigner(proposal$.signers(proposal), caller)
 
-  if (!bigints.eq(proposals$.status(proposal), statusOpen()))
+  if (!bigints.eq(proposal$.status(proposal), STATUS_OPEN()))
     fail("Proposal is not open")
 
-  proposals$.set(
+  proposal$.set(
     proposalId,
-    proposals$.create(
+    proposal$.create(
       proposalId,
-      proposals$.call(proposal),
-      proposals$.proposer(proposal),
-      proposals$.approvalsCount(proposal),
-      statusClosed(),
-      proposals$.threshold(proposal),
-      proposals$.signers(proposal),
+      proposal$.call(proposal),
+      proposal$.proposer(proposal),
+      proposal$.approvalsCount(proposal),
+      STATUS_CLOSED(),
+      proposal$.threshold(proposal),
+      proposal$.signers(proposal),
     ),
   )
 }
@@ -851,17 +853,17 @@ export function close(session: packref, proposalId: blobref): void {
  * @returns Canonical proposal view tuple.
  */
 export function proposal(proposalId: blobref): packref {
-  const record = proposals$.get(proposalId)
+  const record = proposal$.get(proposalId)
 
   return packs.create8(
-    domainTag("proposal_view"),
-    version(),
-    proposals$.proposalId(record),
-    proposals$.call(record),
-    proposals$.proposer(record),
-    proposals$.approvalsCount(record),
-    approvals$.listFromProposal(record),
-    proposals$.status(record),
+    DOMAIN_TAG("proposal_view"),
+    VERSION(),
+    proposal$.proposalId(record),
+    proposal$.call(record),
+    proposal$.proposer(record),
+    proposal$.approvalsCount(record),
+    approval$.listFromProposal(record),
+    proposal$.status(record),
   )
 }
 
@@ -875,7 +877,7 @@ export function proposal(proposalId: blobref): packref {
  * @param policyInput New policy tuple.
  */
 export function update_policy(policyInput: packref): void {
-  executionContext$.assertCanUpdatePolicy(policyInput)
+  execution_context$.assertCanUpdatePolicy(policyInput)
 
   const canonical = policy$.canonicalize(policyInput)
 

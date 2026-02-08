@@ -11,13 +11,6 @@ Threshold-based authorization contract for Bobine call execution.
 
 <!-- DEPLOYMENTS:END -->
 
-## Overview
-
-- Domain: `bobine.multisig`
-- Policy tuple: `["bobine.multisig/policy", 1, threshold, signers]`
-- Call tuple: `["bobine.multisig/call", 1, module, method, params]`
-- Proposal view tuple: `["bobine.multisig/proposal_view", 1, proposal_id, call, proposer, approvals_count, approvals, status]`
-
 ## Methods
 
 <!-- METHODS:START -->

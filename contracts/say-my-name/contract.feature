@@ -7,33 +7,33 @@ Feature: Say My Name Contract
     Given I deploy contract "say-my-name"
 
   Scenario: Set my name for the first time
-    When I call "say-my-name" method "sayMyName" with param "text:Alice"
+    When I call "say-my-name" method "say_my_name" with param "text:Alice"
     Then the execution should succeed
-    And the returned value should be "null"
+    And the returned value should be ""
 
   Scenario: Retrieve my name after setting it
-    When I call "say-my-name" method "sayMyName" with param "text:Bob"
+    When I call "say-my-name" method "say_my_name" with param "text:Bob"
     Then the execution should succeed
-    And the returned value should be "null"
-    When I call "say-my-name" method "sayMyName" with param "text:Charlie"
+    And the returned value should be ""
+    When I call "say-my-name" method "say_my_name" with param "text:Charlie"
     Then the execution should succeed
     And the returned value should be "Bob"
 
   Scenario: Update my name
-    When I call "say-my-name" method "sayMyName" with param "text:Charlie"
+    When I call "say-my-name" method "say_my_name" with param "text:Charlie"
     Then the execution should succeed
-    And the returned value should be "null"
-    When I call "say-my-name" method "sayMyName" with param "text:David"
+    And the returned value should be ""
+    When I call "say-my-name" method "say_my_name" with param "text:David"
     Then the execution should succeed
     And the returned value should be "Charlie"
-    When I call "say-my-name" method "sayMyName" with param "text:Eve"
+    When I call "say-my-name" method "say_my_name" with param "text:Eve"
     Then the execution should succeed
     And the returned value should be "David"
 
   Scenario: Empty name handling
-    When I call "say-my-name" method "sayMyName" with param "text:"
+    When I call "say-my-name" method "say_my_name" with param "text:"
     Then the execution should succeed
-    And the returned value should be "null"
-    When I call "say-my-name" method "sayMyName" with param "text:Zed"
+    And the returned value should be ""
+    When I call "say-my-name" method "say_my_name" with param "text:Zed"
     Then the execution should succeed
     And the returned value should be ""

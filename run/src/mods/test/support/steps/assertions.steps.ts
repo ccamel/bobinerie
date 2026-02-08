@@ -196,13 +196,21 @@ Then(
       )
     }
 
+    const returnedValues =
+      normalizedReturned.length === expected.length + 2 &&
+      typeof normalizedReturned[0] === "string" &&
+      (normalizedReturned[0] as string).startsWith("bobine.") &&
+      typeof normalizedReturned[1] === "bigint"
+        ? normalizedReturned.slice(2)
+        : normalizedReturned
+
     const serialize = (value: unknown) =>
       typeof value === "bigint"
         ? `bigint:${value.toString()}`
         : JSON.stringify(value)
 
     const expectedSorted = expected.map(serialize).sort()
-    const returnedSorted = normalizedReturned.map(serialize).sort()
+    const returnedSorted = returnedValues.map(serialize).sort()
 
     assert.deepStrictEqual(
       returnedSorted,

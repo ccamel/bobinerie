@@ -11,8 +11,10 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
-namespace sessions {
-  const verifyMethod = (): textref => texts.fromString("verify")
+const DOMAIN = "bobine.counter"
+
+namespace session$ {
+  const VERIFY_METHOD = (): textref => texts.fromString("verify")
 
   export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
@@ -21,7 +23,7 @@ namespace sessions {
   export function assert(session: packref): textref {
     const module = packs.get<textref>(session, 0)
     const verified = packs.get<bool>(
-      modules.call(module, verifyMethod(), packs.create1(session)),
+      modules.call(module, VERIFY_METHOD(), packs.create1(session)),
       0,
     )
 
@@ -31,11 +33,11 @@ namespace sessions {
   }
 }
 
-namespace counters {
-  const namespace = (): textref => texts.fromString("counter:")
+namespace counter$ {
+  const KEY_PREFIX = (): textref => texts.fromString(`${DOMAIN}/state/counter/`)
 
   function key(address: textref): textref {
-    return texts.concat(namespace(), address)
+    return texts.concat(KEY_PREFIX(), address)
   }
 
   export function read(address: textref): bigintref {
@@ -70,8 +72,8 @@ namespace counters {
  * @returns Incremented counter value
  */
 export function add(session: packref): bigintref {
-  const caller = sessions.assert(session)
-  return counters.increment(caller)
+  const caller = session$.assert(session)
+  return counter$.increment(caller)
 }
 
 /**
@@ -81,8 +83,8 @@ export function add(session: packref): bigintref {
  * @returns Counter value
  */
 export function value(session: packref): bigintref {
-  const caller = sessions.assert(session)
-  return counters.read(caller)
+  const caller = session$.assert(session)
+  return counter$.read(caller)
 }
 
 /**
@@ -92,6 +94,6 @@ export function value(session: packref): bigintref {
  * @returns Reset counter value
  */
 export function reset(session: packref): bigintref {
-  const caller = sessions.assert(session)
-  return counters.reset(caller)
+  const caller = session$.assert(session)
+  return counter$.reset(caller)
 }

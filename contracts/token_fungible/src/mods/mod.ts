@@ -11,8 +11,10 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
-namespace sessions {
-  const verifyMethod = (): textref => texts.fromString("verify")
+const DOMAIN = "bobine.token_fungible"
+
+namespace session$ {
+  const VERIFY_METHOD = (): textref => texts.fromString("verify")
 
   export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
@@ -21,7 +23,7 @@ namespace sessions {
   export function assert(session: packref): textref {
     const module = packs.get<textref>(session, 0)
     const verified = packs.get<bool>(
-      modules.call(module, verifyMethod(), packs.create1(session)),
+      modules.call(module, VERIFY_METHOD(), packs.create1(session)),
       0,
     )
 
@@ -31,12 +33,13 @@ namespace sessions {
   }
 }
 
-namespace owner {
+namespace owner$ {
+  const OWNER_KEY = (): textref => texts.fromString(`${DOMAIN}/state/owner`)
   const ZERO_ADDRESS =
     "0000000000000000000000000000000000000000000000000000000000000000"
 
   export function get(): textref {
-    const found = storage.get(texts.fromString("owner"))
+    const found = storage.get(OWNER_KEY())
 
     if (!found) return texts.fromString(ZERO_ADDRESS)
 
@@ -44,15 +47,15 @@ namespace owner {
   }
 
   export function set(address: textref): void {
-    storage.set(texts.fromString("owner"), address)
+    storage.set(OWNER_KEY(), address)
   }
 }
 
-namespace balances {
+namespace balance$ {
+  const BALANCE_KEY = (): textref => texts.fromString(`${DOMAIN}/state/balance`)
+
   export function get(address: textref): bigintref {
-    const found = storage.get(
-      packs.create2(texts.fromString("balance"), address),
-    )
+    const found = storage.get(packs.create2(BALANCE_KEY(), address))
 
     if (!found) return bigints.zero()
 
@@ -60,7 +63,7 @@ namespace balances {
   }
 
   export function set(address: textref, value: bigintref): void {
-    storage.set(packs.create2(texts.fromString("balance"), address), value)
+    storage.set(packs.create2(BALANCE_KEY(), address), value)
   }
 
   export function credit(address: textref, amount: bigintref): void {
@@ -76,11 +79,12 @@ namespace balances {
   }
 }
 
-namespace allowances {
+namespace allowance$ {
+  const ALLOWANCE_KEY = (): textref =>
+    texts.fromString(`${DOMAIN}/state/allowance`)
+
   export function get(owner: textref, spender: textref): bigintref {
-    const found = storage.get(
-      packs.create3(texts.fromString("allowance"), owner, spender),
-    )
+    const found = storage.get(packs.create3(ALLOWANCE_KEY(), owner, spender))
 
     if (!found) return bigints.zero()
 
@@ -92,10 +96,7 @@ namespace allowances {
     spender: textref,
     value: bigintref,
   ): void {
-    storage.set(
-      packs.create3(texts.fromString("allowance"), owner, spender),
-      value,
-    )
+    storage.set(packs.create3(ALLOWANCE_KEY(), owner, spender), value)
   }
 
   export function approve(
@@ -105,7 +106,6 @@ namespace allowances {
   ): void {
     const current = get(owner, spender)
 
-    // Reset-to-zero rule (ERC-20 style safety)
     if (
       !bigints.eq(current, bigints.zero()) &&
       !bigints.eq(amount, bigints.zero())
@@ -128,17 +128,17 @@ namespace allowances {
   }
 }
 
-namespace supply {
-  const key = (): textref => texts.fromString("total_supply")
+namespace supply$ {
+  const KEY = (): textref => texts.fromString(`${DOMAIN}/state/total_supply`)
 
   export function get(): bigintref {
-    const found = storage.get(key())
+    const found = storage.get(KEY())
     if (!found) return bigints.zero()
     return packs.get<bigintref>(found, 0)
   }
 
   function set(value: bigintref): void {
-    storage.set(key(), value)
+    storage.set(KEY(), value)
   }
 
   export function inc(delta: bigintref): void {
@@ -185,7 +185,7 @@ export function init(creator: textref): void {
 
   if (!texts.equals(modules.self(), module)) throw new Error("Invalid")
 
-  owner.set(creator)
+  owner$.set(creator)
 }
 
 /**
@@ -195,7 +195,7 @@ export function init(creator: textref): void {
  * @returns Current balance (0 if absent).
  */
 export function balance(target: textref): bigintref {
-  return balances.get(target)
+  return balance$.get(target)
 }
 
 /**
@@ -215,12 +215,12 @@ export function mint(
   target: textref,
   amount: bigintref,
 ): void {
-  const caller = sessions.assert(session)
+  const caller = session$.assert(session)
 
-  if (!texts.equals(caller, owner.get())) throw new Error("Unauthorized")
+  if (!texts.equals(caller, owner$.get())) throw new Error("Unauthorized")
 
-  balances.credit(target, amount)
-  supply.inc(amount)
+  balance$.credit(target, amount)
+  supply$.inc(amount)
 }
 
 /**
@@ -229,7 +229,7 @@ export function mint(
  * @returns Total supply (0 if absent).
  */
 export function total_supply(): bigintref {
-  return supply.get()
+  return supply$.get()
 }
 
 /**
@@ -240,7 +240,7 @@ export function total_supply(): bigintref {
  * @returns Remaining allowance (0 if absent).
  */
 export function allowance(owner: textref, spender: textref): bigintref {
-  return allowances.get(owner, spender)
+  return allowance$.get(owner, spender)
 }
 
 /**
@@ -261,9 +261,9 @@ export function approve(
   spender: textref,
   amount: bigintref,
 ): void {
-  const caller = sessions.assert(session)
+  const caller = session$.assert(session)
 
-  allowances.approve(caller, spender, amount)
+  allowance$.approve(caller, spender, amount)
 }
 
 /**
@@ -286,11 +286,11 @@ export function transfer_from(
   target: textref,
   amount: bigintref,
 ): void {
-  const spender = sessions.assert(session)
+  const spender = session$.assert(session)
 
-  allowances.spend(owner, spender, amount)
-  balances.debit(owner, amount)
-  balances.credit(target, amount)
+  allowance$.spend(owner, spender, amount)
+  balance$.debit(owner, amount)
+  balance$.credit(target, amount)
 }
 
 /**
@@ -305,10 +305,10 @@ export function transfer_from(
  * @throws Error("Insufficient balance") if balance is smaller than amount.
  */
 export function burn(session: packref, amount: bigintref): void {
-  const caller = sessions.assert(session)
+  const caller = session$.assert(session)
 
-  balances.debit(caller, amount)
-  supply.dec(amount)
+  balance$.debit(caller, amount)
+  supply$.dec(amount)
 }
 
 /**
@@ -328,8 +328,8 @@ export function transfer(
   target: textref,
   amount: bigintref,
 ): void {
-  const caller = sessions.assert(session)
+  const caller = session$.assert(session)
 
-  balances.debit(caller, amount)
-  balances.credit(target, amount)
+  balance$.debit(caller, amount)
+  balance$.credit(target, amount)
 }

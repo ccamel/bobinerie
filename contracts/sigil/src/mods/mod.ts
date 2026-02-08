@@ -1,6 +1,7 @@
 import {
   bigintref,
   bigints,
+  blobref,
   blobs,
   modules,
   packref,
@@ -13,16 +14,28 @@ import {
 
 const DOMAIN = "bobine.sigil"
 const XMLNS_SIGIL = "https://bobine.tech#sigil"
+const CPES_VERSION_U32: u32 = 1
 
-const zeroText = (): textref => texts.fromString("0")
-const oneText = (): textref => texts.fromString("1")
-const emptyText = (): textref => texts.fromString("")
-const version = (): bigintref => bigints.inc(bigints.zero())
-const domainTag = (suffix: string): textref =>
+const ZERO_TEXT = (): textref => texts.fromString("0")
+const ONE_TEXT = (): textref => texts.fromString("1")
+const EMPTY_TEXT = (): textref => texts.fromString("")
+const VERSION = (): bigintref => bigints.inc(bigints.zero())
+const DOMAIN_TAG = (suffix: string): textref =>
   texts.fromString(`${DOMAIN}/${suffix}`)
+const ZERO_SEPARATOR = (): blobref => {
+  const bytes = new Uint8Array(1)
+  bytes[0] = 0
+  return blobs.save(bytes.buffer)
+}
+const VERSION_BYTES = (): blobref => {
+  const buffer = new ArrayBuffer(4)
+  const view = new DataView(buffer)
+  view.setUint32(0, CPES_VERSION_U32, false)
+  return blobs.save(buffer)
+}
 
-namespace sessions {
-  const verifyMethod = (): textref => texts.fromString("verify")
+namespace session$ {
+  const VERIFY_METHOD = (): textref => texts.fromString("verify")
 
   export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
@@ -31,7 +44,7 @@ namespace sessions {
   export function assert(session: packref): textref {
     const module = packs.get<textref>(session, 0)
     const verified = packs.get<bool>(
-      modules.call(module, verifyMethod(), packs.create1(session)),
+      modules.call(module, VERIFY_METHOD(), packs.create1(session)),
       0,
     )
 
@@ -41,7 +54,19 @@ namespace sessions {
   }
 }
 
-namespace store {
+function canonicalHash(typeName: string, payload: blobref): blobref {
+  const domainBytes = texts.toUtf8(texts.fromString(DOMAIN))
+  const typeBytes = texts.toUtf8(texts.fromString(typeName))
+  const part0 = blobs.concat(domainBytes, ZERO_SEPARATOR())
+  const part1 = blobs.concat(part0, typeBytes)
+  const part2 = blobs.concat(part1, ZERO_SEPARATOR())
+  const part3 = blobs.concat(part2, VERSION_BYTES())
+  const part4 = blobs.concat(part3, ZERO_SEPARATOR())
+  const frame = blobs.concat(part4, payload)
+  return sha256.digest(frame)
+}
+
+namespace store$ {
   export function readText(key: textref): textref {
     const value = storage.get(key)
     if (!value) return null
@@ -73,19 +98,19 @@ namespace store {
   }
 
   export function writeBool(key: textref, value: bool): void {
-    storage.set(key, value ? oneText() : zeroText())
+    storage.set(key, value ? ONE_TEXT() : ZERO_TEXT())
   }
 }
 
-namespace nonce {
+namespace nonce$ {
   const key = (): textref => texts.fromString("nonce")
 
   export function read(): bigintref {
-    return store.readBigint(key())
+    return store$.readBigint(key())
   }
 
   export function write(value: bigintref): void {
-    store.writeBigint(key(), value)
+    store$.writeBigint(key(), value)
   }
 
   export function next(): bigintref {
@@ -95,7 +120,7 @@ namespace nonce {
   }
 }
 
-namespace burns {
+namespace burn$ {
   const prefix = (): textref => texts.fromString("burns:")
 
   function key(address: textref): textref {
@@ -103,11 +128,11 @@ namespace burns {
   }
 
   export function read(address: textref): bigintref {
-    return store.readBigint(key(address))
+    return store$.readBigint(key(address))
   }
 
   function write(address: textref, value: bigintref): void {
-    store.writeBigint(key(address), value)
+    store$.writeBigint(key(address), value)
   }
 
   export function increment(address: textref): bigintref {
@@ -121,7 +146,7 @@ namespace burns {
   }
 }
 
-namespace seeds {
+namespace seed$ {
   const prefix = (): textref => texts.fromString("seed:")
 
   function key(address: textref): textref {
@@ -129,19 +154,19 @@ namespace seeds {
   }
 
   export function read(address: textref): textref {
-    return store.readText(key(address))
+    return store$.readText(key(address))
   }
 
   export function write(address: textref, value: textref): void {
-    store.writeText(key(address), value)
+    store$.writeText(key(address), value)
   }
 
   export function clear(address: textref): void {
-    write(address, emptyText())
+    write(address, EMPTY_TEXT())
   }
 }
 
-namespace tags {
+namespace tag$ {
   const prefix = (): textref => texts.fromString("tag:")
 
   function key(address: textref): textref {
@@ -149,19 +174,19 @@ namespace tags {
   }
 
   export function read(address: textref): textref {
-    return store.readText(key(address))
+    return store$.readText(key(address))
   }
 
   export function write(address: textref, value: textref): void {
-    store.writeText(key(address), value)
+    store$.writeText(key(address), value)
   }
 
   export function clear(address: textref): void {
-    write(address, emptyText())
+    write(address, EMPTY_TEXT())
   }
 }
 
-namespace blessCounts {
+namespace bless_count$ {
   const prefix = (): textref => texts.fromString("bless_count:")
 
   function key(address: textref): textref {
@@ -169,11 +194,11 @@ namespace blessCounts {
   }
 
   export function read(address: textref): bigintref {
-    return store.readBigint(key(address))
+    return store$.readBigint(key(address))
   }
 
   function write(address: textref, value: bigintref): void {
-    store.writeBigint(key(address), value)
+    store$.writeBigint(key(address), value)
   }
 
   export function increment(address: textref): bigintref {
@@ -187,7 +212,7 @@ namespace blessCounts {
   }
 }
 
-namespace blessMixes {
+namespace bless_mix$ {
   const prefix = (): textref => texts.fromString("bless_mix:")
 
   function key(address: textref): textref {
@@ -195,19 +220,19 @@ namespace blessMixes {
   }
 
   export function read(address: textref): textref {
-    return store.readText(key(address))
+    return store$.readText(key(address))
   }
 
   export function write(address: textref, value: textref): void {
-    store.writeText(key(address), value)
+    store$.writeText(key(address), value)
   }
 
   export function clear(address: textref): void {
-    write(address, emptyText())
+    write(address, EMPTY_TEXT())
   }
 }
 
-namespace blessFlags {
+namespace bless_flag$ {
   const prefix = (): textref => texts.fromString("blessed:")
 
   function key(address: textref): textref {
@@ -215,11 +240,11 @@ namespace blessFlags {
   }
 
   export function read(address: textref): bool {
-    return store.readBool(key(address))
+    return store$.readBool(key(address))
   }
 
   export function write(address: textref, value: bool): void {
-    store.writeBool(key(address), value)
+    store$.writeBool(key(address), value)
   }
 
   export function clear(address: textref): void {
@@ -227,7 +252,7 @@ namespace blessFlags {
   }
 }
 
-namespace blessings {
+namespace blessing$ {
   function hexNibble(code: i32): i32 {
     if (code >= 48 && code <= 57) return code - 48
     if (code >= 97 && code <= 102) return 10 + (code - 97)
@@ -252,7 +277,7 @@ namespace blessings {
   }
 }
 
-namespace render {
+namespace render$ {
   function hexNibble(code: i32): i32 {
     if (code >= 48 && code <= 57) return code - 48
     if (code >= 97 && code <= 102) return 10 + (code - 97)
@@ -344,62 +369,46 @@ namespace render {
   ]
 
   const HEAD: string[] = [
-    // Human
     `<circle cx="32" cy="34" r="18" fill="$S"/>`,
-    // Ape jaw
     `<path d="M32 16 C44 16 52 26 52 36 C52 50 42 56 32 56 C22 56 12 50 12 36 C12 26 20 16 32 16 Z" fill="$S"/>` +
       `<path d="M18 42 Q32 52 46 42" fill="#000" opacity="0.08"/>`,
-    // Alien
     `<ellipse cx="32" cy="32" rx="18" ry="22" fill="$S"/>`,
-    // Zombie (boxy)
     `<rect x="14" y="16" width="36" height="40" rx="10" fill="$S"/>` +
       `<path d="M20 28 L24 24 L28 28" fill="none" stroke="#000" opacity="0.08" stroke-width="3" stroke-linecap="round"/>`,
-    // Ghost
     `<path d="M18 56 V32 C18 22 25 16 32 16 C39 16 46 22 46 32 V56" fill="$S"/>` +
       `<path d="M18 56 Q22 52 26 56 Q30 52 34 56 Q38 52 42 56 Q44 54 46 56" fill="$S"/>`,
-    // Pepe-ish (wide)
     `<ellipse cx="32" cy="36" rx="20" ry="18" fill="$S"/>` +
       `<path d="M16 38 Q32 28 48 38" fill="none" stroke="#000" opacity="0.06" stroke-width="6" stroke-linecap="round"/>`,
   ]
 
   const BODY: string[] = [
-    // Hoodie
     `<path d="M10 64 V46 Q32 30 54 46 V64 Z" fill="$C"/>` +
       `<path d="M18 46 Q32 36 46 46" fill="none" stroke="#fff" opacity="0.10" stroke-width="3" stroke-linecap="round"/>` +
       `<path d="M26 46 V64" stroke="#000" opacity="0.10" stroke-width="3"/>` +
       `<path d="M38 46 V64" stroke="#000" opacity="0.10" stroke-width="3"/>`,
-    // Suit
     `<path d="M12 64 V44 Q32 34 52 44 V64 Z" fill="$C"/>` +
       `<path d="M32 44 L26 64" stroke="#000" opacity="0.12" stroke-width="3"/>` +
       `<path d="M32 44 L38 64" stroke="#000" opacity="0.12" stroke-width="3"/>` +
       `<path d="M28 46 Q32 50 36 46" fill="#fff" opacity="0.10"/>`,
-    // Tee
     `<path d="M12 64 V48 Q32 40 52 48 V64 Z" fill="$C"/>` +
       `<path d="M22 48 Q32 44 42 48" fill="none" stroke="#000" opacity="0.10" stroke-width="3" stroke-linecap="round"/>`,
-    // Naked
     ``,
   ]
 
   const EYES: string[] = [
-    // Normal
     `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/>`,
-    // Bored
     `<path d="M21 31 H29" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
       `<path d="M35 31 H43" stroke="#111" stroke-width="3" stroke-linecap="round"/>`,
-    // Crying
     `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/>` +
       `<path d="M24 35 Q23 40 25 44" fill="none" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>`,
-    // Noggles
     `<circle cx="25" cy="32" r="8" fill="none" stroke="#111" stroke-width="2"/>` +
       `<circle cx="39" cy="32" r="8" fill="none" stroke="#111" stroke-width="2"/>` +
       `<path d="M33 32 H31" stroke="#111" stroke-width="2"/>`,
-    // Laser eyes (meme, not ultra-rare)
     `<circle cx="25" cy="32" r="3" fill="#111"/><circle cx="39" cy="32" r="3" fill="#111"/>` +
       `<path d="M25 32 L0 22" stroke="#ef4444" stroke-width="3" stroke-linecap="round" opacity="0.55" filter="url(#sigil_laser_glow)"/>` +
       `<path d="M39 32 L64 22" stroke="#ef4444" stroke-width="3" stroke-linecap="round" opacity="0.55" filter="url(#sigil_laser_glow)"/>` +
       `<path d="M25 33 L0 34" stroke="#fb7185" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>` +
       `<path d="M39 33 L64 34" stroke="#fb7185" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>`,
-    // Dead
     `<path d="M22 30 L28 36" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
       `<path d="M28 30 L22 36" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
       `<path d="M36 30 L42 36" stroke="#111" stroke-width="3" stroke-linecap="round"/>` +
@@ -420,44 +429,32 @@ namespace render {
     `<path d="M26 43 Q32 47 38 43" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
     `<path d="M26 44 Q32 41 38 44" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
     `<path d="M25 44 H39" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`,
-    // Cigarette
     `<path d="M26 44 H38" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>` +
       `<path d="M38 44 H46" stroke="#e5e7eb" stroke-width="3" stroke-linecap="round"/>` +
       `<path d="M47 43 Q50 41 49 38" fill="none" stroke="#9ca3af" stroke-width="2" opacity="0.55" stroke-linecap="round"/>`,
-    // Pipe
     `<path d="M26 44 Q32 48 38 44" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>` +
       `<path d="M40 44 Q45 46 46 42" fill="none" stroke="#111" opacity="0.65" stroke-width="3" stroke-linecap="round"/>`,
   ]
 
   const HAT: string[] = [
-    // Nothing
     ``,
-    // Cap
     `<path d="M16 28 Q32 16 48 28 Q44 18 32 18 Q20 18 16 28Z" fill="$H"/>` +
       `<path d="M22 26 Q32 22 42 26" fill="none" stroke="#000" opacity="0.10" stroke-width="4" stroke-linecap="round"/>`,
-    // Beanie
     `<path d="M16 30 Q32 14 48 30 Q48 22 32 22 Q16 22 16 30Z" fill="$H"/>`,
-    // Crown
     `<path d="M18 22 L24 14 L32 22 L40 14 L46 22" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` +
       `<circle cx="24" cy="14" r="2" fill="#fef08a" opacity="0.9"/>` +
       `<circle cx="40" cy="14" r="2" fill="#fef08a" opacity="0.9"/>`,
-    // Top hat
     `<rect x="22" y="10" width="20" height="14" rx="2" fill="$H"/>` +
       `<path d="M18 24 H46" stroke="$H" stroke-width="6" stroke-linecap="round"/>`,
-    // Brain
     `<path d="M20 26 Q24 14 32 18 Q40 14 44 26" fill="none" stroke="#fb7185" stroke-width="4" opacity="0.55" stroke-linecap="round"/>`,
   ]
 
   const FX: string[] = [
-    // Nothing
     ``,
-    // Sparkles
     `<path d="M12 18 L14 22 L18 24 L14 26 L12 30 L10 26 L6 24 L10 22 Z" fill="#fff" opacity="0.12"/>` +
       `<path d="M52 40 L54 44 L58 46 L54 48 L52 52 L50 48 L46 46 L50 44 Z" fill="#fff" opacity="0.10"/>`,
-    // Coins
     `<circle cx="14" cy="50" r="5" fill="#f59e0b" opacity="0.22"/>` +
       `<circle cx="52" cy="18" r="4" fill="#f59e0b" opacity="0.18"/>`,
-    // Flies (rot)
     `<circle cx="16" cy="20" r="2" fill="#111" opacity="0.14"/>` +
       `<circle cx="20" cy="18" r="1.5" fill="#111" opacity="0.12"/>` +
       `<circle cx="48" cy="44" r="2" fill="#111" opacity="0.14"/>`,
@@ -470,7 +467,6 @@ namespace render {
     blessCountText: string,
     blessed: bool,
   ): string {
-    // seed32hex is 32 hex chars = 16 bytes
     const b0 = byteAt(seed32hex, 0)
     const b1 = byteAt(seed32hex, 1)
     const b2 = byteAt(seed32hex, 2)
@@ -657,28 +653,22 @@ namespace render {
   }
 }
 
-namespace avatars {
+namespace avatar$ {
   export function generateSeed(address: textref): textref {
-    const burnCount = burns.read(address)
-    const nonceValue = nonce.next()
+    const burnCount = burn$.read(address)
+    const nonceValue = nonce$.next()
 
     const burnsText = bigints.toBase10(burnCount)
     const nonceText = bigints.toBase10(nonceValue)
 
-    const seedPack = packs.create5(
-      domainTag("avatar_seed"),
-      version(),
-      address,
-      burnsText,
-      nonceText,
-    )
-    const digest = sha256.digest(blobs.encode(seedPack))
+    const payload = blobs.encode(packs.create3(address, burnsText, nonceText))
+    const digest = canonicalHash("avatar_seed", payload)
     const hex = texts.toString(blobs.toBase16(digest))
     return texts.fromString(hex.slice(0, 32))
   }
 
   export function retrieve(address: textref): textref {
-    const stored = seeds.read(address)
+    const stored = seed$.read(address)
 
     if (stored) {
       const storedStr = texts.toString(stored)
@@ -686,7 +676,7 @@ namespace avatars {
     }
 
     const seed = generateSeed(address)
-    seeds.write(address, seed)
+    seed$.write(address, seed)
     return seed
   }
 }
@@ -698,7 +688,7 @@ namespace avatars {
  * @returns Derived address as textref
  */
 export function address(session: packref): textref {
-  return sessions.assert(session)
+  return session$.assert(session)
 }
 
 /**
@@ -708,22 +698,22 @@ export function address(session: packref): textref {
  * @returns SVG string as textref
  */
 export function get(address: textref): textref {
-  const seed = seeds.read(address)
-  if (!seed) return emptyText()
+  const seed = seed$.read(address)
+  if (!seed) return EMPTY_TEXT()
 
   const seedText = texts.toString(seed)
-  if (seedText.length === 0) return emptyText()
+  if (seedText.length === 0) return EMPTY_TEXT()
 
-  const tag = tags.read(address)
+  const tag = tag$.read(address)
   const tagText = tag ? texts.toString(tag) : ""
 
-  const burnCount = burns.read(address)
+  const burnCount = burn$.read(address)
   const burnsText = texts.toString(bigints.toBase10(burnCount))
-  const blessCount = blessCounts.read(address)
+  const blessCount = bless_count$.read(address)
   const blessCountText = texts.toString(bigints.toBase10(blessCount))
-  const blessed = blessFlags.read(address)
+  const blessed = bless_flag$.read(address)
   return texts.fromString(
-    render.svg(seedText, tagText, burnsText, blessCountText, blessed),
+    render$.svg(seedText, tagText, burnsText, blessCountText, blessed),
   )
 }
 
@@ -735,9 +725,9 @@ export function get(address: textref): textref {
  * @returns SVG string as textref
  */
 export function mint(session: packref, tag: textref): textref {
-  const address = sessions.assert(session)
-  avatars.retrieve(address)
-  tags.write(address, tag)
+  const address = session$.assert(session)
+  avatar$.retrieve(address)
+  tag$.write(address, tag)
   return get(address)
 }
 
@@ -748,13 +738,13 @@ export function mint(session: packref, tag: textref): textref {
  * @returns Updated burn count
  */
 export function burn(session: packref): bigintref {
-  const address = sessions.assert(session)
-  const next = burns.increment(address)
-  seeds.clear(address)
-  tags.clear(address)
-  blessCounts.reset(address)
-  blessMixes.clear(address)
-  blessFlags.clear(address)
+  const address = session$.assert(session)
+  const next = burn$.increment(address)
+  seed$.clear(address)
+  tag$.clear(address)
+  bless_count$.reset(address)
+  bless_mix$.clear(address)
+  bless_flag$.clear(address)
   return next
 }
 
@@ -777,38 +767,31 @@ export function reroll(session: packref, tag: textref): textref {
  * @returns "blessed" if the roll hits, otherwise "ok"
  */
 export function bless(target: textref): textref {
-  const seed = seeds.read(target)
+  const seed = seed$.read(target)
   if (!seed) throw new Error("Sigil not minted")
   const seedText = texts.toString(seed)
   if (seedText.length === 0) throw new Error("Sigil not minted")
 
-  const already = blessFlags.read(target)
+  const already = bless_flag$.read(target)
   if (already) return texts.fromString("blessed")
 
-  const next = blessCounts.increment(target)
+  const next = bless_count$.increment(target)
   const nextRef = bigints.toBase10(next)
 
-  const mix = blessMixes.read(target)
-  const mixRef = mix ? mix : emptyText()
+  const mix = bless_mix$.read(target)
+  const mixRef = mix ? mix : EMPTY_TEXT()
 
-  const mixPack = packs.create5<
-    textref,
-    bigintref,
-    textref,
-    bigintref,
-    textref
-  >(domainTag("bless_mix"), version(), seed, nextRef, mixRef)
-
-  const digest = sha256.digest(blobs.encode<packref>(mixPack))
-  const digestHexRef = blobs.toBase16(digest) // textref
-  blessMixes.write(target, digestHexRef)
+  const payload = blobs.encode(packs.create3(seed, nextRef, mixRef))
+  const digest = canonicalHash("bless_mix", payload)
+  const digestHexRef = blobs.toBase16(digest)
+  bless_mix$.write(target, digestHexRef)
 
   const digestHex = texts.toString(digestHexRef)
-  const k = blessings.difficulty(seedText)
-  const hit = blessings.hit(digestHex, k)
+  const k = blessing$.difficulty(seedText)
+  const hit = blessing$.hit(digestHex, k)
 
   if (hit) {
-    blessFlags.write(target, true)
+    bless_flag$.write(target, true)
     return texts.fromString("blessed")
   }
 
@@ -822,25 +805,25 @@ export function bless(target: textref): textref {
  * @returns ["bobine.sigil/vibes_view", 1, count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
  */
 export function vibes(target: textref): packref {
-  const count = blessCounts.read(target)
+  const count = bless_count$.read(target)
   const countText = bigints.toBase10(count)
 
-  const blessed = blessFlags.read(target)
-  const blessedText = blessed ? oneText() : zeroText()
+  const blessed = bless_flag$.read(target)
+  const blessedText = blessed ? ONE_TEXT() : ZERO_TEXT()
 
-  const seed = seeds.read(target)
+  const seed = seed$.read(target)
   let k: i32 = 0
 
   if (seed) {
     const seedText = texts.toString(seed)
-    if (seedText.length > 0) k = blessings.difficulty(seedText)
+    if (seedText.length > 0) k = blessing$.difficulty(seedText)
   }
 
   const kText = texts.fromString(k.toString())
 
   return packs.create5(
-    domainTag("vibes_view"),
-    version(),
+    DOMAIN_TAG("vibes_view"),
+    VERSION(),
     countText,
     blessedText,
     kText,

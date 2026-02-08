@@ -12,6 +12,11 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
+const DOMAIN = "bobine.pool-xyk"
+const VERSION = (): bigintref => bigints.one()
+const DOMAIN_TAG = (suffix: string): textref =>
+  texts.fromString(`${DOMAIN}/${suffix}`)
+
 namespace selfcheck$ {
   export function expected(creator: textref): textref {
     return blobs.toBase16(
@@ -32,7 +37,7 @@ namespace selfcheck$ {
 }
 
 namespace session$ {
-  const verifyMethod = (): textref => texts.fromString("verify")
+  const VERIFY_METHOD = (): textref => texts.fromString("verify")
 
   export function addressOf(session: packref): textref {
     return blobs.toBase16(sha256.digest(blobs.encode(session)))
@@ -41,7 +46,7 @@ namespace session$ {
   export function assert(session: packref): textref {
     const module = packs.get<textref>(session, 0)
     const verified = packs.get<bool>(
-      modules.call(module, verifyMethod(), packs.create1(session)),
+      modules.call(module, VERIFY_METHOD(), packs.create1(session)),
       0,
     )
 
@@ -359,7 +364,6 @@ namespace liquidity$ {
     if (bigints.lt(amount1, amount1_min))
       throw new Error("Insufficient amount1")
 
-    // Calculate liquidity to mint
     const totalSupply = liquidity$.get()
     let liquidity: bigintref
     if (bigints.eq(totalSupply, bigints.zero())) {
@@ -381,22 +385,18 @@ namespace liquidity$ {
     if (bigints.lt(liquidity, lp_min))
       throw new Error("Insufficient liquidity minted")
 
-    // Move tokens into the pool
     const poolSession = pool_session$.get()
     const poolAddress = session$.addressOf(poolSession)
     token$.transfer(token0, session, poolAddress, amount0)
     token$.transfer(token1, session, poolAddress, amount1)
 
-    // Update reserves
     const newReserve0 = bigints.add(reserve0, amount0)
     const newReserve1 = bigints.add(reserve1, amount1)
     reserve$.set(newReserve0, newReserve1)
 
-    // Update total supply
     const newTotalSupply = bigints.add(totalSupply, liquidity)
     liquidity$.set(newTotalSupply)
 
-    // Update balance of 'to'
     const previousBalance = liquidity$.balanceOf(to)
     const newBalance = bigints.add(previousBalance, liquidity)
     liquidity$.setBalanceOf(to, newBalance)
@@ -441,15 +441,12 @@ namespace liquidity$ {
     if (bigints.lt(amount1, amount1_min))
       throw new Error("Insufficient amount1")
 
-    // Transfer tokens out from the pool balance (via pool session capability)
     const poolSession = pool_session$.get()
     token$.transfer(token0, poolSession, to, amount0)
     token$.transfer(token1, poolSession, to, amount1)
 
-    // Update reserves
     reserve$.set(bigints.sub(reserve0, amount0), bigints.sub(reserve1, amount1))
 
-    // Burn LP
     liquidity$.setBalanceOf(caller, bigints.sub(balance, liquidity))
     liquidity$.set(bigints.sub(totalSupply, liquidity))
 
@@ -578,10 +575,8 @@ namespace swap$ {
       const poolSession = pool_session$.get()
       const poolAddress = session$.addressOf(poolSession)
 
-      // Move token_in into the pool (push model)
       token$.transfer(token0, session, poolAddress, amount_in)
 
-      // Move token_out out of the pool (via pool session capability)
       token$.transfer(token1, poolSession, to, amount_out)
 
       reserve$.set(
@@ -621,7 +616,6 @@ namespace swap$ {
       throw new Error("Invalid token_in")
     }
 
-    // Return (token_out, amount_out)
     return packs.create2(token_out, amount_out)
   }
 }
@@ -669,7 +663,13 @@ export function clone(creator: textref): textref {
  * @throws "Pool is not initialized" if pool hasn't been initialized yet
  */
 export function tokens(): packref {
-  return pool$.tokens()
+  const value = pool$.tokens()
+  return packs.create4(
+    DOMAIN_TAG("tokens_view"),
+    VERSION(),
+    packs.get<textref>(value, 0),
+    packs.get<textref>(value, 1),
+  )
 }
 
 /**
@@ -690,7 +690,13 @@ export function fee_bps(): bigintref {
  * @throws "Pool is not initialized" if pool hasn't been initialized yet
  */
 export function reserves(): packref {
-  return reserve$.get()
+  const value = reserve$.get()
+  return packs.create4(
+    DOMAIN_TAG("reserves_view"),
+    VERSION(),
+    packs.get<bigintref>(value, 0),
+    packs.get<bigintref>(value, 1),
+  )
 }
 
 /**
@@ -730,7 +736,13 @@ export function quote_swap_exact_in(
   token_in: textref,
   amount_in: bigintref,
 ): packref {
-  return swap$.quoteExactIn(token_in, amount_in)
+  const value = swap$.quoteExactIn(token_in, amount_in)
+  return packs.create4(
+    DOMAIN_TAG("quote_swap_exact_in_view"),
+    VERSION(),
+    packs.get<textref>(value, 0),
+    packs.get<bigintref>(value, 1),
+  )
 }
 
 /**
@@ -761,7 +773,7 @@ export function add_liquidity(
   lp_min: bigintref,
   to: textref,
 ): packref {
-  return liquidity$.add_liquidity(
+  const value = liquidity$.add_liquidity(
     session,
     amount0_desired,
     amount1_desired,
@@ -769,6 +781,13 @@ export function add_liquidity(
     amount1_min,
     lp_min,
     to,
+  )
+  return packs.create5(
+    DOMAIN_TAG("add_liquidity_view"),
+    VERSION(),
+    packs.get<bigintref>(value, 0),
+    packs.get<bigintref>(value, 1),
+    packs.get<bigintref>(value, 2),
   )
 }
 
@@ -795,12 +814,18 @@ export function remove_liquidity(
   amount1_min: bigintref,
   to: textref,
 ): packref {
-  return liquidity$.remove_liquidity(
+  const value = liquidity$.remove_liquidity(
     session,
     liquidity,
     amount0_min,
     amount1_min,
     to,
+  )
+  return packs.create4(
+    DOMAIN_TAG("remove_liquidity_view"),
+    VERSION(),
+    packs.get<bigintref>(value, 0),
+    packs.get<bigintref>(value, 1),
   )
 }
 
@@ -828,7 +853,13 @@ export function swap_exact_in(
   min_out: bigintref,
   to: textref,
 ): packref {
-  return swap$.swapExactIn(session, token_in, amount_in, min_out, to)
+  const value = swap$.swapExactIn(session, token_in, amount_in, min_out, to)
+  return packs.create4(
+    DOMAIN_TAG("swap_exact_in_view"),
+    VERSION(),
+    packs.get<textref>(value, 0),
+    packs.get<bigintref>(value, 1),
+  )
 }
 
 /**

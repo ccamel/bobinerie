@@ -33,13 +33,13 @@ Feature: Multisig Contract
     Then the execution should succeed
 
     Given I have keys for "Alice"
-    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:from-multisig]]"
+    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:from-multisig]]"
     Then the execution should succeed
     And I remember last returned value as "p1"
 
     When I call "multisig" method "proposal" with param "$p1"
     Then the execution should succeed
-    And the returned value should be "pack:[text:bobine.multisig/proposal_view,bigint:1,$p1,pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:from-multisig]],address:Alice,bigint:1,pack:[address:Alice],bigint:0]"
+    And the returned value should be "pack:[text:bobine.multisig/proposal_view,bigint:1,$p1,pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:from-multisig]],address:Alice,bigint:1,pack:[address:Alice],bigint:0]"
 
     When I call "multisig" method "execute" with param "$p1"
     Then the execution should fail
@@ -51,13 +51,13 @@ Feature: Multisig Contract
 
     When I call "multisig" method "execute" with param "$p1"
     Then the execution should succeed
-    And the returned value should be "null"
+    And the returned value should be ""
 
     When I call "multisig" method "execute" with param "$p1"
     Then the execution should succeed
-    And the returned value should be "null"
+    And the returned value should be ""
 
-    When I call "say-my-name" method "sayMyName" with param "text:check"
+    When I call "say-my-name" method "say_my_name" with param "text:check"
     Then the execution should succeed
     And the returned value should be "from-multisig"
 
@@ -68,7 +68,7 @@ Feature: Multisig Contract
     Then the execution should succeed
 
     Given I have keys for "Alice"
-    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:idempotent-approve]]"
+    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:idempotent-approve]]"
     Then the execution should succeed
     And I remember last returned value as "p-idem"
 
@@ -88,11 +88,11 @@ Feature: Multisig Contract
     Then the execution should succeed
 
     Given I have keys for "Carol"
-    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:unauthorized]]"
+    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:unauthorized]]"
     Then the execution should fail
 
     Given I have keys for "Alice"
-    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:authorized]]"
+    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:authorized]]"
     Then the execution should succeed
     And I remember last returned value as "p2"
 
@@ -107,7 +107,7 @@ Feature: Multisig Contract
     Then the execution should succeed
 
     Given I have keys for "Alice"
-    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:should-not-run]]"
+    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:should-not-run]]"
     Then the execution should succeed
     And I remember last returned value as "p3"
 
@@ -117,7 +117,7 @@ Feature: Multisig Contract
 
     When I call "multisig" method "proposal" with param "$p3"
     Then the execution should succeed
-    And the returned value should be "pack:[text:bobine.multisig/proposal_view,bigint:1,$p3,pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:should-not-run]],address:Alice,bigint:1,pack:[address:Alice],bigint:2]"
+    And the returned value should be "pack:[text:bobine.multisig/proposal_view,bigint:1,$p3,pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:should-not-run]],address:Alice,bigint:1,pack:[address:Alice],bigint:2]"
 
     When I call "multisig" method "execute" with param "$p3"
     Then the execution should fail
@@ -150,7 +150,7 @@ Feature: Multisig Contract
     And the returned value should be "pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:a,text:z]]"
 
     Given I have keys for "Alice"
-    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:sayMyName,pack:[text:no-longer-signer]]"
+    When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:no-longer-signer]]"
     Then the execution should fail
 
   Scenario: Initialization rejects invalid thresholds
