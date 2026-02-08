@@ -57,9 +57,11 @@ If Context7 is unavailable:
 
 - **Textref Constants**: Must be implemented as constants assigned to fat arrow functions (e.g., `const myConstant = () => ...`).
 - **Exposed API Functions**: Function names exposed in the API must follow Snake Case (e.g., `my_function_name`).
+- **Contract IDs**: Contract directory names and deployment ids must use kebab-case for multi-word names (e.g., `token-fungible`, `pool-xyk`).
 - **Controller-Only Exports**: Exported contract functions MUST be thin controllers. They may only validate legitimacy (session/auth/context), adapt boundary arguments, call domain namespace operations, and shape boundary responses.
 - **No Business in Exports**: Business rules, state transitions, and storage mutation sequences MUST live in domain namespaces (`xxx$`), not in exported functions.
 - **Domain Naming for Behavior**: Domain methods should carry business intent (`update`, `execute`, `transfer`, `mint`) rather than storage verbs (`set`, `write`) when the operation is behavioral.
+- **Init Model**: Contracts that expose `clone(creator)` must expose `init(creator, ...)` and enforce deterministic module ownership through `selfcheck$.assert(creator)` before state initialization.
 
 ## Related documents
 

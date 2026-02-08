@@ -42,6 +42,9 @@ Rules are strict. Do not mix conventions.
 - Constants: `UPPER_SNAKE_CASE`
   - Examples: `DOMAIN`, `POLICY_TAG`
 
+- Contract ids (directory/deployment keys/domain module segment): `kebab-case` for multi-word names
+  - Examples: `token-fungible`, `pool-xyk`, `say-my-name`
+
 ## Namespaces and structure
 
 Use a domain-driven namespace layout.
@@ -88,6 +91,13 @@ Domain operation naming:
 
 - Use behavioral names for business operations (`update`, `execute`, `transfer`, `mint`, `burn`, `approve`).
 - Reserve storage verbs (`get`, `set`, `read`, `write`) for pure persistence helpers inside domains.
+
+Initialization model:
+
+- Cloneable contracts (`clone(creator)`) must use `init(creator, ...)`.
+- `init(creator, ...)` must verify deterministic ownership via a `selfcheck$` domain before writing state.
+- `init(...)` must be one-shot (`Already initialized` on second call).
+- Non-clone governance/config modules may use one-shot `init(config)` without creator checks if explicitly intended.
 
 ## Encoding rules
 
