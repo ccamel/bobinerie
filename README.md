@@ -41,39 +41,48 @@ Available now:
 <p>》<a href="contracts/counter/README.md">open doc</a></p>
 </td>
 <td width="50%" valign="top">
+<h3><a href="contracts/forth/README.md">Forth</a></h3>
+<p><strong>On-chain Forth interpreter contract for Bobine.</strong></p>
+<p><img alt="work-in-progress" src="https://img.shields.io/badge/status-wip-F4A261" /></p>
+<p>》<a href="contracts/forth/README.md">open doc</a></p>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 <h3><a href="contracts/multisig/README.md">Multisig</a></h3>
 <p><strong>Threshold-based authorization contract for Bobine call execution.</strong></p>
 <p><img alt="governance" src="https://img.shields.io/badge/governance-FF6B35" /></p>
 <p>》<a href="contracts/multisig/README.md">open doc</a></p>
 </td>
-</tr>
-<tr>
 <td width="50%" valign="top">
 <h3><a href="contracts/pool-xyk/README.md">Pool XYK</a></h3>
 <p><strong>XYK (constant-product) AMM pool for two fungible tokens: add/remove liquidity, swap, fee in bps.</strong></p>
 <p><img alt="defi" src="https://img.shields.io/badge/defi-6C63FF" /></p>
 <p>》<a href="contracts/pool-xyk/README.md">open doc</a></p>
 </td>
+</tr>
+<tr>
 <td width="50%" valign="top">
 <h3><a href="contracts/say-my-name/README.md">Say My Name</a></h3>
 <p><strong>A simple name storage contract that remembers who you are.</strong></p>
 <p><img alt="pedagogical" src="https://img.shields.io/badge/pedagogical-2EC4B6" /></p>
 <p>》<a href="contracts/say-my-name/README.md">open doc</a></p>
 </td>
-</tr>
-<tr>
 <td width="50%" valign="top">
 <h3><a href="contracts/sigil/README.md">Sigil</a></h3>
 <p><strong>Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.</strong></p>
 <p><img alt="creative" src="https://img.shields.io/badge/creative-FF9F1C" /></p>
 <p>》<a href="contracts/sigil/README.md">open doc</a></p>
 </td>
+</tr>
+<tr>
 <td width="50%" valign="top">
 <h3><a href="contracts/token-fungible/README.md">Token Fungible</a></h3>
 <p><strong>A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).</strong></p>
 <p><img alt="defi" src="https://img.shields.io/badge/defi-6C63FF" /></p>
 <p>》<a href="contracts/token-fungible/README.md">open doc</a></p>
 </td>
+<td width="50%" valign="top"></td>
 </tr>
 </table>
 
