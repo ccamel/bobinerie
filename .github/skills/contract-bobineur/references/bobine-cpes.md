@@ -25,6 +25,15 @@ Internal storage is out of scope unless it becomes observable through one of the
 - **domain**: a stable namespace for a contract.
 - **version**: a positive integer defining the tuple schema version.
 
+## Scalars
+
+Values that consist of a single scalar (`bigintref`, `textref`, `blobref`, `bool`)
+MUST be passed and returned directly.
+
+Scalars MUST NOT be wrapped in pack tuples.
+
+Pack encoding (tag + version) is reserved for structured values only.
+
 ---
 
 ## 3. Domains and type tags
@@ -77,6 +86,19 @@ Decoders SHOULD support:
 
 - the exact version they implement,
 - and MAY support an explicit range of versions if documented.
+
+## Internal representation
+
+Tag and version headers are **boundary-level constructs only**.
+
+Structured values MUST be validated and decoded at the contract boundary
+using tagged, versioned tuples.
+
+Contracts MUST store and manipulate their internal state using **untagged
+positional tuples**.
+
+When returning structured values, contracts MUST re-encode internal data
+into the canonical tagged, versioned form.
 
 ---
 
@@ -199,7 +221,7 @@ Use an intent tuple for executable actions/messages:
 - `3: method` (textref)
 - `4: args` (packref)
 - `5: nonce` (bigintref, optional but recommended)
-`]`
+  `]`
 
 ### 8.2 View tuples
 

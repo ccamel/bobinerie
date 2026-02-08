@@ -26,6 +26,22 @@ This document defines the mandatory coding style and local workflow rules for Bo
 - Avoid boolean flags when separate functions express intent better.
 - Avoid abstractions unless reused at least twice.
 
+### Casing
+
+Rules are strict. Do not mix conventions.
+
+- Exported contract functions: `lower_snake_case`
+  - Examples: `init`, `update_policy`, `proposal`, `approve`, `execute`
+  - Do not use `get_` prefixes. Prefer direct names (example: `threshold()`).
+
+- Domain namespaces: `lower_snake_case` using a **singular noun** ending with `$` as the plural marker
+  - Examples: `address$`, `balance$`, `approval$`, `proposal$`, `session$`, `math$`
+
+- Local variables and private helpers: `lowerCamelCase` (AssemblyScript idiom)
+
+- Constants: `UPPER_SNAKE_CASE`
+  - Examples: `DOMAIN`, `POLICY_TAG`
+
 ## Namespaces and structure
 
 Use a domain-driven namespace layout.
@@ -40,12 +56,12 @@ Use a domain-driven namespace layout.
 
 Examples of domains:
 
-- `addresses` (identity, sessions, verification)
-- `balances`
-- `owner`
-- `allowances`
-- `config`
-- `metadata`
+- `address$` (identity, sessions, verification)
+- `balance$`
+- `owner$`
+- `allowance$`
+- `config$`
+- `metadata$`
 
 Rules:
 
@@ -60,6 +76,7 @@ Rules:
 - All data crossing a contract boundary MUST follow the Bobine Canonical Pack Encoding Specification specified in `bobine-cpes.md`.
 - Pack layouts are stable interfaces.
 - Ordering, arity, and types are explicit and fixed.
+- Tags use `bobine.<module>/<type>` where `<type>` is `lower_snake_case`.
 
 ## Public API
 
