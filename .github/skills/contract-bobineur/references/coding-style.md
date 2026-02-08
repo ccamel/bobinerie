@@ -67,9 +67,27 @@ Rules:
 
 - Contract API methods orchestrate domains.
   They must not implement storage details inline.
+- Contract API methods are thin controllers.
+  They must not implement business decisions, state transition logic, or multi-step mutation flows inline.
 - Storage access (`storage.get/set`) lives inside domain namespaces.
 - Keep domain namespaces focused.
   If a namespace starts to mix unrelated concerns, split it.
+
+Controller contract:
+
+- Exported methods may only:
+  - validate legitimacy (session/auth/context)
+  - adapt boundary inputs/outputs
+  - call domain operations
+- Exported methods must not:
+  - perform business branching beyond simple legitimacy gates
+  - coordinate storage-level mutation sequences directly
+  - encode domain workflows inline when a domain operation can own them
+
+Domain operation naming:
+
+- Use behavioral names for business operations (`update`, `execute`, `transfer`, `mint`, `burn`, `approve`).
+- Reserve storage verbs (`get`, `set`, `read`, `write`) for pure persistence helpers inside domains.
 
 ## Encoding rules
 
