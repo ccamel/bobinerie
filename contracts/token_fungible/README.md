@@ -6,7 +6,7 @@ A minimal fungible token module for Bobine, designed to be a boring, reliable bu
 
 ## Deployments
 
-- **garage-hazae41-bob0**: `da2ec9aa8b55a8a02fbf4743ebb5ed21c42005d094caa620f5ec54fc8040d25b`
+- **garage-hazae41-bob0**: `94048a29b26533637eda8fa9f53c6e1a66950b5f029c705adde9d1254da697eb`
 - **garage-ccamel-bob0**: `da2ec9aa8b55a8a02fbf4743ebb5ed21c42005d094caa620f5ec54fc8040d25b`
 
 <!-- DEPLOYMENTS:END -->
