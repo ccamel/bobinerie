@@ -390,6 +390,16 @@ namespace policy$ {
   export function set(canonical: packref): void {
     storage.set(key$.policy(), canonical)
   }
+
+  export function init(input: packref): void {
+    assertUninitialized()
+    set(canonicalize(input))
+  }
+
+  export function update(input: packref): void {
+    execution_context$.assertCanUpdatePolicy(input)
+    set(canonicalize(input))
+  }
 }
 
 namespace call$ {
@@ -506,6 +516,128 @@ namespace proposal$ {
 
   export function signers(tuple: packref): packref {
     return packs.get<packref>(tuple, 8)
+  }
+
+  function rewrite(
+    proposalId: blobref,
+    tuple: packref,
+    nextApprovalsCount: bigintref,
+    nextStatus: bigintref,
+  ): void {
+    set(
+      proposalId,
+      create(
+        proposalId,
+        call(tuple),
+        proposer(tuple),
+        nextApprovalsCount,
+        nextStatus,
+        threshold(tuple),
+        signers(tuple),
+      ),
+    )
+  }
+
+  export function propose(signer: textref, callInput: packref): blobref {
+    const currentPolicy = policy$.getTuple()
+
+    assertSigner(policy$.signers(currentPolicy), signer)
+    call$.assertCanonical(callInput)
+
+    const nonce = id$.nextProposalNonce()
+    const proposalId = id$.proposal(signer, callInput, nonce)
+
+    if (has(proposalId)) fail("Proposal already exists")
+
+    set(
+      proposalId,
+      create(
+        proposalId,
+        callInput,
+        signer,
+        bigints.one(),
+        STATUS_OPEN(),
+        policy$.threshold(currentPolicy),
+        policy$.signers(currentPolicy),
+      ),
+    )
+    approval$.set(proposalId, signer, true)
+
+    return proposalId
+  }
+
+  export function approve(proposalId: blobref, signer: textref): bigintref {
+    const tuple = get(proposalId)
+
+    if (!bigints.eq(status(tuple), STATUS_OPEN())) fail("Proposal is not open")
+
+    assertSigner(signers(tuple), signer)
+
+    if (approval$.has(proposalId, signer)) return approvalsCount(tuple)
+
+    approval$.set(proposalId, signer, true)
+
+    const updatedApprovalCount = bigints.inc(approvalsCount(tuple))
+
+    rewrite(proposalId, tuple, updatedApprovalCount, status(tuple))
+
+    return updatedApprovalCount
+  }
+
+  export function execute(proposalId: blobref): packref {
+    const tuple = get(proposalId)
+    const currentStatus = status(tuple)
+
+    if (bigints.eq(currentStatus, STATUS_EXECUTED()))
+      return execution_result$.get(proposalId)
+    if (bigints.eq(currentStatus, STATUS_CLOSED())) fail("Proposal is closed")
+
+    if (bigints.lt(approvalsCount(tuple), threshold(tuple)))
+      fail("Insufficient approvals")
+
+    const callInput = call(tuple)
+
+    call$.assertCanonical(callInput)
+
+    execution_context$.setActive(proposalId)
+
+    const result = modules.call(
+      call$.module(callInput),
+      call$.method(callInput),
+      call$.params(callInput),
+    )
+
+    execution_context$.clearActive()
+
+    rewrite(proposalId, tuple, approvalsCount(tuple), STATUS_EXECUTED())
+    execution_result$.set(proposalId, result)
+
+    return result
+  }
+
+  export function close(proposalId: blobref, signer: textref): void {
+    const tuple = get(proposalId)
+
+    assertSigner(signers(tuple), signer)
+
+    if (!bigints.eq(status(tuple), STATUS_OPEN())) fail("Proposal is not open")
+
+    rewrite(proposalId, tuple, approvalsCount(tuple), STATUS_CLOSED())
+  }
+
+  export function view(proposalKey: blobref): packref {
+    const tuple = get(proposalKey)
+
+    return packs.create8(
+      DOMAIN_TAG("proposal_view"),
+      VERSION(),
+      proposalId(tuple),
+      call(tuple),
+      proposer(tuple),
+      approvalsCount(tuple),
+      approval$.listFromProposal(tuple),
+      status(tuple),
+    )
   }
 }
 
@@ -644,11 +776,7 @@ namespace execution_result$ {
  * - [3] signers (pack list of textref)
  */
 export function init(policyInput: packref): void {
-  policy$.assertUninitialized()
-
-  const canonicalPolicy = policy$.canonicalize(policyInput)
-
-  policy$.set(canonicalPolicy)
+  policy$.init(policyInput)
 }
 
 /**
@@ -679,31 +807,7 @@ export function policy(): packref {
  */
 export function propose(session: packref, call: packref): blobref {
   const caller = session$.assert(session)
-  const currentPolicy = policy$.getTuple()
-
-  assertSigner(policy$.signers(currentPolicy), caller)
-
-  call$.assertCanonical(call)
-
-  const nonce = id$.nextProposalNonce()
-  const proposalId = id$.proposal(caller, call, nonce)
-
-  if (proposal$.has(proposalId)) fail("Proposal already exists")
-
-  const proposal = proposal$.create(
-    proposalId,
-    call,
-    caller,
-    bigints.one(),
-    STATUS_OPEN(),
-    policy$.threshold(currentPolicy),
-    policy$.signers(currentPolicy),
-  )
-
-  proposal$.set(proposalId, proposal)
-  approval$.set(proposalId, caller, true)
-
-  return proposalId
+  return proposal$.propose(caller, call)
 }
 
 /**
@@ -717,34 +821,7 @@ export function propose(session: packref, call: packref): blobref {
  */
 export function approve(session: packref, proposalId: blobref): bigintref {
   const caller = session$.assert(session)
-  const proposal = proposal$.get(proposalId)
-
-  if (!bigints.eq(proposal$.status(proposal), STATUS_OPEN()))
-    fail("Proposal is not open")
-
-  assertSigner(proposal$.signers(proposal), caller)
-
-  if (approval$.has(proposalId, caller))
-    return proposal$.approvalsCount(proposal)
-
-  approval$.set(proposalId, caller, true)
-
-  const updatedApprovalCount = bigints.inc(proposal$.approvalsCount(proposal))
-
-  proposal$.set(
-    proposalId,
-    proposal$.create(
-      proposalId,
-      proposal$.call(proposal),
-      proposal$.proposer(proposal),
-      updatedApprovalCount,
-      proposal$.status(proposal),
-      proposal$.threshold(proposal),
-      proposal$.signers(proposal),
-    ),
-  )
-
-  return updatedApprovalCount
+  return proposal$.approve(proposalId, caller)
 }
 
 /**
@@ -757,51 +834,7 @@ export function approve(session: packref, proposalId: blobref): bigintref {
  * @returns Result of the executed call.
  */
 export function execute(proposalId: blobref): packref {
-  const proposal = proposal$.get(proposalId)
-  const status = proposal$.status(proposal)
-
-  if (bigints.eq(status, STATUS_EXECUTED()))
-    return execution_result$.get(proposalId)
-  if (bigints.eq(status, STATUS_CLOSED())) fail("Proposal is closed")
-
-  if (
-    bigints.lt(
-      proposal$.approvalsCount(proposal),
-      proposal$.threshold(proposal),
-    )
-  )
-    fail("Insufficient approvals")
-
-  const call = proposal$.call(proposal)
-
-  call$.assertCanonical(call)
-
-  execution_context$.setActive(proposalId)
-
-  const result = modules.call(
-    call$.module(call),
-    call$.method(call),
-    call$.params(call),
-  )
-
-  execution_context$.clearActive()
-
-  proposal$.set(
-    proposalId,
-    proposal$.create(
-      proposalId,
-      call,
-      proposal$.proposer(proposal),
-      proposal$.approvalsCount(proposal),
-      STATUS_EXECUTED(),
-      proposal$.threshold(proposal),
-      proposal$.signers(proposal),
-    ),
-  )
-
-  execution_result$.set(proposalId, result)
-
-  return result
+  return proposal$.execute(proposalId)
 }
 
 /**
@@ -814,25 +847,7 @@ export function execute(proposalId: blobref): packref {
  */
 export function close(session: packref, proposalId: blobref): void {
   const caller = session$.assert(session)
-  const proposal = proposal$.get(proposalId)
-
-  assertSigner(proposal$.signers(proposal), caller)
-
-  if (!bigints.eq(proposal$.status(proposal), STATUS_OPEN()))
-    fail("Proposal is not open")
-
-  proposal$.set(
-    proposalId,
-    proposal$.create(
-      proposalId,
-      proposal$.call(proposal),
-      proposal$.proposer(proposal),
-      proposal$.approvalsCount(proposal),
-      STATUS_CLOSED(),
-      proposal$.threshold(proposal),
-      proposal$.signers(proposal),
-    ),
-  )
+  proposal$.close(proposalId, caller)
 }
 
 /**
@@ -853,18 +868,7 @@ export function close(session: packref, proposalId: blobref): void {
  * @returns Canonical proposal view tuple.
  */
 export function proposal(proposalId: blobref): packref {
-  const record = proposal$.get(proposalId)
-
-  return packs.create8(
-    DOMAIN_TAG("proposal_view"),
-    VERSION(),
-    proposal$.proposalId(record),
-    proposal$.call(record),
-    proposal$.proposer(record),
-    proposal$.approvalsCount(record),
-    approval$.listFromProposal(record),
-    proposal$.status(record),
-  )
+  return proposal$.view(proposalId)
 }
 
 /**
@@ -877,9 +881,5 @@ export function proposal(proposalId: blobref): packref {
  * @param policyInput New policy tuple.
  */
 export function update_policy(policyInput: packref): void {
-  execution_context$.assertCanUpdatePolicy(policyInput)
-
-  const canonical = policy$.canonicalize(policyInput)
-
-  policy$.set(canonical)
+  policy$.update(policyInput)
 }

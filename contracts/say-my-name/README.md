@@ -23,7 +23,7 @@ This contract stores a name in its persistent storage. Each time you call it:
 
 <!-- METHODS:START -->
 
-### 🔹 `sayMyName(name)`
+### 🔹 `say_my_name(name)`
 
 Say your name and the contract will remember it.
 

@@ -152,6 +152,74 @@ namespace supply$ {
   }
 }
 
+namespace module$ {
+  export function assertSelf(creator: textref): void {
+    const module = blobs.toBase16(
+      sha256.digest(
+        blobs.encode(
+          packs.create2(modules.load(modules.self()), packs.create1(creator)),
+        ),
+      ),
+    )
+
+    if (!texts.equals(modules.self(), module)) throw new Error("Invalid")
+  }
+}
+
+namespace token$ {
+  export function init(creator: textref): void {
+    module$.assertSelf(creator)
+    owner$.set(creator)
+  }
+
+  function assertOwner(caller: textref): void {
+    if (!texts.equals(caller, owner$.get())) throw new Error("Unauthorized")
+  }
+
+  export function mint(
+    caller: textref,
+    target: textref,
+    amount: bigintref,
+  ): void {
+    assertOwner(caller)
+    balance$.credit(target, amount)
+    supply$.inc(amount)
+  }
+
+  export function approve(
+    owner: textref,
+    spender: textref,
+    amount: bigintref,
+  ): void {
+    allowance$.approve(owner, spender, amount)
+  }
+
+  export function transferFrom(
+    spender: textref,
+    owner: textref,
+    target: textref,
+    amount: bigintref,
+  ): void {
+    allowance$.spend(owner, spender, amount)
+    balance$.debit(owner, amount)
+    balance$.credit(target, amount)
+  }
+
+  export function burn(owner: textref, amount: bigintref): void {
+    balance$.debit(owner, amount)
+    supply$.dec(amount)
+  }
+
+  export function transfer(
+    owner: textref,
+    target: textref,
+    amount: bigintref,
+  ): void {
+    balance$.debit(owner, amount)
+    balance$.credit(target, amount)
+  }
+}
+
 /**
  * Clone this module (same code) and set `creator` as the new module creator.
  *
@@ -175,17 +243,7 @@ export function clone(creator: textref): textref {
  * @throws Error("Invalid") if the deterministic self-check fails.
  */
 export function init(creator: textref): void {
-  const module = blobs.toBase16(
-    sha256.digest(
-      blobs.encode(
-        packs.create2(modules.load(modules.self()), packs.create1(creator)),
-      ),
-    ),
-  )
-
-  if (!texts.equals(modules.self(), module)) throw new Error("Invalid")
-
-  owner$.set(creator)
+  token$.init(creator)
 }
 
 /**
@@ -216,11 +274,7 @@ export function mint(
   amount: bigintref,
 ): void {
   const caller = session$.assert(session)
-
-  if (!texts.equals(caller, owner$.get())) throw new Error("Unauthorized")
-
-  balance$.credit(target, amount)
-  supply$.inc(amount)
+  token$.mint(caller, target, amount)
 }
 
 /**
@@ -262,8 +316,7 @@ export function approve(
   amount: bigintref,
 ): void {
   const caller = session$.assert(session)
-
-  allowance$.approve(caller, spender, amount)
+  token$.approve(caller, spender, amount)
 }
 
 /**
@@ -287,10 +340,7 @@ export function transfer_from(
   amount: bigintref,
 ): void {
   const spender = session$.assert(session)
-
-  allowance$.spend(owner, spender, amount)
-  balance$.debit(owner, amount)
-  balance$.credit(target, amount)
+  token$.transferFrom(spender, owner, target, amount)
 }
 
 /**
@@ -306,9 +356,7 @@ export function transfer_from(
  */
 export function burn(session: packref, amount: bigintref): void {
   const caller = session$.assert(session)
-
-  balance$.debit(caller, amount)
-  supply$.dec(amount)
+  token$.burn(caller, amount)
 }
 
 /**
@@ -329,7 +377,5 @@ export function transfer(
   amount: bigintref,
 ): void {
   const caller = session$.assert(session)
-
-  balance$.debit(caller, amount)
-  balance$.credit(target, amount)
+  token$.transfer(caller, target, amount)
 }

@@ -275,6 +275,64 @@ namespace blessing$ {
     const threshold = 1 << (8 - k)
     return first < threshold
   }
+
+  export function bless(target: textref): textref {
+    const seed = seed$.read(target)
+    if (!seed) throw new Error("Sigil not minted")
+    const seedText = texts.toString(seed)
+    if (seedText.length === 0) throw new Error("Sigil not minted")
+
+    const already = bless_flag$.read(target)
+    if (already) return texts.fromString("blessed")
+
+    const next = bless_count$.increment(target)
+    const nextRef = bigints.toBase10(next)
+
+    const mix = bless_mix$.read(target)
+    const mixRef = mix ? mix : EMPTY_TEXT()
+
+    const payload = blobs.encode(packs.create3(seed, nextRef, mixRef))
+    const digest = canonicalHash("bless_mix", payload)
+    const digestHexRef = blobs.toBase16(digest)
+    bless_mix$.write(target, digestHexRef)
+
+    const digestHex = texts.toString(digestHexRef)
+    const k = difficulty(seedText)
+    const hitRoll = hit(digestHex, k)
+
+    if (hitRoll) {
+      bless_flag$.write(target, true)
+      return texts.fromString("blessed")
+    }
+
+    return texts.fromString("ok")
+  }
+
+  export function vibes(target: textref): packref {
+    const count = bless_count$.read(target)
+    const countText = bigints.toBase10(count)
+
+    const blessed = bless_flag$.read(target)
+    const blessedText = blessed ? ONE_TEXT() : ZERO_TEXT()
+
+    const seed = seed$.read(target)
+    let k: i32 = 0
+
+    if (seed) {
+      const seedText = texts.toString(seed)
+      if (seedText.length > 0) k = difficulty(seedText)
+    }
+
+    const kText = texts.fromString(k.toString())
+
+    return packs.create5(
+      DOMAIN_TAG("vibes_view"),
+      VERSION(),
+      countText,
+      blessedText,
+      kText,
+    )
+  }
 }
 
 namespace render$ {
@@ -679,6 +737,48 @@ namespace avatar$ {
     seed$.write(address, seed)
     return seed
   }
+
+  export function render(address: textref): textref {
+    const seed = seed$.read(address)
+    if (!seed) return EMPTY_TEXT()
+
+    const seedText = texts.toString(seed)
+    if (seedText.length === 0) return EMPTY_TEXT()
+
+    const tag = tag$.read(address)
+    const tagText = tag ? texts.toString(tag) : ""
+
+    const burnCount = burn$.read(address)
+    const burnsText = texts.toString(bigints.toBase10(burnCount))
+    const blessCount = bless_count$.read(address)
+    const blessCountText = texts.toString(bigints.toBase10(blessCount))
+    const blessed = bless_flag$.read(address)
+
+    return texts.fromString(
+      render$.svg(seedText, tagText, burnsText, blessCountText, blessed),
+    )
+  }
+
+  export function mint(address: textref, tag: textref): textref {
+    retrieve(address)
+    tag$.write(address, tag)
+    return render(address)
+  }
+
+  export function burn(address: textref): bigintref {
+    const next = burn$.increment(address)
+    seed$.clear(address)
+    tag$.clear(address)
+    bless_count$.reset(address)
+    bless_mix$.clear(address)
+    bless_flag$.clear(address)
+    return next
+  }
+
+  export function reroll(address: textref, tag: textref): textref {
+    burn(address)
+    return mint(address, tag)
+  }
 }
 
 /**
@@ -698,23 +798,7 @@ export function address(session: packref): textref {
  * @returns SVG string as textref
  */
 export function get(address: textref): textref {
-  const seed = seed$.read(address)
-  if (!seed) return EMPTY_TEXT()
-
-  const seedText = texts.toString(seed)
-  if (seedText.length === 0) return EMPTY_TEXT()
-
-  const tag = tag$.read(address)
-  const tagText = tag ? texts.toString(tag) : ""
-
-  const burnCount = burn$.read(address)
-  const burnsText = texts.toString(bigints.toBase10(burnCount))
-  const blessCount = bless_count$.read(address)
-  const blessCountText = texts.toString(bigints.toBase10(blessCount))
-  const blessed = bless_flag$.read(address)
-  return texts.fromString(
-    render$.svg(seedText, tagText, burnsText, blessCountText, blessed),
-  )
+  return avatar$.render(address)
 }
 
 /**
@@ -726,9 +810,7 @@ export function get(address: textref): textref {
  */
 export function mint(session: packref, tag: textref): textref {
   const address = session$.assert(session)
-  avatar$.retrieve(address)
-  tag$.write(address, tag)
-  return get(address)
+  return avatar$.mint(address, tag)
 }
 
 /**
@@ -739,13 +821,7 @@ export function mint(session: packref, tag: textref): textref {
  */
 export function burn(session: packref): bigintref {
   const address = session$.assert(session)
-  const next = burn$.increment(address)
-  seed$.clear(address)
-  tag$.clear(address)
-  bless_count$.reset(address)
-  bless_mix$.clear(address)
-  bless_flag$.clear(address)
-  return next
+  return avatar$.burn(address)
 }
 
 /**
@@ -756,8 +832,8 @@ export function burn(session: packref): bigintref {
  * @returns SVG string as textref
  */
 export function reroll(session: packref, tag: textref): textref {
-  burn(session)
-  return mint(session, tag)
+  const address = session$.assert(session)
+  return avatar$.reroll(address, tag)
 }
 
 /**
@@ -767,35 +843,7 @@ export function reroll(session: packref, tag: textref): textref {
  * @returns "blessed" if the roll hits, otherwise "ok"
  */
 export function bless(target: textref): textref {
-  const seed = seed$.read(target)
-  if (!seed) throw new Error("Sigil not minted")
-  const seedText = texts.toString(seed)
-  if (seedText.length === 0) throw new Error("Sigil not minted")
-
-  const already = bless_flag$.read(target)
-  if (already) return texts.fromString("blessed")
-
-  const next = bless_count$.increment(target)
-  const nextRef = bigints.toBase10(next)
-
-  const mix = bless_mix$.read(target)
-  const mixRef = mix ? mix : EMPTY_TEXT()
-
-  const payload = blobs.encode(packs.create3(seed, nextRef, mixRef))
-  const digest = canonicalHash("bless_mix", payload)
-  const digestHexRef = blobs.toBase16(digest)
-  bless_mix$.write(target, digestHexRef)
-
-  const digestHex = texts.toString(digestHexRef)
-  const k = blessing$.difficulty(seedText)
-  const hit = blessing$.hit(digestHex, k)
-
-  if (hit) {
-    bless_flag$.write(target, true)
-    return texts.fromString("blessed")
-  }
-
-  return texts.fromString("ok")
+  return blessing$.bless(target)
 }
 
 /**
@@ -805,27 +853,5 @@ export function bless(target: textref): textref {
  * @returns ["bobine.sigil/vibes_view", 1, count_base10, blessed_flag ("1"|"0"), difficulty_bits_base10]
  */
 export function vibes(target: textref): packref {
-  const count = bless_count$.read(target)
-  const countText = bigints.toBase10(count)
-
-  const blessed = bless_flag$.read(target)
-  const blessedText = blessed ? ONE_TEXT() : ZERO_TEXT()
-
-  const seed = seed$.read(target)
-  let k: i32 = 0
-
-  if (seed) {
-    const seedText = texts.toString(seed)
-    if (seedText.length > 0) k = blessing$.difficulty(seedText)
-  }
-
-  const kText = texts.fromString(k.toString())
-
-  return packs.create5(
-    DOMAIN_TAG("vibes_view"),
-    VERSION(),
-    countText,
-    blessedText,
-    kText,
-  )
+  return blessing$.vibes(target)
 }

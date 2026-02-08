@@ -17,9 +17,21 @@ namespace name$ {
   }
 }
 
+namespace greeting$ {
+  export function say(name: textref): textref {
+    const previous = name$.read()
+    console.log(texts.fromString(`Hello, ${texts.toString(name)}!`))
+    name$.write(name)
+    return previous
+  }
+}
+
+/**
+ * Say your name and the contract will remember it.
+ *
+ * @param name Your name as a text string
+ * @returns The previously stored name, or `null` if this is the first call
+ */
 export function say_my_name(name: textref): textref {
-  const previous = name$.read()
-  console.log(texts.fromString(`Hello, ${texts.toString(name)}!`))
-  name$.write(name)
-  return previous
+  return greeting$.say(name)
 }
