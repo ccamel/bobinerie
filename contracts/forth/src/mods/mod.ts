@@ -5,9 +5,12 @@ import {
   modules,
   packs,
   sha256,
+  storage,
   textref,
   texts,
 } from "@hazae41/stdbob"
+
+const DOMAIN = "bobine.forth"
 
 namespace selfcheck$ {
   export function expected(creator: textref): textref {
@@ -25,6 +28,16 @@ namespace selfcheck$ {
 
     if (!texts.equals(modules.self(), module))
       throw new Error("Invalid module creator")
+  }
+}
+
+namespace hash$ {
+  export function source(program: textref): textref {
+    return blobs.toBase16(sha256.digest(blobs.encode(program)))
+  }
+
+  export function blob(blob: blobref): textref {
+    return blobs.toBase16(sha256.digest(blobs.encode(blob)))
   }
 }
 
@@ -278,9 +291,9 @@ namespace compiler$ {
 
     constructor(source: string) {
       this.source = source
-      this.constants = new Array<string>()
+      this.constants = [] as string[]
       this.constantIndexes = new Map<string, i32>()
-      this.code = new Array<u8>()
+      this.code = [] as u8[]
       this.awaitingDefinitionName = false
       this.inDefinition = false
       this.mainSeen = 0
@@ -411,8 +424,7 @@ namespace compiler$ {
     name: string,
     patchOffset: i32,
   ): void {
-    if (!state.pendingCalls.has(name))
-      state.pendingCalls.set(name, new Array<i32>())
+    if (!state.pendingCalls.has(name)) state.pendingCalls.set(name, [] as i32[])
     state.pendingCalls.get(name).push(patchOffset)
   }
 
@@ -571,10 +583,58 @@ namespace compiler$ {
   }
 }
 
+namespace program$ {
+  const PROGRAM_BLOB_KEY = (): textref =>
+    texts.fromString(`${DOMAIN}/state/program_blob`)
+  const SOURCE_HASH_KEY = (): textref =>
+    texts.fromString(`${DOMAIN}/state/source_hash`)
+  const BLOB_HASH_KEY = (): textref =>
+    texts.fromString(`${DOMAIN}/state/blob_hash`)
+
+  export function writeBlob(blob: blobref): void {
+    storage.set(PROGRAM_BLOB_KEY(), blob)
+  }
+
+  export function writeSourceHash(hash: textref): void {
+    storage.set(SOURCE_HASH_KEY(), hash)
+  }
+
+  export function writeBlobHash(hash: textref): void {
+    storage.set(BLOB_HASH_KEY(), hash)
+  }
+
+  export function readSourceHash(): textref {
+    const found = storage.get(SOURCE_HASH_KEY())
+    if (!found) return null
+    return packs.get<textref>(found, 0)
+  }
+
+  export function readBlobHash(): textref {
+    const found = storage.get(BLOB_HASH_KEY())
+    if (!found) return null
+    return packs.get<textref>(found, 0)
+  }
+}
+
 namespace forth$ {
   export function init(creator: textref, program: textref): void {
     selfcheck$.assert(creator)
-    compiler$.compile(program)
+
+    const blob = compiler$.compile(program)
+    const sourceHash = hash$.source(program)
+    const blobHash = hash$.blob(blob)
+
+    program$.writeBlob(blob)
+    program$.writeSourceHash(sourceHash)
+    program$.writeBlobHash(blobHash)
+  }
+
+  export function sourceHash(): textref {
+    return program$.readSourceHash()
+  }
+
+  export function blobHash(): textref {
+    return program$.readBlobHash()
   }
 }
 
@@ -609,4 +669,22 @@ export function clone(creator: textref): textref {
  */
 export function init(creator: textref, program: textref): void {
   forth$.init(creator, program)
+}
+
+/**
+ * Get the hash of the source program exactly as provided to `init`.
+ *
+ * @returns Hex-encoded source hash, or `null` if not initialized.
+ */
+export function source_hash(): textref {
+  return forth$.sourceHash()
+}
+
+/**
+ * Get the hash of the canonical compiled blob.
+ *
+ * @returns Hex-encoded blob hash, or `null` if not initialized.
+ */
+export function blob_hash(): textref {
+  return forth$.blobHash()
 }
