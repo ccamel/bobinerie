@@ -11,7 +11,7 @@ import {
   texts,
 } from "@hazae41/stdbob"
 
-const DOMAIN = "bobine.token_fungible"
+const DOMAIN = "bobine.token-fungible"
 
 namespace session$ {
   const VERIFY_METHOD = (): textref => texts.fromString("verify")
@@ -48,6 +48,10 @@ namespace owner$ {
 
   export function set(address: textref): void {
     storage.set(OWNER_KEY(), address)
+  }
+
+  export function assertUninitialized(): void {
+    if (storage.get(OWNER_KEY())) throw new Error("Already initialized")
   }
 }
 
@@ -152,23 +156,29 @@ namespace supply$ {
   }
 }
 
-namespace module$ {
-  export function assertSelf(creator: textref): void {
-    const module = blobs.toBase16(
+namespace selfcheck$ {
+  export function expected(creator: textref): textref {
+    return blobs.toBase16(
       sha256.digest(
         blobs.encode(
           packs.create2(modules.load(modules.self()), packs.create1(creator)),
         ),
       ),
     )
+  }
 
-    if (!texts.equals(modules.self(), module)) throw new Error("Invalid")
+  export function assert(creator: textref): void {
+    const module = expected(creator)
+
+    if (!texts.equals(modules.self(), module))
+      throw new Error("Invalid module creator")
   }
 }
 
 namespace token$ {
   export function init(creator: textref): void {
-    module$.assertSelf(creator)
+    owner$.assertUninitialized()
+    selfcheck$.assert(creator)
     owner$.set(creator)
   }
 
@@ -240,7 +250,7 @@ export function clone(creator: textref): textref {
  * the code + creator tuple, then stores the owner.
  *
  * @param creator The address that becomes the token owner (allowed to mint).
- * @throws Error("Invalid") if the deterministic self-check fails.
+ * @throws Error("Invalid module creator") if the deterministic self-check fails.
  */
 export function init(creator: textref): void {
   token$.init(creator)

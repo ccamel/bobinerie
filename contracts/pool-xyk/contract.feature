@@ -132,14 +132,14 @@ Feature: Pool XYK Contract
   Scenario: Add liquidity mints LP and updates reserves
     Given I have keys for "Alice"
     And I have keys for "Bob"
-    And I deploy contract "token_fungible"
-    When I call "token_fungible" method "clone" with param "address:Alice"
+    And I deploy contract "token-fungible"
+    When I call "token-fungible" method "clone" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_a"
     When I call "$token_a" method "init" with param "address:Alice"
     Then the execution should succeed
-    When I call "token_fungible" method "clone" with param "address:Bob"
+    When I call "token-fungible" method "clone" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_b"
@@ -197,14 +197,14 @@ Feature: Pool XYK Contract
   Scenario: Remove liquidity burns LP and returns tokens
     Given I have keys for "Alice"
     And I have keys for "Bob"
-    And I deploy contract "token_fungible"
-    When I call "token_fungible" method "clone" with param "address:Alice"
+    And I deploy contract "token-fungible"
+    When I call "token-fungible" method "clone" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_a"
     When I call "$token_a" method "init" with param "address:Alice"
     Then the execution should succeed
-    When I call "token_fungible" method "clone" with param "address:Bob"
+    When I call "token-fungible" method "clone" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_b"
@@ -266,14 +266,14 @@ Feature: Pool XYK Contract
   Scenario: Swap exact in updates reserves and returns output
     Given I have keys for "Alice"
     And I have keys for "Bob"
-    And I deploy contract "token_fungible"
-    When I call "token_fungible" method "clone" with param "address:Alice"
+    And I deploy contract "token-fungible"
+    When I call "token-fungible" method "clone" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_a"
     When I call "$token_a" method "init" with param "address:Alice"
     Then the execution should succeed
-    When I call "token_fungible" method "clone" with param "address:Bob"
+    When I call "token-fungible" method "clone" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_b"
@@ -333,14 +333,14 @@ Feature: Pool XYK Contract
   Scenario: Swap exact in fails when min_out is too high
     Given I have keys for "Alice"
     And I have keys for "Bob"
-    And I deploy contract "token_fungible"
-    When I call "token_fungible" method "clone" with param "address:Alice"
+    And I deploy contract "token-fungible"
+    When I call "token-fungible" method "clone" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_a"
     When I call "$token_a" method "init" with param "address:Alice"
     Then the execution should succeed
-    When I call "token_fungible" method "clone" with param "address:Bob"
+    When I call "token-fungible" method "clone" with param "address:Bob"
     Then the execution should succeed
     And the returned value should be a "string"
     And I remember last returned value as "token_b"

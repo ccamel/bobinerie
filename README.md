@@ -69,10 +69,10 @@ Available now:
 <p>》<a href="contracts/sigil/README.md">open doc</a></p>
 </td>
 <td width="50%" valign="top">
-<h3><a href="contracts/token_fungible/README.md">Token Fungible</a></h3>
+<h3><a href="contracts/token-fungible/README.md">Token Fungible</a></h3>
 <p><strong>A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).</strong></p>
 <p><img alt="defi" src="https://img.shields.io/badge/defi-6C63FF" /></p>
-<p>》<a href="contracts/token_fungible/README.md">open doc</a></p>
+<p>》<a href="contracts/token-fungible/README.md">open doc</a></p>
 </td>
 </tr>
 </table>

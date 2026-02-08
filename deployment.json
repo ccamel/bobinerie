@@ -11,7 +11,7 @@
         "sigil": {
           "address": "9b633a265a4adefcee7baf34874bf10e96cc85f8a807a992ce9daed7074b017e"
         },
-        "token_fungible": {
+        "token-fungible": {
           "address": "94048a29b26533637eda8fa9f53c6e1a66950b5f029c705adde9d1254da697eb"
         },
         "pool-xyk": {
@@ -33,7 +33,7 @@
         "sigil": {
           "address": "9b633a265a4adefcee7baf34874bf10e96cc85f8a807a992ce9daed7074b017e"
         },
-        "token_fungible": {
+        "token-fungible": {
           "address": "94048a29b26533637eda8fa9f53c6e1a66950b5f029c705adde9d1254da697eb"
         },
         "pool-xyk": {
