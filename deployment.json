@@ -16,6 +16,9 @@
         },
         "pool-xyk": {
           "address": "360a1f069271b93fbd8eb62df02d245cdacf0330813ea7a7c7e123f42ce1f678"
+        },
+        "multisig": {
+          "address": "a424686ac5d7a3f5afafa0746070d3373470a85250ae2697c28fa889d222631e"
         }
       }
     },
