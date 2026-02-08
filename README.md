@@ -35,6 +35,9 @@ Available now:
 - **[counter](contracts/counter/README.md)** ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
   > Per-account counter with Ed25519 session authentication.
 
+- **[multisig](contracts/multisig/README.md)** ![governance](https://img.shields.io/badge/governance-FF6B35)
+  > Threshold-based authorization contract for Bobine call execution.
+
 - **[pool-xyk](contracts/pool-xyk/README.md)** ![defi](https://img.shields.io/badge/defi-6C63FF)
   > XYK (constant-product) AMM pool for two fungible tokens: add/remove liquidity, swap, fee in bps.
 
