@@ -3,22 +3,22 @@
     "garage-hazae41-bob0": {
       "contracts": {
         "counter": {
-          "address": "c6f1f6552341086e02553424d60534568b90353a766ed924712d4d8576577f7e"
+          "address": "378407ab5ff8fba8b0b2fc5c3912c20d3e431ab16805967cdf26358a8f0cf61e"
         },
         "say-my-name": {
-          "address": "49ce664357bd4a3c90ac47ae63441ceff70e22d3c3e530f593b8f32770fcdbc6"
+          "address": "d9fb78a305f52edbb065318a7c5681358559c8a56b0031f4a97198267be6df89"
         },
         "sigil": {
-          "address": "17496dccca6b679db63719bbda2518564d3057f29ffe95c6af03028fd96630a5"
+          "address": "9b633a265a4adefcee7baf34874bf10e96cc85f8a807a992ce9daed7074b017e"
         },
         "token_fungible": {
-          "address": "da2ec9aa8b55a8a02fbf4743ebb5ed21c42005d094caa620f5ec54fc8040d25b"
+          "address": "94048a29b26533637eda8fa9f53c6e1a66950b5f029c705adde9d1254da697eb"
         },
         "pool-xyk": {
-          "address": "360a1f069271b93fbd8eb62df02d245cdacf0330813ea7a7c7e123f42ce1f678"
+          "address": "d9a00d0342335b7b302460d2b174940202b9785abe3b43a61287202fbf141452"
         },
         "multisig": {
-          "address": "a424686ac5d7a3f5afafa0746070d3373470a85250ae2697c28fa889d222631e"
+          "address": "83b60b6281355df532de9ebba332a4abd76456764fc1b8dd1cebf12bc872c347"
         }
       }
     },
