@@ -19,7 +19,7 @@ const CPES_VERSION_U32: u32 = 1
 const ZERO_TEXT = (): textref => texts.fromString("0")
 const ONE_TEXT = (): textref => texts.fromString("1")
 const EMPTY_TEXT = (): textref => texts.fromString("")
-const VERSION = (): bigintref => bigints.inc(bigints.zero())
+const VERSION = (): bigintref => bigints.inc(bigints.one())
 const DOMAIN_TAG = (suffix: string): textref =>
   texts.fromString(`${DOMAIN}/${suffix}`)
 const ZERO_SEPARATOR = (): blobref => {
