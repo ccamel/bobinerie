@@ -5,9 +5,8 @@ Feature: Counter Contract
     And I can only do so through an authenticated call (capability) for my abstract account
 
   Background:
-    Given a prepackaged contract "counter"
-    And a produced contract "counter" with random salt
-    And a produced fixture contract "ed25519"
+    Given I deploy contract "counter"
+    And I deploy contract "ed25519"
     And I use auth module "ed25519"
 
   Scenario: Counter lifecycle for one user

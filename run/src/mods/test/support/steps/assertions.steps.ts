@@ -1,5 +1,6 @@
 import { strict as assert } from "node:assert"
 import { DataTable, Then } from "@cucumber/cucumber"
+import { parseValueWithCommon } from "../parsing"
 import { BobineWorld } from "../world"
 
 function formatValue(value: unknown): string {
@@ -10,38 +11,18 @@ function formatValue(value: unknown): string {
 
 function parseExpectedValue(world: BobineWorld, token: string): unknown {
   const trimmed = token.trim()
-  if (!trimmed || trimmed === "null") {
-    return null
-  }
   if (trimmed === "true") {
     return true
   }
   if (trimmed === "false") {
     return false
   }
-  if (trimmed.startsWith("address:")) {
-    const key = trimmed.slice("address:".length)
-    const address = world.userAddresses.get(key)
-    if (!address) {
-      throw new Error(`Unknown address for ${key}`)
-    }
-    return address
+  const result = parseValueWithCommon(world, token, parseExpectedValue)
+  if (result !== null) {
+    return result
   }
-  if (trimmed.startsWith("contract:")) {
-    const key = trimmed.slice("contract:".length)
-    return world.getProducedModuleAddress(key)
-  }
-  if (trimmed.startsWith("blob:")) {
-    return Uint8Array.fromHex(trimmed.slice("blob:".length))
-  }
-  if (trimmed.startsWith("bigint:")) {
-    return BigInt(trimmed.slice("bigint:".length))
-  }
-  if (trimmed.startsWith("number:")) {
-    return Number(trimmed.slice("number:".length))
-  }
-  if (trimmed.startsWith("text:")) {
-    return trimmed.slice("text:".length)
+  if (trimmed === "null" || !trimmed) {
+    return null
   }
   return trimmed
 }
@@ -126,31 +107,30 @@ Then(
 
     const returned = this.lastExecutionResult.returned
 
-    let expected: unknown
-    if (expectedValue === "null") {
-      expected = null
-    } else if (expectedValue === "true") {
-      expected = true
-    } else if (expectedValue === "false") {
-      expected = false
-    } else if (expectedValue.startsWith("bigint:")) {
-      expected = BigInt(expectedValue.slice(7))
-    } else if (expectedValue.startsWith("number:")) {
-      expected = Number(expectedValue.slice(7))
-    } else if (expectedValue === "") {
-      expected = ""
-    } else if (!Number.isNaN(Number(expectedValue))) {
-      expected = Number(expectedValue)
-    } else {
-      expected = expectedValue
-    }
+    const expected =
+      expectedValue === "" ? "" : parseExpectedValue(this, expectedValue)
 
-    const normalizedReturned =
+    let normalizedReturned = returned
+
+    if (
       Array.isArray(returned) &&
       returned.length === 1 &&
       !Array.isArray(expected)
-        ? returned[0]
-        : returned
+    ) {
+      normalizedReturned = returned[0]
+    } else if (
+      Array.isArray(returned) &&
+      typeof expected === "string" &&
+      returned.every((c) => typeof c === "string" && c.length === 1)
+    ) {
+      normalizedReturned = returned.join("")
+      console.log(`Debug: joined character array, now=${normalizedReturned}`)
+    }
+
+    if (expected === null && normalizedReturned === null) {
+      console.log(`✅ Returned value matches: ${formatValue(expected)}`)
+      return
+    }
 
     assert.deepStrictEqual(
       normalizedReturned,

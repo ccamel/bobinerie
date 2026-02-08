@@ -4,8 +4,7 @@ Feature: Say My Name Contract
   So that the contract remembers who I am
 
   Background:
-    Given a prepackaged contract "say-my-name"
-    And a produced contract "say-my-name" with random salt
+    Given I deploy contract "say-my-name"
 
   Scenario: Set my name for the first time
     When I call "say-my-name" method "sayMyName" with param "text:Alice"

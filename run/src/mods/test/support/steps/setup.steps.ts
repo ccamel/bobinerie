@@ -1,15 +1,20 @@
 import { execSync } from "node:child_process"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { Given } from "@cucumber/cucumber"
 import { Writable } from "@hazae41/binary"
 import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
 import { BobineWorld } from "../world"
 
-type ProduceOptions = {
-  successSuffix?: string
-  errorSuffix?: string
-  alreadyProducedLabel?: string
-  producedLabel?: string
+function getProjectContractSourcePath(contractName: string): string {
+  return `./contracts/${contractName}/src/mod.ts`
+}
+
+function getProjectContractWasmPath(contractName: string): string {
+  return `./contracts/${contractName}/out/mod.wasm`
+}
+
+function getFixtureWasmPath(contractName: string): string {
+  return `./run/src/mods/test/support/fixtures/${contractName}.wasm`
 }
 
 async function produceWasmModule(
@@ -17,14 +22,12 @@ async function produceWasmModule(
   name: string,
   wasmPath: string,
   salt: Packable[],
-  options: ProduceOptions = {},
 ): Promise<void> {
   const contract = world.getContract(name)
 
   if (contract.produced && contract.moduleAddress) {
-    const label = options.alreadyProducedLabel ?? "Contract"
     console.log(
-      `ℹ️  ${label} ${name} already produced at ${contract.moduleAddress}`,
+      `ℹ️ Contract ${name} already produced at ${contract.moduleAddress}`,
     )
     return
   }
@@ -55,93 +58,46 @@ async function produceWasmModule(
 
     world.markProduced(name, moduleAddress)
 
-    const label = options.producedLabel ?? "contract"
-    const suffix = options.successSuffix ? ` ${options.successSuffix}` : ""
-    console.log(`✅ Produced ${label}: ${name} at ${moduleAddress}${suffix}`)
+    console.log(`✅ Produced contract: ${name} at ${moduleAddress}`)
   } catch (error) {
-    const suffix = options.errorSuffix ? ` ${options.errorSuffix}` : ""
-    throw new Error(`Failed to produce ${name}${suffix}: ${error}`)
+    throw new Error(`Failed to produce ${name}: ${error}`)
   }
 }
 
-async function produceContractWithSalt(
-  world: BobineWorld,
-  contractName: string,
-  salt: Packable[],
-  options: ProduceOptions = {},
-): Promise<void> {
-  const wasmPath = `./contracts/${contractName}/out/mod.wasm`
-  await produceWasmModule(world, contractName, wasmPath, salt, options)
-}
-
 Given(
-  "a prepackaged contract {string}",
-  async function (this: BobineWorld, contractName: string) {
-    try {
-      execSync(`CONTRACT=${contractName} npm run contract:build`, {
-        cwd: process.cwd(),
-        stdio: "pipe",
-        encoding: "utf-8",
-      })
-
-      this.getContract(contractName)
-
-      console.log(`✅ Prepackaged contract: ${contractName}`)
-    } catch (error) {
-      throw new Error(`Failed to prepack contract ${contractName}: ${error}`)
-    }
-  },
-)
-
-Given(
-  "a produced contract {string}",
+  "I deploy contract {string}",
   { timeout: 60 * 1000 },
   async function (this: BobineWorld, contractName: string) {
-    await produceContractWithSalt(this, contractName, [])
-  },
-)
+    const sourcePath = getProjectContractSourcePath(contractName)
+    const fixtureWasmPath = getFixtureWasmPath(contractName)
+    const hasProjectContract = existsSync(sourcePath)
+    const hasFixtureContract = existsSync(fixtureWasmPath)
 
-Given(
-  "a produced contract {string} with random salt",
-  { timeout: 60 * 1000 },
-  async function (this: BobineWorld, contractName: string) {
-    const salt = `${Date.now()}-${Math.random()}`
-    await produceContractWithSalt(this, contractName, [salt], {
-      successSuffix: "with random salt",
-      errorSuffix: "with random salt",
-    })
-  },
-)
-
-Given(
-  "a produced contract {string} for {string}",
-  { timeout: 60 * 1000 },
-  async function (this: BobineWorld, contractName: string, userName: string) {
-    const address = this.userAddresses.get(userName)
-
-    if (!address) {
+    if (!hasProjectContract && !hasFixtureContract) {
       throw new Error(
-        `No address for ${userName}. Call "I have keys for \\"${userName}\\"" first`,
+        `Unknown contract ${contractName}. Expected ${sourcePath} or ${fixtureWasmPath}`,
       )
     }
 
-    await produceContractWithSalt(this, contractName, [address], {
-      successSuffix: `for ${userName}`,
-      errorSuffix: `for ${userName}`,
-    })
-  },
-)
+    if (hasProjectContract) {
+      try {
+        execSync(`CONTRACT=${contractName} npm run contract:build`, {
+          cwd: process.cwd(),
+          stdio: "pipe",
+          encoding: "utf-8",
+        })
+      } catch (error) {
+        throw new Error(`Failed to build contract ${contractName}: ${error}`)
+      }
+    }
 
-Given(
-  "a produced fixture contract {string}",
-  { timeout: 60 * 1000 },
-  async function (this: BobineWorld, fixtureName: string) {
-    const wasmPath = `./run/src/mods/test/support/fixtures/${fixtureName}.wasm`
-    await produceWasmModule(this, fixtureName, wasmPath, [], {
-      alreadyProducedLabel: "Fixture contract",
-      producedLabel: "fixture contract",
-      errorSuffix: "(fixture contract)",
-    })
+    const deployCreator = this.nextDeploySalt().toString()
+    this.savedValues.set(`${contractName}_creator`, deployCreator)
+
+    const wasmPath = hasProjectContract
+      ? getProjectContractWasmPath(contractName)
+      : fixtureWasmPath
+    await produceWasmModule(this, contractName, wasmPath, [deployCreator])
   },
 )
 
@@ -205,19 +161,22 @@ Given(
   },
 )
 
+function rememberLastReturnedValue(world: BobineWorld, key: string): void {
+  if (!world.lastExecutionResult) {
+    throw new Error("No execution result found")
+  }
+
+  const value = world.lastExecutionResult.returned
+  console.log(
+    `🧷 Saving value: ${JSON.stringify(value)} (type: ${typeof value}, isUint8Array: ${value instanceof Uint8Array}, isArray: ${Array.isArray(value)})`,
+  )
+  world.savedValues.set(key, value)
+  console.log(`🧷 Saved last returned value as ${key}`)
+}
+
 Given(
-  "I set contract {string} address to last returned value",
-  function (this: BobineWorld, contractName: string) {
-    if (!this.lastExecutionResult) {
-      throw new Error("No execution result found")
-    }
-
-    const returned = this.lastExecutionResult.returned
-    if (typeof returned !== "string") {
-      throw new Error("Last returned value is not a contract address")
-    }
-
-    this.markProduced(contractName, returned)
-    console.log(`🔗 Using ${contractName} at ${returned}`)
+  "I remember last returned value as {string}",
+  function (this: BobineWorld, key: string) {
+    rememberLastReturnedValue(this, key)
   },
 )
