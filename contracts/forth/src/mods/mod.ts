@@ -1,12 +1,4 @@
-import {
-  bigints,
-  blobs,
-  modules,
-  packs,
-  sha256,
-  textref,
-  texts,
-} from "@hazae41/stdbob"
+import { blobs, modules, packs, sha256, textref, texts } from "@hazae41/stdbob"
 
 namespace selfcheck$ {
   export function expected(creator: textref): textref {
@@ -27,32 +19,6 @@ namespace selfcheck$ {
   }
 }
 
-namespace dictionary$ {
-  export enum Opcode {
-    DROP = 1,
-    DUP = 2,
-    SWAP = 3,
-    OVER = 4,
-    ADD = 5,
-    SUB = 6,
-    MUL = 7,
-    DIV = 8,
-  }
-
-  export function lookup(word: string): Opcode {
-    if (word === "drop") return Opcode.DROP
-    if (word === "dup") return Opcode.DUP
-    if (word === "swap") return Opcode.SWAP
-    if (word === "over") return Opcode.OVER
-    if (word === "+") return Opcode.ADD
-    if (word === "-") return Opcode.SUB
-    if (word === "*") return Opcode.MUL
-    if (word === "/") return Opcode.DIV
-
-    throw new Error("Unknown word")
-  }
-}
-
 namespace tokenizer$ {
   const TAB: i32 = 9
   const LF: i32 = 10
@@ -67,6 +33,9 @@ namespace tokenizer$ {
   const DIGIT_9: i32 = 57
   const BACKSLASH: i32 = 92
 
+  export const TOKEN_INT: u8 = 1
+  export const TOKEN_WORD: u8 = 2
+
   function isSeparator(code: i32): bool {
     return code === SPACE || code === TAB || code === LF || code === CR
   }
@@ -75,21 +44,21 @@ namespace tokenizer$ {
     return code >= DIGIT_0 && code <= DIGIT_9
   }
 
-  function isIntegerToken(token: string): bool {
-    const length = token.length
+  function isIntegerSlice(source: string, start: i32, end: i32): bool {
+    const length = end - start
 
     if (length < 1) return false
 
-    let index = 0
-    const first = token.charCodeAt(0)
+    let index = start
+    const first = source.charCodeAt(index)
 
     if (first === PLUS || first === MINUS) {
       if (length === 1) return false
-      index = 1
+      index += 1
     }
 
-    while (index < length) {
-      if (!isDigit(token.charCodeAt(index))) return false
+    while (index < end) {
+      if (!isDigit(source.charCodeAt(index))) return false
       index += 1
     }
 
@@ -148,17 +117,9 @@ namespace tokenizer$ {
     return index
   }
 
-  function consumeToken(token: string): void {
-    if (isIntegerToken(token)) {
-      bigints.fromBase10(texts.fromString(token))
-      return
-    }
+  export type TokenEmit = (ctx: usize, kind: u8, start: i32, end: i32) => void
 
-    dictionary$.lookup(token.toLowerCase())
-  }
-
-  export function scan(program: textref): i64 {
-    const source = texts.toString(program)
+  function scanSource(source: string, ctx: usize, emit: TokenEmit): i64 {
     const length = source.length
 
     let index: i32 = 0
@@ -183,18 +144,79 @@ namespace tokenizer$ {
         index += 1
       }
 
-      consumeToken(source.substring(start, index))
+      const end = index
+
+      if (isIntegerSlice(source, start, end)) {
+        emit(ctx, TOKEN_INT, start, end)
+      } else {
+        emit(ctx, TOKEN_WORD, start, end)
+      }
+
       tokens += 1
     }
 
     return tokens
+  }
+
+  export function scan(program: textref, ctx: usize, emit: TokenEmit): i64 {
+    return scanSource(texts.toString(program), ctx, emit)
+  }
+}
+
+namespace compiler$ {
+  type State = {
+    tokens: i64
+  }
+
+  function onToken(ctx: usize, kind: u8, start: i32, end: i32): void {
+    const state = changetype<State>(ctx)
+
+    state.tokens += 1
+
+    kind
+    start
+    end
+  }
+
+  export function compile(program: textref): i64 {
+    const state: State = { tokens: 0 }
+
+    tokenizer$.scan(program, changetype<usize>(state), onToken)
+
+    return state.tokens
+  }
+}
+
+namespace dictionary$ {
+  export enum Opcode {
+    DROP = 1,
+    DUP = 2,
+    SWAP = 3,
+    OVER = 4,
+    ADD = 5,
+    SUB = 6,
+    MUL = 7,
+    DIV = 8,
+  }
+
+  export function lookup(word: string): Opcode {
+    if (word === "drop") return Opcode.DROP
+    if (word === "dup") return Opcode.DUP
+    if (word === "swap") return Opcode.SWAP
+    if (word === "over") return Opcode.OVER
+    if (word === "+") return Opcode.ADD
+    if (word === "-") return Opcode.SUB
+    if (word === "*") return Opcode.MUL
+    if (word === "/") return Opcode.DIV
+
+    throw new Error("Unknown word")
   }
 }
 
 namespace forth$ {
   export function init(creator: textref, program: textref): void {
     selfcheck$.assert(creator)
-    tokenizer$.scan(program)
+    compiler$.compile(program)
   }
 }
 
