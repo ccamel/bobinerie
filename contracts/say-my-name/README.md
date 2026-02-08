@@ -7,7 +7,7 @@ A simple name storage contract that remembers who you are.
 ## Deployments
 
 - **garage-hazae41-bob0**: `d9fb78a305f52edbb065318a7c5681358559c8a56b0031f4a97198267be6df89`
-- **garage-ccamel-bob0**: `49ce664357bd4a3c90ac47ae63441ceff70e22d3c3e530f593b8f32770fcdbc6`
+- **garage-ccamel-bob0**: `d9fb78a305f52edbb065318a7c5681358559c8a56b0031f4a97198267be6df89`
 
 <!-- DEPLOYMENTS:END -->
 
