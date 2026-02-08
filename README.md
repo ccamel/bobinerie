@@ -32,23 +32,50 @@ Available now:
 
 <!-- CONTRACTS:START -->
 
-- **[counter](contracts/counter/README.md)** ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
-  > Per-account counter with Ed25519 session authentication.
-
-- **[multisig](contracts/multisig/README.md)** ![governance](https://img.shields.io/badge/governance-FF6B35)
-  > Threshold-based authorization contract for Bobine call execution.
-
-- **[pool-xyk](contracts/pool-xyk/README.md)** ![defi](https://img.shields.io/badge/defi-6C63FF)
-  > XYK (constant-product) AMM pool for two fungible tokens: add/remove liquidity, swap, fee in bps.
-
-- **[say-my-name](contracts/say-my-name/README.md)** ![pedagogical](https://img.shields.io/badge/pedagogical-2EC4B6)
-  > A simple name storage contract that remembers who you are.
-
-- **[sigil](contracts/sigil/README.md)** ![creative](https://img.shields.io/badge/creative-FF9F1C)
-  > Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.
-
-- **[token_fungible](contracts/token_fungible/README.md)** ![defi](https://img.shields.io/badge/defi-6C63FF)
-  > A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).
+<table>
+<tr>
+<td width="50%" valign="top">
+<h3><a href="contracts/counter/README.md">Counter</a></h3>
+<p><strong>Per-account counter with Ed25519 session authentication.</strong></p>
+<p><img alt="pedagogical" src="https://img.shields.io/badge/pedagogical-2EC4B6" /></p>
+<p>》<a href="contracts/counter/README.md">open doc</a></p>
+</td>
+<td width="50%" valign="top">
+<h3><a href="contracts/multisig/README.md">Multisig</a></h3>
+<p><strong>Threshold-based authorization contract for Bobine call execution.</strong></p>
+<p><img alt="governance" src="https://img.shields.io/badge/governance-FF6B35" /></p>
+<p>》<a href="contracts/multisig/README.md">open doc</a></p>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<h3><a href="contracts/pool-xyk/README.md">Pool XYK</a></h3>
+<p><strong>XYK (constant-product) AMM pool for two fungible tokens: add/remove liquidity, swap, fee in bps.</strong></p>
+<p><img alt="defi" src="https://img.shields.io/badge/defi-6C63FF" /></p>
+<p>》<a href="contracts/pool-xyk/README.md">open doc</a></p>
+</td>
+<td width="50%" valign="top">
+<h3><a href="contracts/say-my-name/README.md">Say My Name</a></h3>
+<p><strong>A simple name storage contract that remembers who you are.</strong></p>
+<p><img alt="pedagogical" src="https://img.shields.io/badge/pedagogical-2EC4B6" /></p>
+<p>》<a href="contracts/say-my-name/README.md">open doc</a></p>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<h3><a href="contracts/sigil/README.md">Sigil</a></h3>
+<p><strong>Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional on-chain tag.</strong></p>
+<p><img alt="creative" src="https://img.shields.io/badge/creative-FF9F1C" /></p>
+<p>》<a href="contracts/sigil/README.md">open doc</a></p>
+</td>
+<td width="50%" valign="top">
+<h3><a href="contracts/token_fungible/README.md">Token Fungible</a></h3>
+<p><strong>A minimal fungible token module for Bobine, designed to be a boring, reliable building block for DeFi modules (pools, routers, etc.).</strong></p>
+<p><img alt="defi" src="https://img.shields.io/badge/defi-6C63FF" /></p>
+<p>》<a href="contracts/token_fungible/README.md">open doc</a></p>
+</td>
+</tr>
+</table>
 
 <!-- CONTRACTS:END -->
 
