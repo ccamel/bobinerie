@@ -4,6 +4,10 @@ Threshold-based authorization contract for Bobine call execution.
 
 <!-- DEPLOYMENTS:START -->
 
+## Deployments
+
+- **garage-hazae41-bob0**: `a424686ac5d7a3f5afafa0746070d3373470a85250ae2697c28fa889d222631e`
+
 <!-- DEPLOYMENTS:END -->
 
 ## Overview
