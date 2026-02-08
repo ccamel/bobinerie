@@ -83,6 +83,7 @@ Canonical policy tuple.
 Read the current proposal view.
 
 ProposalView tuple:
+
 - [0] "bobine.multisig/proposal_view"
 - [1] 1
 - [2] proposal_id
@@ -105,6 +106,7 @@ Canonical proposal view tuple.
 Propose a canonical call intent.
 
 Call tuple format:
+
 - [0] "bobine.multisig/call"
 - [1] 1
 - [2] target module address (textref)

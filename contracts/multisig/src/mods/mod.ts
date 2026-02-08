@@ -662,6 +662,7 @@ export function policy(): packref {
  * Propose a canonical call intent.
  *
  * Call tuple format:
+ *
  * - [0] "bobine.multisig/call"
  * - [1] 1
  * - [2] target module address (textref)
@@ -836,6 +837,7 @@ export function close(session: packref, proposalId: blobref): void {
  * Read the current proposal view.
  *
  * ProposalView tuple:
+ *
  * - [0] "bobine.multisig/proposal_view"
  * - [1] 1
  * - [2] proposal_id
