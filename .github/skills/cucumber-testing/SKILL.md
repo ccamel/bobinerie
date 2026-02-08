@@ -22,7 +22,7 @@ All step definitions are centralized in `run/src/mods/test/support/steps/`. **Do
 
 - **Assertions**: `assertions.steps.ts` - Check return values, success/failure.
 - **Execution**: `execute.steps.ts` - Invoking contract methods.
-- **Setup**: `setup.steps.ts` - Key generation, contract production.
+- **Setup**: `setup.steps.ts` - Contract deployment, auth setup, key generation.
 
 ## Common Steps & Patterns
 
@@ -39,7 +39,9 @@ Reuse these existing steps to maintain consistency:
 ### Interactions
 
 - `When I invoke {string} method {string} through auth`
+- `Given I deploy contract {string}`
 - `Given I have keys for {string}`
+- `Given I remember last returned value as {string}`
 
 ## Best Practices
 
@@ -47,4 +49,5 @@ Reuse these existing steps to maintain consistency:
 - **Data Formats**:
   - Use `bigint:` prefix for all numeric values in feature files.
   - Use `address:` prefix when referring to user addresses created in the `Given` steps.
+  - Use `$name` or `${name}` to reference remembered values or produced contract addresses.
 - **Isolation**: Each scenario should stand alone; rely on the `Background` or `setup` steps to establish the environment.

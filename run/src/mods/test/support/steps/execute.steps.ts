@@ -1,40 +1,17 @@
 import { DataTable, When } from "@cucumber/cucumber"
 import { Readable, Writable } from "@hazae41/binary"
 import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
+import { parseValueWithCommon, resolveVariableToken } from "../parsing"
 import { BobineWorld } from "../world"
 
 const AUTH_DOMAIN_ID = "17fa1cb5-c5af-4cfd-9bea-1a36590b890d"
 
 function parseParamValue(world: BobineWorld, token: string): Packable {
-  const trimmed = token.trim()
-  if (!trimmed || trimmed === "null") {
-    return null
+  const result = parseValueWithCommon(world, token, parseParamValue)
+  if (result !== null) {
+    return result as Packable
   }
-  if (trimmed.startsWith("address:")) {
-    const key = trimmed.slice("address:".length)
-    const address = world.userAddresses.get(key)
-    if (!address) {
-      throw new Error(`Unknown address for ${key}`)
-    }
-    return address
-  }
-  if (trimmed.startsWith("contract:")) {
-    const key = trimmed.slice("contract:".length)
-    return world.getProducedModuleAddress(key)
-  }
-  if (trimmed.startsWith("blob:")) {
-    return Uint8Array.fromHex(trimmed.slice("blob:".length))
-  }
-  if (trimmed.startsWith("bigint:")) {
-    return BigInt(trimmed.slice("bigint:".length))
-  }
-  if (trimmed.startsWith("number:")) {
-    return Number(trimmed.slice("number:".length))
-  }
-  if (trimmed.startsWith("text:")) {
-    return trimmed.slice("text:".length)
-  }
-  throw new Error(`Unknown value type: ${trimmed}`)
+  throw new Error(`Unknown value type: ${token}`)
 }
 
 function parseParams(world: BobineWorld, tokens: string[]): Packable[] {
@@ -75,6 +52,18 @@ function isNullResponse(bytes: Uint8Array): boolean {
   )
 }
 
+function extractErrorMessage(errorText: string): string {
+  try {
+    const parsed = JSON.parse(errorText)
+    if (parsed.message) {
+      return parsed.message
+    }
+  } catch {
+    // Not JSON, return as-is
+  }
+  return errorText
+}
+
 function parsePackedResponse(bytes: Uint8Array): {
   logs: string[]
   returned: Packable | null
@@ -105,20 +94,23 @@ async function parseExecutionResponse(
   const fallbackText = new TextDecoder().decode(bytes).trim()
 
   if (!response.ok) {
+    const errorMsg = extractErrorMessage(
+      fallbackText || `Status ${response.status}`,
+    )
     try {
       const parsed = parsePackedResponse(bytes)
       return {
         ok: false,
         logs: parsed.logs,
         returned: parsed.returned,
-        error: fallbackText || `Status ${response.status}`,
+        error: errorMsg,
       }
     } catch (_error) {
       return {
         ok: false,
         logs: [],
         returned: null,
-        error: fallbackText || `Status ${response.status}`,
+        error: errorMsg,
       }
     }
   }
@@ -135,7 +127,7 @@ async function parseExecutionResponse(
       ok: false,
       logs: [],
       returned: null,
-      error: fallbackText || String(error),
+      error: extractErrorMessage(fallbackText || String(error)),
     }
   }
 }
@@ -178,15 +170,21 @@ async function callContract(
   method: string,
   params: Packable[],
 ): Promise<void> {
-  const contract = world.getContract(contractName)
+  const trimmedName = contractName.trim()
+  const resolved = resolveVariableToken(world, trimmedName)
+  const moduleAddress = resolved.found
+    ? resolved.value
+    : world.getProducedModuleAddress(trimmedName)
 
-  if (!contract.produced || !contract.moduleAddress) {
-    throw new Error(`Contract ${contractName} has not been produced yet`)
+  if (typeof moduleAddress !== "string") {
+    throw new Error(
+      `Contract reference ${contractName} did not resolve to an address`,
+    )
   }
 
   try {
     const body = new FormData()
-    body.append("module", contract.moduleAddress)
+    body.append("module", moduleAddress)
     body.append("method", method)
     body.append(
       "params",
@@ -234,7 +232,17 @@ async function invokeContractThroughAuth(
 
   const authModuleName = world.sessionKeys.authModuleName
   const authModuleAddress = world.getProducedModuleAddress(authModuleName)
-  const contractAddress = world.getProducedModuleAddress(contractName)
+  const trimmedName = contractName.trim()
+  const resolved = resolveVariableToken(world, trimmedName)
+  const contractAddress = resolved.found
+    ? resolved.value
+    : world.getProducedModuleAddress(trimmedName)
+
+  if (typeof contractAddress !== "string") {
+    throw new Error(
+      `Contract reference ${contractName} did not resolve to an address`,
+    )
+  }
 
   try {
     const sessionBytes = Writable.writeToBytesOrThrow(

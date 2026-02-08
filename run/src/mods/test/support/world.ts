@@ -74,8 +74,10 @@ export class BobineWorld extends World {
   public authModuleName?: string
   public userKeys: Map<string, UserKeyPair> = new Map()
   public userAddresses: Map<string, string> = new Map()
+  public savedValues: Map<string, unknown> = new Map()
   private sparkPool: string[]
   private sparkIndex = 0
+  private deploySaltCounter = 0n
 
   constructor(options: ConstructorParameters<typeof World>[0]) {
     super(options)
@@ -89,6 +91,8 @@ export class BobineWorld extends World {
     this.authModuleName = undefined
     this.userKeys.clear()
     this.userAddresses.clear()
+    this.savedValues.clear()
+    this.deploySaltCounter = 0n
   }
 
   nextSpark(): Uint8Array {
@@ -104,6 +108,11 @@ export class BobineWorld extends World {
 
   getSparkUsage(): SparkUsage {
     return { used: this.sparkIndex, total: this.sparkPool.length }
+  }
+
+  nextDeploySalt(): bigint {
+    this.deploySaltCounter += 1n
+    return this.deploySaltCounter
   }
 
   getContract(name: string): ContractState {
