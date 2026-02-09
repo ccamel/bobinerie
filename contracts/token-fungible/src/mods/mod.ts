@@ -2,6 +2,7 @@ import {
   bigintref,
   bigints,
   blobs,
+  env,
   modules,
   packref,
   packs,
@@ -27,7 +28,8 @@ namespace session$ {
       0,
     )
 
-    if (!verified) throw new Error("Invalid session")
+    if (!verified)
+      return env.panic<textref>(texts.fromString("Invalid session"))
 
     return addressOf(session)
   }
@@ -51,7 +53,10 @@ namespace owner$ {
   }
 
   export function assertUninitialized(): void {
-    if (storage.get(OWNER_KEY())) throw new Error("Already initialized")
+    if (storage.get(OWNER_KEY())) {
+      env.panic<void>(texts.fromString("Already initialized"))
+      return
+    }
   }
 }
 
@@ -77,7 +82,10 @@ namespace balance$ {
   export function debit(address: textref, amount: bigintref): void {
     const current = get(address)
 
-    if (bigints.lt(current, amount)) throw new Error("Insufficient balance")
+    if (bigints.lt(current, amount)) {
+      env.panic<void>(texts.fromString("Insufficient balance"))
+      return
+    }
 
     set(address, bigints.sub(current, amount))
   }
@@ -113,8 +121,12 @@ namespace allowance$ {
     if (
       !bigints.eq(current, bigints.zero()) &&
       !bigints.eq(amount, bigints.zero())
-    )
-      throw new Error("Must reset allowance to 0 before changing")
+    ) {
+      env.panic<void>(
+        texts.fromString("Must reset allowance to 0 before changing"),
+      )
+      return
+    }
 
     set(owner, spender, amount)
   }
@@ -126,7 +138,10 @@ namespace allowance$ {
   ): void {
     const current = get(owner, spender)
 
-    if (bigints.lt(current, amount)) throw new Error("Insufficient allowance")
+    if (bigints.lt(current, amount)) {
+      env.panic<void>(texts.fromString("Insufficient allowance"))
+      return
+    }
 
     set(owner, spender, bigints.sub(current, amount))
   }
@@ -151,7 +166,10 @@ namespace supply$ {
 
   export function dec(delta: bigintref): void {
     const current = get()
-    if (bigints.lt(current, delta)) throw new Error("Insufficient supply")
+    if (bigints.lt(current, delta)) {
+      env.panic<void>(texts.fromString("Insufficient supply"))
+      return
+    }
     set(bigints.sub(current, delta))
   }
 }
@@ -170,8 +188,10 @@ namespace selfcheck$ {
   export function assert(creator: textref): void {
     const module = expected(creator)
 
-    if (!texts.equals(modules.self(), module))
-      throw new Error("Invalid module creator")
+    if (!texts.equals(modules.self(), module)) {
+      env.panic<void>(texts.fromString("Invalid module creator"))
+      return
+    }
   }
 }
 
@@ -183,7 +203,10 @@ namespace token$ {
   }
 
   function assertOwner(caller: textref): void {
-    if (!texts.equals(caller, owner$.get())) throw new Error("Unauthorized")
+    if (!texts.equals(caller, owner$.get())) {
+      env.panic<void>(texts.fromString("Unauthorized"))
+      return
+    }
   }
 
   export function mint(

@@ -2,6 +2,7 @@ import {
   bigintref,
   bigints,
   blobs,
+  env,
   modules,
   packref,
   packs,
@@ -31,8 +32,10 @@ namespace selfcheck$ {
   export function assert(creator: textref): void {
     const module = expected(creator)
 
-    if (!texts.equals(modules.self(), module))
-      throw new Error("Invalid module creator")
+    if (!texts.equals(modules.self(), module)) {
+      env.panic<void>(texts.fromString("Invalid module creator"))
+      return
+    }
   }
 }
 
@@ -50,7 +53,8 @@ namespace session$ {
       0,
     )
 
-    if (!verified) throw new Error("Invalid session")
+    if (!verified)
+      return env.panic<textref>(texts.fromString("Invalid session"))
 
     return addressOf(session)
   }
@@ -71,7 +75,8 @@ namespace pool_session$ {
 
 namespace math$ {
   export function isqrt(n: bigintref): bigintref {
-    if (bigints.lt(n, bigints.zero())) throw new Error("Invalid sqrt")
+    if (bigints.lt(n, bigints.zero()))
+      return env.panic<bigintref>(texts.fromString("Invalid sqrt"))
 
     if (bigints.eq(n, bigints.zero())) return bigints.zero()
 
@@ -127,11 +132,17 @@ namespace pool$ {
   }
 
   function assertUninitialized(): void {
-    if (initialized()) throw new Error("Already initialized")
+    if (initialized()) {
+      env.panic<void>(texts.fromString("Already initialized"))
+      return
+    }
   }
 
   export function assertInitialized(): void {
-    if (!initialized()) throw new Error("Pool is not initialized")
+    if (!initialized()) {
+      env.panic<void>(texts.fromString("Pool is not initialized"))
+      return
+    }
   }
 
   export function init(
@@ -145,7 +156,10 @@ namespace pool$ {
       case -1:
         break
       case 0:
-        throw new Error("Token A and Token B must be different")
+        env.panic<void>(
+          texts.fromString("Token A and Token B must be different"),
+        )
+        return
       case 1: {
         const temp = token_a
         token_a = token_b
@@ -154,9 +168,15 @@ namespace pool$ {
       }
     }
 
-    if (bigints.lt(fee_bps, bigints.zero())) throw new Error("Invalid fee_bps")
+    if (bigints.lt(fee_bps, bigints.zero())) {
+      env.panic<void>(texts.fromString("Invalid fee_bps"))
+      return
+    }
 
-    if (bigints.gt(fee_bps, maxFeeBps())) throw new Error("Invalid fee_bps")
+    if (bigints.gt(fee_bps, maxFeeBps())) {
+      env.panic<void>(texts.fromString("Invalid fee_bps"))
+      return
+    }
 
     storage.set(key(token0Key()), token_a)
     storage.set(key(token1Key()), token_b)
@@ -319,10 +339,10 @@ namespace liquidity$ {
     pool$.assertInitialized()
 
     if (bigints.eq(amount0_desired, bigints.zero()))
-      throw new Error("Invalid amount0_desired")
+      return env.panic<packref>(texts.fromString("Invalid amount0_desired"))
 
     if (bigints.eq(amount1_desired, bigints.zero()))
-      throw new Error("Invalid amount1_desired")
+      return env.panic<packref>(texts.fromString("Invalid amount1_desired"))
 
     const tokens = pool$.tokens()
     const token0 = packs.get<textref>(tokens, 0)
@@ -360,9 +380,9 @@ namespace liquidity$ {
     }
 
     if (bigints.lt(amount0, amount0_min))
-      throw new Error("Insufficient amount0")
+      return env.panic<packref>(texts.fromString("Insufficient amount0"))
     if (bigints.lt(amount1, amount1_min))
-      throw new Error("Insufficient amount1")
+      return env.panic<packref>(texts.fromString("Insufficient amount1"))
 
     const totalSupply = liquidity$.get()
     let liquidity: bigintref
@@ -380,10 +400,13 @@ namespace liquidity$ {
       liquidity = bigints.lt(liquidity0, liquidity1) ? liquidity0 : liquidity1
     }
 
-    if (bigints.eq(liquidity, bigints.zero())) throw new Error("Zero liquidity")
+    if (bigints.eq(liquidity, bigints.zero()))
+      return env.panic<packref>(texts.fromString("Zero liquidity"))
 
     if (bigints.lt(liquidity, lp_min))
-      throw new Error("Insufficient liquidity minted")
+      return env.panic<packref>(
+        texts.fromString("Insufficient liquidity minted"),
+      )
 
     const poolSession = pool_session$.get()
     const poolAddress = session$.addressOf(poolSession)
@@ -414,7 +437,7 @@ namespace liquidity$ {
     pool$.assertInitialized()
 
     if (bigints.eq(liquidity, bigints.zero()))
-      throw new Error("Invalid liquidity")
+      return env.panic<packref>(texts.fromString("Invalid liquidity"))
 
     const caller = session$.assert(session)
 
@@ -427,19 +450,22 @@ namespace liquidity$ {
     const reserve1 = packs.get<bigintref>(reserves, 1)
 
     const totalSupply = liquidity$.get()
-    if (bigints.eq(totalSupply, bigints.zero())) throw new Error("No liquidity")
+    if (bigints.eq(totalSupply, bigints.zero()))
+      return env.panic<packref>(texts.fromString("No liquidity"))
 
     const balance = liquidity$.balanceOf(caller)
     if (bigints.lt(balance, liquidity))
-      throw new Error("Insufficient liquidity balance")
+      return env.panic<packref>(
+        texts.fromString("Insufficient liquidity balance"),
+      )
 
     const amount0 = bigints.div(bigints.mul(liquidity, reserve0), totalSupply)
     const amount1 = bigints.div(bigints.mul(liquidity, reserve1), totalSupply)
 
     if (bigints.lt(amount0, amount0_min))
-      throw new Error("Insufficient amount0")
+      return env.panic<packref>(texts.fromString("Insufficient amount0"))
     if (bigints.lt(amount1, amount1_min))
-      throw new Error("Insufficient amount1")
+      return env.panic<packref>(texts.fromString("Insufficient amount1"))
 
     const poolSession = pool_session$.get()
     token$.transfer(token0, poolSession, to, amount0)
@@ -511,7 +537,7 @@ namespace swap$ {
         fee_denominator,
       )
     } else {
-      throw new Error("Invalid token_in")
+      return env.panic<packref>(texts.fromString("Invalid token_in"))
     }
 
     return packs.create2(token_out, amount_out)
@@ -536,7 +562,7 @@ namespace swap$ {
     pool$.assertInitialized()
 
     if (bigints.eq(amount_in, bigints.zero()))
-      throw new Error("Invalid amount_in")
+      return env.panic<packref>(texts.fromString("Invalid amount_in"))
 
     const tokens = pool$.tokens()
     const token0 = packs.get<textref>(tokens, 0)
@@ -559,7 +585,7 @@ namespace swap$ {
         bigints.eq(reserve0, bigints.zero()) ||
         bigints.eq(reserve1, bigints.zero())
       )
-        throw new Error("Empty reserves")
+        return env.panic<packref>(texts.fromString("Empty reserves"))
 
       amount_out = computeAmountOut(
         amount_in,
@@ -570,7 +596,7 @@ namespace swap$ {
       )
 
       if (bigints.lt(amount_out, min_out))
-        throw new Error("Insufficient output")
+        return env.panic<packref>(texts.fromString("Insufficient output"))
 
       const poolSession = pool_session$.get()
       const poolAddress = session$.addressOf(poolSession)
@@ -589,7 +615,7 @@ namespace swap$ {
         bigints.eq(reserve0, bigints.zero()) ||
         bigints.eq(reserve1, bigints.zero())
       )
-        throw new Error("Empty reserves")
+        return env.panic<packref>(texts.fromString("Empty reserves"))
 
       amount_out = computeAmountOut(
         amount_in,
@@ -600,7 +626,7 @@ namespace swap$ {
       )
 
       if (bigints.lt(amount_out, min_out))
-        throw new Error("Insufficient output")
+        return env.panic<packref>(texts.fromString("Insufficient output"))
 
       const poolSession = pool_session$.get()
       const poolAddress = session$.addressOf(poolSession)
@@ -613,7 +639,7 @@ namespace swap$ {
         bigints.add(reserve1, amount_in),
       )
     } else {
-      throw new Error("Invalid token_in")
+      return env.panic<packref>(texts.fromString("Invalid token_in"))
     }
 
     return packs.create2(token_out, amount_out)

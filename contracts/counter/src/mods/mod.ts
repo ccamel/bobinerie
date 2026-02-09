@@ -2,6 +2,7 @@ import {
   bigintref,
   bigints,
   blobs,
+  env,
   modules,
   packref,
   packs,
@@ -27,7 +28,8 @@ namespace session$ {
       0,
     )
 
-    if (!verified) throw new Error("Invalid session")
+    if (!verified)
+      return env.panic<textref>(texts.fromString("Invalid session"))
 
     return addressOf(session)
   }

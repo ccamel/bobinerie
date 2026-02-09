@@ -3,6 +3,7 @@ import {
   bigints,
   blobref,
   blobs,
+  env,
   modules,
   packref,
   packs,
@@ -48,7 +49,8 @@ namespace session$ {
       0,
     )
 
-    if (!verified) throw new Error("Invalid session")
+    if (!verified)
+      return env.panic<textref>(texts.fromString("Invalid session"))
 
     return addressOf(session)
   }
@@ -278,9 +280,10 @@ namespace blessing$ {
 
   export function bless(target: textref): textref {
     const seed = seed$.read(target)
-    if (!seed) throw new Error("Sigil not minted")
+    if (!seed) return env.panic<textref>(texts.fromString("Sigil not minted"))
     const seedText = texts.toString(seed)
-    if (seedText.length === 0) throw new Error("Sigil not minted")
+    if (seedText.length === 0)
+      return env.panic<textref>(texts.fromString("Sigil not minted"))
 
     const already = bless_flag$.read(target)
     if (already) return texts.fromString("blessed")

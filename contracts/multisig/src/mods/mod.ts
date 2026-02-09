@@ -3,6 +3,7 @@ import {
   bigints,
   blobref,
   blobs,
+  env,
   modules,
   packref,
   packs,
@@ -38,10 +39,6 @@ const VERSION_BYTES = (): blobref => {
 
 function bigintFromI32(value: i32): bigintref {
   return bigints.fromInt64(value as i64)
-}
-
-function fail(message: string): void {
-  throw new Error(message)
 }
 
 function samePack(left: packref, right: packref): bool {
@@ -105,10 +102,10 @@ function uniqueSortedStrings(values: string[]): string[] {
 }
 
 function normalizeSignerHexes(signers: packref): string[] {
-  if (!signers) fail("Invalid policy")
+  if (!signers) return env.panic<string[]>(texts.fromString("Invalid policy"))
 
   const length = packs.length(signers)
-  if (length < 1) fail("Invalid policy")
+  if (length < 1) return env.panic<string[]>(texts.fromString("Invalid policy"))
 
   const values = new Array<string>(length)
 
@@ -198,13 +195,13 @@ function packChunkFromSignerHexes(
         signerFromHex(signerHexes[start + 8]),
       )
     default:
-      fail("Invalid signers")
-      return null
+      return env.panic<packref>(texts.fromString("Invalid signers"))
   }
 }
 
 function packFromSignerHexes(signerHexes: string[]): packref {
-  if (signerHexes.length < 1) fail("Invalid signers")
+  if (signerHexes.length < 1)
+    return env.panic<packref>(texts.fromString("Invalid signers"))
 
   let result: packref = null
   let offset = 0
@@ -232,7 +229,10 @@ function isSigner(signers: packref, address: textref): bool {
 }
 
 function assertSigner(signers: packref, address: textref): void {
-  if (!isSigner(signers, address)) fail("Unauthorized")
+  if (!isSigner(signers, address)) {
+    env.panic<void>(texts.fromString("Unauthorized"))
+    return
+  }
 }
 
 namespace session$ {
@@ -249,7 +249,8 @@ namespace session$ {
       0,
     )
 
-    if (!verified) fail("Invalid session")
+    if (!verified)
+      return env.panic<textref>(texts.fromString("Invalid session"))
 
     return addressOf(session)
   }
@@ -337,17 +338,20 @@ namespace policy$ {
   const TAG = (): textref => DOMAIN_TAG("policy")
 
   export function assertUninitialized(): void {
-    if (storage.get(key$.policy())) fail("Already initialized")
+    if (storage.get(key$.policy())) {
+      env.panic<void>(texts.fromString("Already initialized"))
+      return
+    }
   }
 
   export function getTuple(): packref {
     const found = storage.get(key$.policy())
 
-    if (!found) fail("Not initialized")
+    if (!found) return env.panic<packref>(texts.fromString("Not initialized"))
 
     const tuple = packs.get<packref>(found, 0)
 
-    if (!tuple) fail("Not initialized")
+    if (!tuple) return env.panic<packref>(texts.fromString("Not initialized"))
 
     return tuple
   }
@@ -361,26 +365,32 @@ namespace policy$ {
   }
 
   export function canonicalize(input: packref): packref {
-    if (!input) fail("Invalid policy")
-    if (packs.length(input) < 4) fail("Invalid policy")
+    if (!input) return env.panic<packref>(texts.fromString("Invalid policy"))
+    if (packs.length(input) < 4)
+      return env.panic<packref>(texts.fromString("Invalid policy"))
 
     const foundTag = packs.get<textref>(input, 0)
     const foundVersion = packs.get<bigintref>(input, 1)
 
-    if (!texts.equals(foundTag, TAG())) fail("Invalid policy")
-    if (!bigints.eq(foundVersion, VERSION())) fail("Invalid policy")
+    if (!texts.equals(foundTag, TAG()))
+      return env.panic<packref>(texts.fromString("Invalid policy"))
+    if (!bigints.eq(foundVersion, VERSION()))
+      return env.panic<packref>(texts.fromString("Invalid policy"))
 
     const foundThreshold = packs.get<bigintref>(input, 2)
     const foundSigners = packs.get<packref>(input, 3)
 
     const signerHexes = normalizeSignerHexes(foundSigners)
 
-    if (signerHexes.length < 1) fail("Invalid policy")
-    if (bigints.lt(foundThreshold, bigints.one())) fail("Invalid policy")
+    if (signerHexes.length < 1)
+      return env.panic<packref>(texts.fromString("Invalid policy"))
+    if (bigints.lt(foundThreshold, bigints.one()))
+      return env.panic<packref>(texts.fromString("Invalid policy"))
 
     const signerCount = bigintFromI32(signerHexes.length)
 
-    if (bigints.gt(foundThreshold, signerCount)) fail("Invalid policy")
+    if (bigints.gt(foundThreshold, signerCount))
+      return env.panic<packref>(texts.fromString("Invalid policy"))
 
     const normalizedSigners = packFromSignerHexes(signerHexes)
 
@@ -406,18 +416,33 @@ namespace call$ {
   const TAG = (): textref => DOMAIN_TAG("call")
 
   export function assertCanonical(call: packref): void {
-    if (!call) fail("Invalid call")
-    if (packs.length(call) < 5) fail("Invalid call")
+    if (!call) {
+      env.panic<void>(texts.fromString("Invalid call"))
+      return
+    }
+    if (packs.length(call) < 5) {
+      env.panic<void>(texts.fromString("Invalid call"))
+      return
+    }
 
     const foundTag = packs.get<textref>(call, 0)
     const foundVersion = packs.get<bigintref>(call, 1)
 
-    if (!texts.equals(foundTag, TAG())) fail("Invalid call")
-    if (!bigints.eq(foundVersion, VERSION())) fail("Invalid call")
+    if (!texts.equals(foundTag, TAG())) {
+      env.panic<void>(texts.fromString("Invalid call"))
+      return
+    }
+    if (!bigints.eq(foundVersion, VERSION())) {
+      env.panic<void>(texts.fromString("Invalid call"))
+      return
+    }
 
     const params = packs.get<packref>(call, 4)
 
-    if (!params) fail("Invalid call")
+    if (!params) {
+      env.panic<void>(texts.fromString("Invalid call"))
+      return
+    }
   }
 
   export function module(call: packref): textref {
@@ -459,14 +484,26 @@ namespace proposal$ {
   }
 
   export function assertCanonical(tuple: packref): void {
-    if (!tuple) fail("Invalid proposal")
-    if (packs.length(tuple) < 9) fail("Invalid proposal")
+    if (!tuple) {
+      env.panic<void>(texts.fromString("Invalid proposal"))
+      return
+    }
+    if (packs.length(tuple) < 9) {
+      env.panic<void>(texts.fromString("Invalid proposal"))
+      return
+    }
 
     const foundTag = packs.get<textref>(tuple, 0)
     const foundVersion = packs.get<bigintref>(tuple, 1)
 
-    if (!texts.equals(foundTag, TAG())) fail("Invalid proposal")
-    if (!bigints.eq(foundVersion, VERSION())) fail("Invalid proposal")
+    if (!texts.equals(foundTag, TAG())) {
+      env.panic<void>(texts.fromString("Invalid proposal"))
+      return
+    }
+    if (!bigints.eq(foundVersion, VERSION())) {
+      env.panic<void>(texts.fromString("Invalid proposal"))
+      return
+    }
   }
 
   export function has(proposalId: blobref): bool {
@@ -476,7 +513,8 @@ namespace proposal$ {
   export function get(proposalId: blobref): packref {
     const found = storage.get(key$.proposal(proposalId))
 
-    if (!found) fail("Proposal not found")
+    if (!found)
+      return env.panic<packref>(texts.fromString("Proposal not found"))
 
     const tuple = packs.get<packref>(found, 0)
 
@@ -547,7 +585,8 @@ namespace proposal$ {
     const nonce = id$.nextProposalNonce()
     const proposalId = id$.proposal(signer, callInput, nonce)
 
-    if (has(proposalId)) fail("Proposal already exists")
+    if (has(proposalId))
+      return env.panic<blobref>(texts.fromString("Proposal already exists"))
 
     set(
       proposalId,
@@ -569,7 +608,8 @@ namespace proposal$ {
   export function approve(proposalId: blobref, signer: textref): bigintref {
     const tuple = get(proposalId)
 
-    if (!bigints.eq(status(tuple), STATUS_OPEN())) fail("Proposal is not open")
+    if (!bigints.eq(status(tuple), STATUS_OPEN()))
+      return env.panic<bigintref>(texts.fromString("Proposal is not open"))
 
     assertSigner(signers(tuple), signer)
 
@@ -590,10 +630,11 @@ namespace proposal$ {
 
     if (bigints.eq(currentStatus, STATUS_EXECUTED()))
       return execution_result$.get(proposalId)
-    if (bigints.eq(currentStatus, STATUS_CLOSED())) fail("Proposal is closed")
+    if (bigints.eq(currentStatus, STATUS_CLOSED()))
+      return env.panic<packref>(texts.fromString("Proposal is closed"))
 
     if (bigints.lt(approvalsCount(tuple), threshold(tuple)))
-      fail("Insufficient approvals")
+      return env.panic<packref>(texts.fromString("Insufficient approvals"))
 
     const callInput = call(tuple)
 
@@ -620,7 +661,10 @@ namespace proposal$ {
 
     assertSigner(signers(tuple), signer)
 
-    if (!bigints.eq(status(tuple), STATUS_OPEN())) fail("Proposal is not open")
+    if (!bigints.eq(status(tuple), STATUS_OPEN())) {
+      env.panic<void>(texts.fromString("Proposal is not open"))
+      return
+    }
 
     rewrite(proposalId, tuple, approvalsCount(tuple), STATUS_CLOSED())
   }
@@ -680,7 +724,8 @@ namespace approval$ {
       }
     }
 
-    if (approvedSignerHexes.length < 1) fail("Invalid proposal approvals")
+    if (approvedSignerHexes.length < 1)
+      return env.panic<packref>(texts.fromString("Invalid proposal approvals"))
 
     return packFromSignerHexes(approvedSignerHexes)
   }
@@ -712,25 +757,39 @@ namespace execution_context$ {
   export function assertCanUpdatePolicy(policyInput: packref): void {
     const activeProposalId = getActive()
 
-    if (!activeProposalId) fail("Unauthorized")
+    if (!activeProposalId) {
+      env.panic<void>(texts.fromString("Unauthorized"))
+      return
+    }
 
     const proposal = proposal$.get(activeProposalId)
     const call = proposal$.call(proposal)
 
     call$.assertCanonical(call)
 
-    if (!texts.equals(call$.module(call), modules.self())) fail("Unauthorized")
+    if (!texts.equals(call$.module(call), modules.self())) {
+      env.panic<void>(texts.fromString("Unauthorized"))
+      return
+    }
 
-    if (!texts.equals(call$.method(call), UPDATE_POLICY_METHOD()))
-      fail("Unauthorized")
+    if (!texts.equals(call$.method(call), UPDATE_POLICY_METHOD())) {
+      env.panic<void>(texts.fromString("Unauthorized"))
+      return
+    }
 
     const params = call$.params(call)
 
-    if (packs.length(params) !== 1) fail("Unauthorized")
+    if (packs.length(params) !== 1) {
+      env.panic<void>(texts.fromString("Unauthorized"))
+      return
+    }
 
     const expectedPolicy = packs.get<packref>(params, 0)
 
-    if (!samePack(expectedPolicy, policyInput)) fail("Unauthorized")
+    if (!samePack(expectedPolicy, policyInput)) {
+      env.panic<void>(texts.fromString("Unauthorized"))
+      return
+    }
   }
 }
 
@@ -749,18 +808,23 @@ namespace execution_result$ {
       key$.executionResult(id$.executionResult(proposalId)),
     )
 
-    if (!found) fail("Missing execution result")
+    if (!found)
+      return env.panic<packref>(texts.fromString("Missing execution result"))
 
     const tuple = packs.get<packref>(found, 0)
 
-    if (!tuple) fail("Missing execution result")
-    if (packs.length(tuple) < 3) fail("Missing execution result")
+    if (!tuple)
+      return env.panic<packref>(texts.fromString("Missing execution result"))
+    if (packs.length(tuple) < 3)
+      return env.panic<packref>(texts.fromString("Missing execution result"))
 
     const foundTag = packs.get<textref>(tuple, 0)
     const foundVersion = packs.get<bigintref>(tuple, 1)
 
-    if (!texts.equals(foundTag, TAG())) fail("Missing execution result")
-    if (!bigints.eq(foundVersion, VERSION())) fail("Missing execution result")
+    if (!texts.equals(foundTag, TAG()))
+      return env.panic<packref>(texts.fromString("Missing execution result"))
+    if (!bigints.eq(foundVersion, VERSION()))
+      return env.panic<packref>(texts.fromString("Missing execution result"))
 
     return packs.get<packref>(tuple, 2)
   }
