@@ -19,6 +19,68 @@ This contract stores a name in its persistent storage. Each time you call it:
 - It returns the previous stored name (or null if none)
 - It saves your new name for next time
 
+## Usage Scenarios
+
+<!-- FEATURES:START -->
+
+As a user of the Bobine platform
+I want to store and retrieve my name
+So that the contract remembers who I am
+
+These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
+
+### Shared Setup
+
+This setup is applied before each published scenario.
+
+Here are the steps:
+
+- **Given** I deploy contract `"say-my-name"`
+
+### 1. Set my name for the first time
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **When** I call `"say-my-name"` method `"say_my_name"` with param `"text:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `""`
+
+### 2. Retrieve my name after setting it
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **When** I call `"say-my-name"` method `"say_my_name"` with param `"text:Bob"`
+
+- **Then** the execution should succeed; and the returned value should be `""`
+
+- **When** I call `"say-my-name"` method `"say_my_name"` with param `"text:Charlie"`
+
+- **Then** the execution should succeed; and the returned value should be `"Bob"`
+
+### 3. Update my name
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **When** I call `"say-my-name"` method `"say_my_name"` with param `"text:Charlie"`
+
+- **Then** the execution should succeed; and the returned value should be `""`
+
+- **When** I call `"say-my-name"` method `"say_my_name"` with param `"text:David"`
+
+- **Then** the execution should succeed; and the returned value should be `"Charlie"`
+
+- **When** I call `"say-my-name"` method `"say_my_name"` with param `"text:Eve"`
+
+- **Then** the execution should succeed; and the returned value should be `"David"`
+
+<!-- FEATURES:END -->
+
 ## Methods
 
 <!-- METHODS:START -->

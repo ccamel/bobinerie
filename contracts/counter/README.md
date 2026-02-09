@@ -15,6 +15,115 @@ Per-account counter with Ed25519 session authentication.
 
 Maintains isolated counters keyed by account address. Requires an Ed25519 session module for authentication and nonce management.
 
+## Usage Scenarios
+
+<!-- FEATURES:START -->
+
+As a user of the Bobine platform
+I want to maintain a per-account counter
+So that I can increment, read, and reset my own counter value
+And I can only do so through an authenticated call (capability) for my abstract account
+
+These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
+
+### Shared Setup
+
+This setup is applied before each published scenario.
+
+Here are the steps:
+
+- **Given** I deploy contract `"counter"`; and I deploy contract `"ed25519"`; and I use auth module `"ed25519"`
+
+### 1. Counter lifecycle for one user
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"counter"` method `"value"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+- **When** I invoke `"counter"` method `"add"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:1"`
+
+- **When** I invoke `"counter"` method `"add"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:2"`
+
+- **When** I invoke `"counter"` method `"value"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:2"`
+
+- **When** I invoke `"counter"` method `"reset"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+### 2. Counter isolation between two users
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"counter"` method `"add"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:1"`
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"counter"` method `"value"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+- **When** I invoke `"counter"` method `"add"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:1"`
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"counter"` method `"value"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:1"`
+
+### 3. Reset only affects the current user
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"counter"` method `"add"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:1"`
+
+- **When** I invoke `"counter"` method `"add"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:2"`
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"counter"` method `"add"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:1"`
+
+- **When** I invoke `"counter"` method `"reset"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"counter"` method `"value"` through auth
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:2"`
+
+<!-- FEATURES:END -->
+
 ## Methods
 
 <!-- METHODS:START -->

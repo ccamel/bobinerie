@@ -11,6 +11,379 @@ XYK (constant-product) AMM pool for two fungible tokens: add/remove liquidity, s
 
 <!-- DEPLOYMENTS:END -->
 
+## Usage Scenarios
+
+<!-- FEATURES:START -->
+
+As a user of the Bobine platform
+I want to initialize a constant-product pool safely
+So that tokens and fees are validated and set only once
+
+These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
+
+### Shared Setup
+
+This setup is applied before each published scenario.
+
+Here are the steps:
+
+- **Given** I deploy contract `"pool-xyk"`; and I deploy contract `"ed25519"`; and I use auth module `"ed25519"`
+
+### 1. Initialize with ordered tokens sets tokens and fee
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I call `"$pool-xyk"` method `"init"` with params:
+
+  ```gherkin
+  | $pool-xyk_creator |
+  | text:TokenA |
+  | text:TokenB |
+  | bigint:30 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$pool-xyk"` method `"tokens"`
+
+- **Then** the execution should succeed; and the returned value should be:
+
+  ```gherkin
+  | text:bobine.pool-xyk/tokens_view |
+  | bigint:1 |
+  | text:TokenA |
+  | text:TokenB |
+  ```
+
+- **When** I call `"$pool-xyk"` method `"fee_bps"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:30"`
+
+### 2. Add liquidity mints LP and updates reserves
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Alice"`; and I have keys for `"Bob"`; and I deploy contract `"token-fungible"`
+
+- **When** I call `"token-fungible"` method `"clone"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`; and I remember last returned value as `"token_a"`
+
+- **When** I call `"$token_a"` method `"init"` with param `"address:Alice"`
+
+- **Then** the execution should succeed
+
+- **When** I call `"token-fungible"` method `"clone"` with param `"address:Bob"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`; and I remember last returned value as `"token_b"`
+
+- **When** I call `"$token_b"` method `"init"` with param `"address:Bob"`
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"$token_a"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:1000 |
+  ```
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"$token_b"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:1000 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$pool-xyk"` method `"init"` with params:
+
+  ```gherkin
+  | $pool-xyk_creator |
+  | $token_a |
+  | $token_b |
+  | bigint:30 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$pool-xyk"` method `"tokens"`
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"$pool-xyk"` method `"add_liquidity"` through auth with params:
+
+  ```gherkin
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | address:Alice |
+  ```
+
+- **Then** the execution should succeed; and the returned value should be:
+
+  ```gherkin
+  | text:bobine.pool-xyk/add_liquidity_view |
+  | bigint:1 |
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  ```
+
+- **When** I call `"$pool-xyk"` method `"reserves"`
+
+- **Then** the execution should succeed; and the returned value should be:
+
+  ```gherkin
+  | text:bobine.pool-xyk/reserves_view |
+  | bigint:1 |
+  | bigint:100 |
+  | bigint:100 |
+  ```
+
+- **When** I call `"$pool-xyk"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+- **When** I call `"$pool-xyk"` method `"balance_of"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+### 3. Remove liquidity burns LP and returns tokens
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Alice"`; and I have keys for `"Bob"`; and I deploy contract `"token-fungible"`
+
+- **When** I call `"token-fungible"` method `"clone"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`; and I remember last returned value as `"token_a"`
+
+- **When** I call `"$token_a"` method `"init"` with param `"address:Alice"`
+
+- **Then** the execution should succeed
+
+- **When** I call `"token-fungible"` method `"clone"` with param `"address:Bob"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`; and I remember last returned value as `"token_b"`
+
+- **When** I call `"$token_b"` method `"init"` with param `"address:Bob"`
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"$token_a"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:1000 |
+  ```
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"$token_b"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:1000 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$pool-xyk"` method `"init"` with params:
+
+  ```gherkin
+  | $pool-xyk_creator |
+  | $token_a |
+  | $token_b |
+  | bigint:30 |
+  ```
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"$pool-xyk"` method `"add_liquidity"` through auth with params:
+
+  ```gherkin
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | address:Alice |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I invoke `"$pool-xyk"` method `"remove_liquidity"` through auth with params:
+
+  ```gherkin
+  | bigint:40 |
+  | bigint:40 |
+  | bigint:40 |
+  | address:Alice |
+  ```
+
+- **Then** the execution should succeed; and the returned value should be:
+
+  ```gherkin
+  | text:bobine.pool-xyk/remove_liquidity_view |
+  | bigint:1 |
+  | bigint:40 |
+  | bigint:40 |
+  ```
+
+- **When** I call `"$pool-xyk"` method `"reserves"`
+
+- **Then** the execution should succeed; and the returned value should be:
+
+  ```gherkin
+  | text:bobine.pool-xyk/reserves_view |
+  | bigint:1 |
+  | bigint:60 |
+  | bigint:60 |
+  ```
+
+- **When** I call `"$pool-xyk"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:60"`
+
+- **When** I call `"$pool-xyk"` method `"balance_of"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:60"`
+
+### 4. Swap exact in updates reserves and returns output
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Alice"`; and I have keys for `"Bob"`; and I deploy contract `"token-fungible"`
+
+- **When** I call `"token-fungible"` method `"clone"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`; and I remember last returned value as `"token_a"`
+
+- **When** I call `"$token_a"` method `"init"` with param `"address:Alice"`
+
+- **Then** the execution should succeed
+
+- **When** I call `"token-fungible"` method `"clone"` with param `"address:Bob"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`; and I remember last returned value as `"token_b"`
+
+- **When** I call `"$token_b"` method `"init"` with param `"address:Bob"`
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"$token_a"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:1000 |
+  ```
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"$token_b"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:1000 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$pool-xyk"` method `"init"` with params:
+
+  ```gherkin
+  | $pool-xyk_creator |
+  | $token_a |
+  | $token_b |
+  | bigint:30 |
+  ```
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"$pool-xyk"` method `"add_liquidity"` through auth with params:
+
+  ```gherkin
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | bigint:100 |
+  | address:Alice |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I invoke `"$pool-xyk"` method `"swap_exact_in"` through auth with params:
+
+  ```gherkin
+  | $token_a |
+  | bigint:10 |
+  | bigint:9 |
+  | address:Alice |
+  ```
+
+- **Then** the execution should succeed; and the returned value should be:
+
+  ```gherkin
+  | text:bobine.pool-xyk/swap_exact_in_view |
+  | bigint:1 |
+  | $token_b |
+  | bigint:9 |
+  ```
+
+- **When** I call `"$pool-xyk"` method `"reserves"`
+
+- **Then** the execution should succeed; and the returned values should be in any order:
+
+  ```gherkin
+  | bigint:91 |
+  | bigint:110 |
+  ```
+
+- **When** I call `"$pool-xyk"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+- **When** I call `"$pool-xyk"` method `"balance_of"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+<!-- FEATURES:END -->
+
 ## Methods
 
 <!-- METHODS:START -->

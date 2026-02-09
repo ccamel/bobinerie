@@ -18,6 +18,219 @@ A minimal fungible token module for Bobine, designed to be a boring, reliable bu
 - **Total supply**: track minted minus burned.
 - **Owner minting**: one address can mint (useful for testnets, faucets, and controlled supplies).
 
+## Usage Scenarios
+
+<!-- FEATURES:START -->
+
+As a user of the Bobine platform
+I want fungible tokens with balances and allowances
+So that I can mint, transfer, approve, and burn safely
+
+These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
+
+### Shared Setup
+
+This setup is applied before each published scenario.
+
+Here are the steps:
+
+- **Given** I deploy contract `"token-fungible"`; and I deploy contract `"ed25519"`; and I use auth module `"ed25519"`; and I have keys for `"Alice"`
+
+- **When** I call `"$token-fungible"` method `"clone"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`; and I remember last returned value as `"token-fungible"`
+
+- **When** I call `"$token-fungible"` method `"init"` with param `"address:Alice"`
+
+- **Then** the execution should succeed
+
+### 1. Initial state after initialization
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I call `"$token-fungible"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Bob"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+- **When** I call `"$token-fungible"` method `"allowance"` with params:
+
+  ```gherkin
+  | address:Alice |
+  | address:Bob |
+  ```
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:0"`
+
+### 2. Owner can mint and supply tracks balances
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **When** I invoke `"$token-fungible"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:100 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+- **When** I call `"$token-fungible"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+### 3. Transfer moves balances between users
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Bob"`; and I have keys for `"Alice"`
+
+- **When** I invoke `"$token-fungible"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:100 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I invoke `"$token-fungible"` method `"transfer"` through auth with params:
+
+  ```gherkin
+  | address:Bob |
+  | bigint:40 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:60"`
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Bob"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:40"`
+
+- **When** I call `"$token-fungible"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+### 4. Approve and transfer_from consume allowance
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I have keys for `"Bob"`; and I have keys for `"Charlie"`; and I have keys for `"Alice"`
+
+- **When** I invoke `"$token-fungible"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:100 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I invoke `"$token-fungible"` method `"approve"` through auth with params:
+
+  ```gherkin
+  | address:Bob |
+  | bigint:30 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$token-fungible"` method `"allowance"` with params:
+
+  ```gherkin
+  | address:Alice |
+  | address:Bob |
+  ```
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:30"`
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"$token-fungible"` method `"transfer_from"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | address:Charlie |
+  | bigint:20 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"$token-fungible"` method `"allowance"` with params:
+
+  ```gherkin
+  | address:Alice |
+  | address:Bob |
+  ```
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:10"`
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:80"`
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Charlie"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:20"`
+
+- **When** I call `"$token-fungible"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:100"`
+
+### 5. Burn reduces balance and total supply
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **When** I invoke `"$token-fungible"` method `"mint"` through auth with params:
+
+  ```gherkin
+  | address:Alice |
+  | bigint:100 |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I invoke `"$token-fungible"` method `"burn"` through auth with param `"bigint:40"`
+
+- **Then** the execution should succeed
+
+- **When** I call `"$token-fungible"` method `"balance"` with param `"address:Alice"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:60"`
+
+- **When** I call `"$token-fungible"` method `"total_supply"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:60"`
+
+<!-- FEATURES:END -->
+
 ## Methods
 
 <!-- METHODS:START -->

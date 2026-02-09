@@ -11,6 +11,126 @@ Threshold-based authorization contract for Bobine call execution.
 
 <!-- DEPLOYMENTS:END -->
 
+## Usage Scenarios
+
+<!-- FEATURES:START -->
+
+As a user of the Bobine platform
+I want threshold-based authorization over call execution
+So that sensitive actions are executed only after enough signer approvals
+
+These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
+
+### Shared Setup
+
+This setup is applied before each published scenario.
+
+Here are the steps:
+
+- **Given** I deploy contract `"multisig"`; and I deploy contract `"ed25519"`; and I use auth module `"ed25519"`; and I have keys for `"Alice"`; and I have keys for `"Bob"`; and I have keys for `"Carol"`
+
+### 1. Initialization canonicalizes signers (sort + dedupe)
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **When** I call `"multisig"` method `"init"` with param `"pack:[text:bobine.multisig/policy,bigint:1,bigint:2,pack:[text:charlie,text:alice,text:alice,text:bob]]"`
+
+- **Then** the execution should succeed
+
+- **When** I call `"multisig"` method `"policy"`
+
+- **Then** the execution should succeed; and the returned value should be `"pack:[text:bobine.multisig/policy,bigint:1,bigint:2,pack:[text:alice,text:bob,text:charlie]]"`
+
+### 2. Threshold approvals are required, then execution is idempotent
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I deploy contract `"say-my-name"`
+
+- **When** I call `"multisig"` method `"init"` with param `"pack:[text:bobine.multisig/policy,bigint:1,bigint:2,pack:[address:Alice,address:Bob,address:Carol]]"`
+
+- **Then** the execution should succeed
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"multisig"` method `"propose"` through auth with param `"pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:from-multisig]]"`
+
+- **Then** the execution should succeed; and I remember last returned value as `"p1"`
+
+- **When** I call `"multisig"` method `"proposal"` with param `"$p1"`
+
+- **Then** the execution should succeed; and the returned value should be `"pack:[text:bobine.multisig/proposal_view,bigint:1,$p1,pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:from-multisig]],address:Alice,bigint:1,pack:[address:Alice],bigint:0]"`
+
+- **When** I call `"multisig"` method `"execute"` with param `"$p1"`
+
+- **Then** the execution should fail with `"Insufficient approvals"`
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"multisig"` method `"approve"` through auth with param `"$p1"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:2"`
+
+- **When** I call `"multisig"` method `"execute"` with param `"$p1"`
+
+- **Then** the execution should succeed; and the returned value should be `""`
+
+- **When** I call `"multisig"` method `"execute"` with param `"$p1"`
+
+- **Then** the execution should succeed; and the returned value should be `""`
+
+- **When** I call `"say-my-name"` method `"say_my_name"` with param `"text:check"`
+
+- **Then** the execution should succeed; and the returned value should be `"from-multisig"`
+
+### 3. Policy update is only allowed through an executed multisig proposal
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I deploy contract `"say-my-name"`
+
+- **When** I call `"multisig"` method `"init"` with param `"pack:[text:bobine.multisig/policy,bigint:1,bigint:2,pack:[address:Alice,address:Bob,address:Carol]]"`
+
+- **Then** the execution should succeed
+
+- **When** I call `"multisig"` method `"update_policy"` with param `"pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:z,text:a,text:a]]"`
+
+- **Then** the execution should fail with `"Unauthorized"`
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"multisig"` method `"propose"` through auth with param `"pack:[text:bobine.multisig/call,bigint:1,$multisig,text:update_policy,pack:[pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:z,text:a,text:a]]]]"`
+
+- **Then** the execution should succeed; and I remember last returned value as `"p4"`
+
+- **Given** I have keys for `"Bob"`
+
+- **When** I invoke `"multisig"` method `"approve"` through auth with param `"$p4"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:2"`
+
+- **When** I call `"multisig"` method `"execute"` with param `"$p4"`
+
+- **Then** the execution should succeed; and the returned value should be `"null"`
+
+- **When** I call `"multisig"` method `"policy"`
+
+- **Then** the execution should succeed; and the returned value should be `"pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:a,text:z]]"`
+
+- **Given** I have keys for `"Alice"`
+
+- **When** I invoke `"multisig"` method `"propose"` through auth with param `"pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:no-longer-signer]]"`
+
+- **Then** the execution should fail with `"Unauthorized"`
+
+<!-- FEATURES:END -->
+
 ## Methods
 
 <!-- METHODS:START -->
