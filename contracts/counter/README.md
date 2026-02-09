@@ -6,7 +6,7 @@ Per-account counter with Ed25519 session authentication.
 
 ## Deployments
 
-- **garage-hazae41-bob0**: `378407ab5ff8fba8b0b2fc5c3912c20d3e431ab16805967cdf26358a8f0cf61e`
+- **garage-hazae41-bob0**: `cf7a20489f65a42e2c7ff27d066b7fb690c752e5ed9ec60aae8a55d3ab821022`
 - **garage-ccamel-bob0**: `378407ab5ff8fba8b0b2fc5c3912c20d3e431ab16805967cdf26358a8f0cf61e`
 
 <!-- DEPLOYMENTS:END -->

@@ -6,7 +6,7 @@ Account-bound on-chain sigil (SVG PFP): mint one per derived address, optional o
 
 ## Deployments
 
-- **garage-hazae41-bob0**: `a679f5fdb01636c9ff0a39eec2828fcb022ce577e61046152585ebf0765f68cb`
+- **garage-hazae41-bob0**: `c9da8fc4ba2cd89b09e6a99309b42da74c6ffe3364caf022fc3afb9d183764d5`
 - **garage-ccamel-bob0**: `a679f5fdb01636c9ff0a39eec2828fcb022ce577e61046152585ebf0765f68cb`
 
 <!-- DEPLOYMENTS:END -->

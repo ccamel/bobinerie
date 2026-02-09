@@ -6,7 +6,7 @@ Threshold-based authorization contract for Bobine call execution.
 
 ## Deployments
 
-- **garage-hazae41-bob0**: `83b60b6281355df532de9ebba332a4abd76456764fc1b8dd1cebf12bc872c347`
+- **garage-hazae41-bob0**: `811c45e38f318f3a8adb7d56466c5b45c32587c8417e3c01efb5af71bdb47950`
 - **garage-ccamel-bob0**: `83b60b6281355df532de9ebba332a4abd76456764fc1b8dd1cebf12bc872c347`
 
 <!-- DEPLOYMENTS:END -->
