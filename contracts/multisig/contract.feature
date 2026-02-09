@@ -11,6 +11,7 @@ Feature: Multisig Contract
     And I have keys for "Bob"
     And I have keys for "Carol"
 
+  @public-doc
   Scenario: Initialization canonicalizes signers (sort + dedupe)
     When I call "multisig" method "init" with param "pack:[text:bobine.multisig/policy,bigint:1,bigint:2,pack:[text:charlie,text:alice,text:alice,text:bob]]"
     Then the execution should succeed
@@ -26,6 +27,7 @@ Feature: Multisig Contract
     When I call "multisig" method "init" with param "pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:bob]]"
     Then the execution should fail with "Already initialized"
 
+  @public-doc
   Scenario: Threshold approvals are required, then execution is idempotent
     Given I deploy contract "say-my-name"
 
@@ -122,6 +124,7 @@ Feature: Multisig Contract
     When I call "multisig" method "execute" with param "$p3"
     Then the execution should fail with "Proposal is closed"
 
+  @public-doc
   Scenario: Policy update is only allowed through an executed multisig proposal
     Given I deploy contract "say-my-name"
 

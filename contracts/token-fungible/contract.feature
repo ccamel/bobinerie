@@ -15,6 +15,7 @@ Feature: Token Fungible Contract
     When I call "$token-fungible" method "init" with param "address:Alice"
     Then the execution should succeed
 
+  @public-doc
   Scenario: Initial state after initialization
     Given I have keys for "Bob"
     When I call "$token-fungible" method "total_supply"
@@ -32,6 +33,7 @@ Feature: Token Fungible Contract
     Then the execution should succeed
     And the returned value should be "bigint:0"
 
+  @public-doc
   Scenario: Owner can mint and supply tracks balances
     When I invoke "$token-fungible" method "mint" through auth with params:
       | address:Alice |
@@ -51,6 +53,7 @@ Feature: Token Fungible Contract
       | bigint:50 |
     Then the execution should fail with "Unauthorized"
 
+  @public-doc
   Scenario: Transfer moves balances between users
     Given I have keys for "Bob"
     And I have keys for "Alice"
@@ -93,6 +96,7 @@ Feature: Token Fungible Contract
     Then the execution should succeed
     And the returned value should be "bigint:10"
 
+  @public-doc
   Scenario: Approve and transfer_from consume allowance
     Given I have keys for "Bob"
     And I have keys for "Charlie"
@@ -185,6 +189,7 @@ Feature: Token Fungible Contract
     Then the execution should succeed
     And the returned value should be "bigint:0"
 
+  @public-doc
   Scenario: Burn reduces balance and total supply
     When I invoke "$token-fungible" method "mint" through auth with params:
       | address:Alice |

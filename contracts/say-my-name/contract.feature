@@ -6,11 +6,13 @@ Feature: Say My Name Contract
   Background:
     Given I deploy contract "say-my-name"
 
+  @public-doc
   Scenario: Set my name for the first time
     When I call "say-my-name" method "say_my_name" with param "text:Alice"
     Then the execution should succeed
     And the returned value should be ""
 
+  @public-doc
   Scenario: Retrieve my name after setting it
     When I call "say-my-name" method "say_my_name" with param "text:Bob"
     Then the execution should succeed
@@ -19,6 +21,7 @@ Feature: Say My Name Contract
     Then the execution should succeed
     And the returned value should be "Bob"
 
+  @public-doc
   Scenario: Update my name
     When I call "say-my-name" method "say_my_name" with param "text:Charlie"
     Then the execution should succeed

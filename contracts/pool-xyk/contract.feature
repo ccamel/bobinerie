@@ -15,6 +15,7 @@ Feature: Pool XYK Contract
     When I call "$pool-xyk" method "fee_bps"
     Then the execution should fail with "Pool is not initialized"
 
+  @public-doc
   Scenario: Initialize with ordered tokens sets tokens and fee
     Given I have keys for "Alice"
     When I call "$pool-xyk" method "init" with params:
@@ -129,6 +130,7 @@ Feature: Pool XYK Contract
     Then the execution should succeed
     And the returned value should be "bigint:10000"
 
+  @public-doc
   Scenario: Add liquidity mints LP and updates reserves
     Given I have keys for "Alice"
     And I have keys for "Bob"
@@ -194,6 +196,7 @@ Feature: Pool XYK Contract
     Then the execution should succeed
     And the returned value should be "bigint:100"
 
+  @public-doc
   Scenario: Remove liquidity burns LP and returns tokens
     Given I have keys for "Alice"
     And I have keys for "Bob"
@@ -263,6 +266,7 @@ Feature: Pool XYK Contract
     Then the execution should succeed
     And the returned value should be "bigint:60"
 
+  @public-doc
   Scenario: Swap exact in updates reserves and returns output
     Given I have keys for "Alice"
     And I have keys for "Bob"

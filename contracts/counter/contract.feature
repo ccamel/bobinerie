@@ -9,6 +9,7 @@ Feature: Counter Contract
     And I deploy contract "ed25519"
     And I use auth module "ed25519"
 
+  @public-doc
   Scenario: Counter lifecycle for one user
     Given I have keys for "Alice"
 
@@ -32,6 +33,7 @@ Feature: Counter Contract
     Then the execution should succeed
     And the returned value should be "bigint:0"
 
+  @public-doc
   Scenario: Counter isolation between two users
     Given I have keys for "Alice"
 
@@ -53,6 +55,7 @@ Feature: Counter Contract
     Then the execution should succeed
     And the returned value should be "bigint:1"
 
+  @public-doc
   Scenario: Reset only affects the current user
     Given I have keys for "Alice"
 
