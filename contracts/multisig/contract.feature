@@ -24,7 +24,7 @@ Feature: Multisig Contract
     Then the execution should succeed
 
     When I call "multisig" method "init" with param "pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:bob]]"
-    Then the execution should fail
+    Then the execution should fail with "Already initialized"
 
   Scenario: Threshold approvals are required, then execution is idempotent
     Given I deploy contract "say-my-name"
@@ -42,7 +42,7 @@ Feature: Multisig Contract
     And the returned value should be "pack:[text:bobine.multisig/proposal_view,bigint:1,$p1,pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:from-multisig]],address:Alice,bigint:1,pack:[address:Alice],bigint:0]"
 
     When I call "multisig" method "execute" with param "$p1"
-    Then the execution should fail
+    Then the execution should fail with "Insufficient approvals"
 
     Given I have keys for "Bob"
     When I invoke "multisig" method "approve" through auth with param "$p1"
@@ -89,7 +89,7 @@ Feature: Multisig Contract
 
     Given I have keys for "Carol"
     When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:unauthorized]]"
-    Then the execution should fail
+    Then the execution should fail with "Unauthorized"
 
     Given I have keys for "Alice"
     When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:authorized]]"
@@ -98,7 +98,7 @@ Feature: Multisig Contract
 
     Given I have keys for "Carol"
     When I invoke "multisig" method "approve" through auth with param "$p2"
-    Then the execution should fail
+    Then the execution should fail with "Unauthorized"
 
   Scenario: Closed proposal is not executable
     Given I deploy contract "say-my-name"
@@ -120,7 +120,7 @@ Feature: Multisig Contract
     And the returned value should be "pack:[text:bobine.multisig/proposal_view,bigint:1,$p3,pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:should-not-run]],address:Alice,bigint:1,pack:[address:Alice],bigint:2]"
 
     When I call "multisig" method "execute" with param "$p3"
-    Then the execution should fail
+    Then the execution should fail with "Proposal is closed"
 
   Scenario: Policy update is only allowed through an executed multisig proposal
     Given I deploy contract "say-my-name"
@@ -129,7 +129,7 @@ Feature: Multisig Contract
     Then the execution should succeed
 
     When I call "multisig" method "update_policy" with param "pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:z,text:a,text:a]]"
-    Then the execution should fail
+    Then the execution should fail with "Unauthorized"
 
     Given I have keys for "Alice"
     When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$multisig,text:update_policy,pack:[pack:[text:bobine.multisig/policy,bigint:1,bigint:1,pack:[text:z,text:a,text:a]]]]"
@@ -151,11 +151,11 @@ Feature: Multisig Contract
 
     Given I have keys for "Alice"
     When I invoke "multisig" method "propose" through auth with param "pack:[text:bobine.multisig/call,bigint:1,$say-my-name,text:say_my_name,pack:[text:no-longer-signer]]"
-    Then the execution should fail
+    Then the execution should fail with "Unauthorized"
 
   Scenario: Initialization rejects invalid thresholds
     When I call "multisig" method "init" with param "pack:[text:bobine.multisig/policy,bigint:1,bigint:0,pack:[text:alice]]"
-    Then the execution should fail
+    Then the execution should fail with "Invalid policy"
 
     When I call "multisig" method "init" with param "pack:[text:bobine.multisig/policy,bigint:1,bigint:2,pack:[text:alice]]"
-    Then the execution should fail
+    Then the execution should fail with "Invalid policy"

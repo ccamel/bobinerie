@@ -11,9 +11,9 @@ Feature: Pool XYK Contract
   Scenario: Reading tokens and fee before init fails
     Given I have keys for "Alice"
     When I call "$pool-xyk" method "tokens"
-    Then the execution should fail
+    Then the execution should fail with "Pool is not initialized"
     When I call "$pool-xyk" method "fee_bps"
-    Then the execution should fail
+    Then the execution should fail with "Pool is not initialized"
 
   Scenario: Initialize with ordered tokens sets tokens and fee
     Given I have keys for "Alice"
@@ -66,7 +66,7 @@ Feature: Pool XYK Contract
       | text:TokenA |
       | text:TokenB |
       | bigint:25 |
-    Then the execution should fail
+    Then the execution should fail with "Already initialized"
 
   Scenario: Creator mismatch fails self-check
     Given I have keys for "Alice"
@@ -76,7 +76,7 @@ Feature: Pool XYK Contract
       | text:TokenA |
       | text:TokenB |
       | bigint:25 |
-    Then the execution should fail
+    Then the execution should fail with "Invalid module creator"
 
   Scenario: Token addresses must be different
     Given I have keys for "Alice"
@@ -85,7 +85,7 @@ Feature: Pool XYK Contract
       | text:TokenA |
       | text:TokenA |
       | bigint:25 |
-    Then the execution should fail
+    Then the execution should fail with "Token A and Token B must be different"
 
   Scenario: Fee must not be negative
     Given I have keys for "Alice"
@@ -94,7 +94,7 @@ Feature: Pool XYK Contract
       | text:TokenA |
       | text:TokenB |
       | bigint:-1 |
-    Then the execution should fail
+    Then the execution should fail with "Invalid fee_bps"
 
   Scenario: Fee must not exceed 10000 bps
     Given I have keys for "Alice"
@@ -103,7 +103,7 @@ Feature: Pool XYK Contract
       | text:TokenA |
       | text:TokenB |
       | bigint:10001 |
-    Then the execution should fail
+    Then the execution should fail with "Invalid fee_bps"
 
   Scenario: Fee at 0 bps is accepted
     Given I have keys for "Alice"
@@ -379,4 +379,4 @@ Feature: Pool XYK Contract
       | bigint:10 |
       | bigint:10 |
       | address:Alice |
-    Then the execution should fail
+    Then the execution should fail with "Insufficient output"

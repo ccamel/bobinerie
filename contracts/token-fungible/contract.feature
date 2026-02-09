@@ -49,7 +49,7 @@ Feature: Token Fungible Contract
     When I invoke "$token-fungible" method "mint" through auth with params:
       | address:Bob |
       | bigint:50 |
-    Then the execution should fail
+    Then the execution should fail with "Unauthorized"
 
   Scenario: Transfer moves balances between users
     Given I have keys for "Bob"
@@ -82,7 +82,7 @@ Feature: Token Fungible Contract
     When I invoke "$token-fungible" method "transfer" through auth with params:
       | address:Bob |
       | bigint:25 |
-    Then the execution should fail
+    Then the execution should fail with "Insufficient balance"
     When I call "$token-fungible" method "balance" with param "address:Alice"
     Then the execution should succeed
     And the returned value should be "bigint:10"
@@ -141,7 +141,7 @@ Feature: Token Fungible Contract
     When I invoke "$token-fungible" method "approve" through auth with params:
       | address:Bob |
       | bigint:7 |
-    Then the execution should fail
+    Then the execution should fail with "Must reset allowance to 0 before changing"
     When I invoke "$token-fungible" method "approve" through auth with params:
       | address:Bob |
       | bigint:0 |
@@ -172,7 +172,7 @@ Feature: Token Fungible Contract
       | address:Alice |
       | address:Bob |
       | bigint:15 |
-    Then the execution should fail
+    Then the execution should fail with "Insufficient allowance"
     When I call "$token-fungible" method "allowance" with params:
       | address:Alice |
       | address:Bob |
@@ -201,4 +201,4 @@ Feature: Token Fungible Contract
 
   Scenario: Burn fails with insufficient balance
     When I invoke "$token-fungible" method "burn" through auth with param "bigint:1"
-    Then the execution should fail
+    Then the execution should fail with "Insufficient balance"
