@@ -42,6 +42,18 @@ type ModuleExecution = {
   error?: string
 }
 
+const TRANSIENT_WAIT_ERROR = "Failed to wait"
+const TRANSIENT_RETRY_ATTEMPTS = 4
+const TRANSIENT_RETRY_DELAY_MS = 50
+
+function isTransientWaitError(error?: string): boolean {
+  return !!error && error.includes(TRANSIENT_WAIT_ERROR)
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 function isNullResponse(bytes: Uint8Array): boolean {
   return (
     bytes.length === 4 &&
@@ -132,7 +144,7 @@ async function parseExecutionResponse(
   }
 }
 
-async function executeModule(
+async function executeModuleOnce(
   world: BobineWorld,
   moduleAddress: string,
   method: string,
@@ -164,6 +176,31 @@ async function executeModule(
   }
 }
 
+async function executeModule(
+  world: BobineWorld,
+  moduleAddress: string,
+  method: string,
+  params: Packable[],
+): Promise<ModuleExecution> {
+  let result = await executeModuleOnce(world, moduleAddress, method, params)
+
+  for (
+    let attempt = 1;
+    !result.ok &&
+    isTransientWaitError(result.error) &&
+    attempt < TRANSIENT_RETRY_ATTEMPTS;
+    attempt++
+  ) {
+    console.log(
+      `⚠️ Transient Bobine error on ${method}; retry ${attempt}/${TRANSIENT_RETRY_ATTEMPTS - 1}`,
+    )
+    await sleep(TRANSIENT_RETRY_DELAY_MS * attempt)
+    result = await executeModuleOnce(world, moduleAddress, method, params)
+  }
+
+  return result
+}
+
 async function callContract(
   world: BobineWorld,
   contractName: string,
@@ -183,21 +220,7 @@ async function callContract(
   }
 
   try {
-    const body = new FormData()
-    body.append("module", moduleAddress)
-    body.append("method", method)
-    body.append(
-      "params",
-      new Blob([Writable.writeToBytesOrThrow(new Packed(params))]),
-    )
-    body.append("effort", new Blob([world.nextSpark()]))
-
-    const response = await fetch(new URL("/api/execute", world.serverUrl), {
-      method: "POST",
-      headers: { Accept: "application/octet-stream" },
-      body,
-    })
-    const parsed = await parseExecutionResponse(response)
+    const parsed = await executeModule(world, moduleAddress, method, params)
     world.lastExecutionResult = {
       success: parsed.ok,
       logs: parsed.logs,
