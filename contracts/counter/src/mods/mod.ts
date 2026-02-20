@@ -46,7 +46,7 @@ namespace counter$ {
     const value = storage.get(key(address))
     if (!value) return bigints.zero()
 
-    const text = changetype<textref>(value)
+    const text = packs.get<textref>(value, 0)
     return bigints.fromBase10(text)
   }
 

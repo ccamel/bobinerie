@@ -17,6 +17,8 @@ const DOMAIN = "bobine.pool-xyk"
 const VERSION = (): bigintref => bigints.one()
 const DOMAIN_TAG = (suffix: string): textref =>
   texts.fromString(`${DOMAIN}/${suffix}`)
+const TWO = (): bigintref => bigints.two()
+const FEE_BPS_DENOMINATOR = (): bigintref => bigints.fromInt64(10_000)
 
 namespace selfcheck$ {
   export function expected(creator: textref): textref {
@@ -81,17 +83,11 @@ namespace math$ {
     if (bigints.eq(n, bigints.zero())) return bigints.zero()
 
     let x = n
-    let y = bigints.div(
-      bigints.add(x, bigints.one()),
-      bigints.fromBase10(texts.fromString("2")),
-    )
+    let y = bigints.div(bigints.add(x, bigints.one()), TWO())
 
     while (bigints.lt(y, x)) {
       x = y
-      y = bigints.div(
-        bigints.add(x, bigints.div(n, x)),
-        bigints.fromBase10(texts.fromString("2")),
-      )
+      y = bigints.div(bigints.add(x, bigints.div(n, x)), TWO())
     }
 
     return x
@@ -105,8 +101,7 @@ namespace pool$ {
   const token1Key = (): textref => texts.fromString("token1")
   const feeBpsKey = (): textref => texts.fromString("fee_bps")
 
-  const maxFeeBps = (): bigintref =>
-    bigints.fromBase10(texts.fromString("10000"))
+  const maxFeeBps = (): bigintref => FEE_BPS_DENOMINATOR()
 
   function key(field: textref): textref {
     return texts.concat(prefix(), field)
@@ -207,7 +202,7 @@ namespace pool$ {
   }
 
   export function feeDenominator(): bigintref {
-    return bigints.fromBase10(texts.fromString("10000"))
+    return FEE_BPS_DENOMINATOR()
   }
 }
 
