@@ -6,7 +6,7 @@ XYK (constant-product) AMM pool for two fungible tokens: add/remove liquidity, s
 
 ## Deployments
 
-- **garage-hazae41-bob0**: `6f2c089f24279b09b1938b216da3fc2a4ce0523a896180c23ea4b9532b2b1a13`
+- **garage-hazae41-bob0**: `9bf2890ebbfcb2d194e64e6809079dd6f2d1f0d315acba3dec75b8489fc2cdda`
 - **garage-ccamel-bob0**: `d9a00d0342335b7b302460d2b174940202b9785abe3b43a61287202fbf141452`
 
 <!-- DEPLOYMENTS:END -->
