@@ -72,7 +72,7 @@ namespace store$ {
   export function readText(key: textref): textref {
     const value = storage.get(key)
     if (!value) return null
-    return changetype<textref>(value)
+    return packs.get<textref>(value, 0)
   }
 
   export function writeText(key: textref, value: textref): void {
