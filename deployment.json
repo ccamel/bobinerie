@@ -3,19 +3,19 @@
     "garage-hazae41-bob0": {
       "contracts": {
         "counter": {
-          "address": "cf7a20489f65a42e2c7ff27d066b7fb690c752e5ed9ec60aae8a55d3ab821022"
+          "address": "d41002f874ca7b475b4253eff2ad180de4232a1e49c538e1d58bbaa6c0cf97d7"
         },
         "say-my-name": {
           "address": "d9fb78a305f52edbb065318a7c5681358559c8a56b0031f4a97198267be6df89"
         },
         "sigil": {
-          "address": "c9da8fc4ba2cd89b09e6a99309b42da74c6ffe3364caf022fc3afb9d183764d5"
+          "address": "4be65463c55463e8d4d3aaae25566712b71f7b6cfc5b1f797c75fb8682e9cb3d"
         },
         "token-fungible": {
           "address": "7fbd3265a35bc2192d4e2b9114ef1ee9596d04218bc58995453c03a4c464b255"
         },
         "pool-xyk": {
-          "address": "6f2c089f24279b09b1938b216da3fc2a4ce0523a896180c23ea4b9532b2b1a13"
+          "address": "9bf2890ebbfcb2d194e64e6809079dd6f2d1f0d315acba3dec75b8489fc2cdda"
         },
         "multisig": {
           "address": "811c45e38f318f3a8adb7d56466c5b45c32587c8417e3c01efb5af71bdb47950"
