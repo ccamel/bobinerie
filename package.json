@@ -8,7 +8,7 @@
     "produce": "npm run contracts:produce",
     "contract:build": ": \"${CONTRACT:?❌ CONTRACT is required (e.g. CONTRACT=mycontract)}\" && rm -rf ./contracts/$CONTRACT/out && npm run contract:asc && npm run contract:types",
     "contract:asc": ": \"${CONTRACT:?❌ CONTRACT is required (e.g. CONTRACT=mycontract)}\" && deno x asc ./contracts/$CONTRACT/src/mod.ts -o ./contracts/$CONTRACT/out/mod.wasm --runtime stub --enable reference-types",
-    "contract:types": ": \"${CONTRACT:?❌ CONTRACT is required (e.g. CONTRACT=mycontract)}\" && deno x tsc ./contracts/$CONTRACT/src/mod.ts --outFile ./contracts/$CONTRACT/out/mod.d.ts --noCheck --declaration --emitDeclarationOnly",
+    "contract:types": ": \"${CONTRACT:?❌ CONTRACT is required (e.g. CONTRACT=mycontract)}\" && deno x tsc --project ./contracts/$CONTRACT --outFile ./contracts/$CONTRACT/out/mod.d.ts --noCheck --declaration --emitDeclarationOnly",
     "contract:produce": ": \"${CONTRACT:?❌ CONTRACT is required (e.g. CONTRACT=mycontract)}\" && deno run -A ./run/src/mods/produce/mod.ts ./contracts/$CONTRACT/out/mod.wasm",
     "contracts:build": "for dir in contracts/*/; do CONTRACT=$(basename \"$dir\") npm run contract:build || exit 1; done",
     "contracts:produce": "for dir in contracts/*/; do CONTRACT=$(basename \"$dir\") npm run contract:produce || exit 1; done",
@@ -40,7 +40,7 @@
     "deno": "^2.6.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "dependencies": {
