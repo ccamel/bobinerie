@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  lint-code:
+  lint-skills:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
