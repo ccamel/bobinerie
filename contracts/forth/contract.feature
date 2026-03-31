@@ -48,6 +48,43 @@ Feature: Forth Contract
       | text:: MAIN MYSTERYWORD ; |
     Then the execution should fail with "Unknown word"
 
+  Scenario: Initializing with an unexpected closing parenthesis fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator   |
+      | text:: MAIN ) ;  |
+    Then the execution should fail with "Unexpected )"
+
+  Scenario: Initializing with an unclosed parenthesized comment fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator        |
+      | text:: MAIN ( test ;  |
+    Then the execution should fail with "Unclosed comment"
+
+  Scenario: Initializing with duplicate MAIN definitions fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator               |
+      | text:: MAIN 1 ; : MAIN 2 ;  |
+    Then the execution should fail with "Duplicate MAIN"
+
+  Scenario: Initializing with instructions outside a definition fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator |
+      | text:1         |
+    Then the execution should fail with "Instruction outside definition"
+
+  Scenario: Running with stack underflow fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator     |
+      | text:: MAIN DROP ; |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should fail with "Stack underflow"
+
   @public-doc
   Scenario: Source and blob hashes are exposed after initialization
     Given I deploy contract "forth"
