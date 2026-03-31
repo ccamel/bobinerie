@@ -1,9 +1,13 @@
 import {
+  bigintref,
   bigints,
   blobref,
   blobs,
+  env,
   modules,
+  packref,
   packs,
+  refs,
   sha256,
   storage,
   textref,
@@ -11,6 +15,10 @@ import {
 } from "@hazae41/stdbob"
 
 const DOMAIN = "bobine.forth"
+
+function panic<T>(message: string): T {
+  return env.panic<T>(texts.fromString(message))
+}
 
 namespace selfcheck$ {
   export function expected(creator: textref): textref {
@@ -27,7 +35,7 @@ namespace selfcheck$ {
     const module = expected(creator)
 
     if (!texts.equals(modules.self(), module))
-      throw new Error("Invalid module creator")
+      panic<void>("Invalid module creator")
   }
 }
 
@@ -109,7 +117,7 @@ namespace tokenizer$ {
       index += 1
     }
 
-    throw new Error("Unclosed comment")
+    return panic<i32>("Unclosed comment")
   }
 
   function skipIgnored(source: string, index: i32): i32 {
@@ -152,7 +160,7 @@ namespace tokenizer$ {
       if (index >= length) break
 
       if (source.charCodeAt(index) === RIGHT_PAREN)
-        throw new Error("Unexpected )")
+        return panic<i64>("Unexpected )")
 
       const start = index
 
@@ -161,7 +169,7 @@ namespace tokenizer$ {
 
         if (isSeparator(code)) break
         if (code === BACKSLASH || code === LEFT_PAREN) break
-        if (code === RIGHT_PAREN) throw new Error("Unexpected )")
+        if (code === RIGHT_PAREN) return panic<i64>("Unexpected )")
 
         index += 1
       }
@@ -265,7 +273,7 @@ namespace dictionary$ {
 
   export function lookupSlice(source: string, start: i32, end: i32): Opcode {
     const op = tryLookupSlice(source, start, end)
-    if (op === 0) throw new Error("Unknown word")
+    if (op === 0) return panic<Opcode>("Unknown word")
     return op
   }
 }
@@ -300,7 +308,6 @@ namespace compiler$ {
       this.mainAddress = 0
       this.wordAddresses = new Map<string, i32>()
       this.pendingCalls = new Map<string, Array<i32>>()
-      // Emit mandatory prologue: CALL <main_addr>; HALT
       this.code.push(<u8>dictionary$.Opcode.CALL)
       pushU32LE(this.code, 0)
       this.code.push(<u8>dictionary$.Opcode.HALT)
@@ -446,7 +453,7 @@ namespace compiler$ {
   function onWordToken(state: State, start: i32, end: i32): void {
     if (isSingleCharToken(state.source, start, end, ASCII_COLON)) {
       if (state.awaitingDefinitionName || state.inDefinition)
-        throw new Error("Unexpected :")
+        panic<void>("Unexpected :")
 
       state.awaitingDefinitionName = true
       return
@@ -457,20 +464,20 @@ namespace compiler$ {
         isSingleCharToken(state.source, start, end, ASCII_COLON) ||
         isSingleCharToken(state.source, start, end, ASCII_SEMICOLON)
       )
-        throw new Error("Invalid definition name")
+        panic<void>("Invalid definition name")
 
       state.awaitingDefinitionName = false
       state.inDefinition = true
 
       const name = sliceToLowerString(state.source, start, end)
-      if (state.wordAddresses.has(name)) throw new Error("Duplicate definition")
+      if (state.wordAddresses.has(name)) panic<void>("Duplicate definition")
 
       const addr = state.code.length
       state.wordAddresses.set(name, addr)
       patchPendingCalls(state, name, addr)
 
       if (name === "main") {
-        if (state.mainSeen > 0) throw new Error("Duplicate MAIN")
+        if (state.mainSeen > 0) panic<void>("Duplicate MAIN")
 
         state.mainSeen = 1
         state.mainAddress = addr
@@ -480,14 +487,14 @@ namespace compiler$ {
     }
 
     if (isSingleCharToken(state.source, start, end, ASCII_SEMICOLON)) {
-      if (!state.inDefinition) throw new Error("Unexpected ;")
+      if (!state.inDefinition) panic<void>("Unexpected ;")
 
       state.code.push(<u8>dictionary$.Opcode.RET)
       state.inDefinition = false
       return
     }
 
-    if (!state.inDefinition) throw new Error("Instruction outside definition")
+    if (!state.inDefinition) panic<void>("Instruction outside definition")
 
     if (emitWordSlice(state, start, end)) return
 
@@ -503,22 +510,22 @@ namespace compiler$ {
       return
     }
 
-    if (state.awaitingDefinitionName) throw new Error("Invalid definition name")
-    if (!state.inDefinition) throw new Error("Instruction outside definition")
+    if (state.awaitingDefinitionName) panic<void>("Invalid definition name")
+    if (!state.inDefinition) panic<void>("Instruction outside definition")
 
     if (kind === tokenizer$.TOKEN_INT) {
       emitLiteralSlice(state, start, end)
       return
     }
 
-    throw new Error("Invalid token kind")
+    panic<void>("Invalid token kind")
   }
 
   function finalize(state: State): void {
-    if (state.awaitingDefinitionName) throw new Error("Missing definition name")
-    if (state.inDefinition) throw new Error("Unclosed definition")
-    if (state.mainSeen !== 1) throw new Error("Missing MAIN")
-    if (state.pendingCalls.size > 0) throw new Error("Unknown word")
+    if (state.awaitingDefinitionName) panic<void>("Missing definition name")
+    if (state.inDefinition) panic<void>("Unclosed definition")
+    if (state.mainSeen !== 1) panic<void>("Missing MAIN")
+    if (state.pendingCalls.size > 0) panic<void>("Unknown word")
 
     setU32LE(state.code, 1, <u32>state.mainAddress)
   }
@@ -583,6 +590,439 @@ namespace compiler$ {
   }
 }
 
+namespace format$ {
+  const HEADER_SIZE: i32 = 20
+
+  function readU32LE(bytes: Uint8Array, offset: i32): u32 {
+    return (
+      <u32>bytes[offset] |
+      ((<u32>bytes[offset + 1]) << 8) |
+      ((<u32>bytes[offset + 2]) << 16) |
+      ((<u32>bytes[offset + 3]) << 24)
+    )
+  }
+
+  function utf8SliceToText(
+    bytes: Uint8Array,
+    start: i32,
+    length: i32,
+  ): textref {
+    const copy = new Uint8Array(length)
+
+    for (let i = 0; i < length; i++) {
+      copy[i] = bytes[start + i]
+    }
+
+    return texts.fromUtf8(blobs.save(copy.buffer))
+  }
+
+  export function load(program: blobref): Uint8Array {
+    return Uint8Array.wrap(blobs.load(program))
+  }
+
+  export function constPoolOffset(): i32 {
+    return HEADER_SIZE
+  }
+
+  export function constCount(bytes: Uint8Array): i32 {
+    return <i32>readU32LE(bytes, 8)
+  }
+
+  export function constPoolLen(bytes: Uint8Array): i32 {
+    return <i32>readU32LE(bytes, 12)
+  }
+
+  export function codeOffset(bytes: Uint8Array): i32 {
+    return HEADER_SIZE + constPoolLen(bytes)
+  }
+
+  export function codeLen(bytes: Uint8Array): i32 {
+    return <i32>readU32LE(bytes, 16)
+  }
+
+  export function constOffsets(bytes: Uint8Array): Array<i32> {
+    const count = constCount(bytes)
+    const offsets = new Array<i32>(count)
+    let cursor = HEADER_SIZE
+
+    for (let i = 0; i < count; i++) {
+      offsets[i] = cursor
+      const length = <i32>readU32LE(bytes, cursor)
+      cursor += 4 + length
+    }
+
+    return offsets
+  }
+
+  export function readConstAt(
+    bytes: Uint8Array,
+    offsets: Array<i32>,
+    index: i32,
+  ): textref {
+    const cursor = offsets[index]
+    const length = <i32>readU32LE(bytes, cursor)
+
+    return utf8SliceToText(bytes, cursor + 4, length)
+  }
+
+  export function readOpcodeAt(bytes: Uint8Array, offset: i32, ip: i32): u8 {
+    return bytes[offset + ip]
+  }
+
+  export function readU32At(bytes: Uint8Array, offset: i32, ip: i32): u32 {
+    return readU32LE(bytes, offset + ip)
+  }
+}
+
+namespace vm$ {
+  function toBigint(value: i32): bigintref {
+    return changetype<bigintref>(refs.denumerize(value))
+  }
+
+  function toRef(value: bigintref): i32 {
+    return refs.numerize(value)
+  }
+
+  function assertStackSize(stack: Array<i32>, size: i32): void {
+    if (stack.length < size) panic<void>("Stack underflow")
+  }
+
+  function pop(stack: Array<i32>): i32 {
+    assertStackSize(stack, 1)
+    return stack.pop()
+  }
+
+  function assertJumpAddress(address: i32, codeLen: i32): void {
+    if (address < 0 || address >= codeLen) panic<void>("Invalid jump address")
+  }
+
+  function readInputStack(inputStack: packref): Array<i32> {
+    if (!inputStack) return [] as i32[]
+
+    const length = packs.length(inputStack)
+    const values = new Array<i32>(length)
+
+    for (let i = 0; i < length; i++) {
+      values[i] = toRef(packs.get<bigintref>(inputStack, i))
+    }
+
+    return values
+  }
+
+  function chunk(values: Array<i32>, start: i32, count: i32): packref {
+    switch (count) {
+      case 1:
+        return packs.create1(toBigint(values[start]))
+      case 2:
+        return packs.create2(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+        )
+      case 3:
+        return packs.create3(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+          toBigint(values[start + 2]),
+        )
+      case 4:
+        return packs.create4(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+          toBigint(values[start + 2]),
+          toBigint(values[start + 3]),
+        )
+      case 5:
+        return packs.create5(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+          toBigint(values[start + 2]),
+          toBigint(values[start + 3]),
+          toBigint(values[start + 4]),
+        )
+      case 6:
+        return packs.create6(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+          toBigint(values[start + 2]),
+          toBigint(values[start + 3]),
+          toBigint(values[start + 4]),
+          toBigint(values[start + 5]),
+        )
+      case 7:
+        return packs.create7(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+          toBigint(values[start + 2]),
+          toBigint(values[start + 3]),
+          toBigint(values[start + 4]),
+          toBigint(values[start + 5]),
+          toBigint(values[start + 6]),
+        )
+      case 8:
+        return packs.create8(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+          toBigint(values[start + 2]),
+          toBigint(values[start + 3]),
+          toBigint(values[start + 4]),
+          toBigint(values[start + 5]),
+          toBigint(values[start + 6]),
+          toBigint(values[start + 7]),
+        )
+      case 9:
+        return packs.create9(
+          toBigint(values[start]),
+          toBigint(values[start + 1]),
+          toBigint(values[start + 2]),
+          toBigint(values[start + 3]),
+          toBigint(values[start + 4]),
+          toBigint(values[start + 5]),
+          toBigint(values[start + 6]),
+          toBigint(values[start + 7]),
+          toBigint(values[start + 8]),
+        )
+      default:
+        return panic<packref>("Invalid output stack")
+    }
+  }
+
+  function writeOutputStack(values: Array<i32>): packref {
+    if (values.length < 1) return null
+
+    return buildPack(values, 0, values.length)
+  }
+
+  function buildPack(values: Array<i32>, start: i32, end: i32): packref {
+    const len = end - start
+
+    if (len <= 0) return null
+    if (len <= 9) return chunk(values, start, len)
+
+    const mid = start + (len >> 1)
+
+    const left = buildPack(values, start, mid)
+    const right = buildPack(values, mid, end)
+
+    if (!left) return right
+    if (!right) return left
+
+    return packs.concat(left, right)
+  }
+
+  function readConstant(
+    bytes: Uint8Array,
+    offsets: Array<i32>,
+    cache: Array<i32>,
+    loaded: Array<bool>,
+    index: i32,
+  ): i32 {
+    if (index < 0 || index >= offsets.length)
+      return panic<i32>("Invalid constant index")
+
+    if (!loaded[index]) {
+      cache[index] = toRef(
+        bigints.fromBase10(format$.readConstAt(bytes, offsets, index)),
+      )
+      loaded[index] = true
+    }
+
+    return cache[index]
+  }
+
+  export function run(program: blobref, inputStack: packref): packref {
+    const bytes = format$.load(program)
+    const codeOffset = format$.codeOffset(bytes)
+    const codeLen = format$.codeLen(bytes)
+    const constOffsets = format$.constOffsets(bytes)
+    const constCount = constOffsets.length
+
+    const constants = new Array<i32>(constCount)
+    const loaded = new Array<bool>(constCount)
+    const stack = readInputStack(inputStack)
+    const calls: i32[] = []
+
+    const zeroBigint = bigints.zero()
+    const zero = toRef(zeroBigint)
+    const one = toRef(bigints.one())
+
+    let ip: i32 = 0
+
+    while (true) {
+      if (ip < 0 || ip >= codeLen)
+        return panic<packref>("Invalid instruction pointer")
+
+      const opcode = format$.readOpcodeAt(bytes, codeOffset, ip)
+
+      switch (<i32>opcode) {
+        case dictionary$.Opcode.DROP: {
+          pop(stack)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.DUP: {
+          assertStackSize(stack, 1)
+          stack.push(stack[stack.length - 1])
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.SWAP: {
+          assertStackSize(stack, 2)
+          const b = pop(stack)
+          const a = pop(stack)
+          stack.push(b)
+          stack.push(a)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.OVER: {
+          assertStackSize(stack, 2)
+          stack.push(stack[stack.length - 2])
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.ROT: {
+          assertStackSize(stack, 3)
+          const c = pop(stack)
+          const b = pop(stack)
+          const a = pop(stack)
+          stack.push(b)
+          stack.push(c)
+          stack.push(a)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.NROT: {
+          assertStackSize(stack, 3)
+          const c = pop(stack)
+          const b = pop(stack)
+          const a = pop(stack)
+          stack.push(c)
+          stack.push(a)
+          stack.push(b)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.TWODUP: {
+          assertStackSize(stack, 2)
+          const a = stack[stack.length - 2]
+          const b = stack[stack.length - 1]
+          stack.push(a)
+          stack.push(b)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.TWODROP: {
+          assertStackSize(stack, 2)
+          pop(stack)
+          pop(stack)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.ADD: {
+          assertStackSize(stack, 2)
+          const b = toBigint(pop(stack))
+          const a = toBigint(pop(stack))
+          stack.push(toRef(bigints.add(a, b)))
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.SUB: {
+          assertStackSize(stack, 2)
+          const b = toBigint(pop(stack))
+          const a = toBigint(pop(stack))
+          stack.push(toRef(bigints.sub(a, b)))
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.MUL: {
+          assertStackSize(stack, 2)
+          const b = toBigint(pop(stack))
+          const a = toBigint(pop(stack))
+          stack.push(toRef(bigints.mul(a, b)))
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.DIV: {
+          assertStackSize(stack, 2)
+          const b = toBigint(pop(stack))
+          const a = toBigint(pop(stack))
+          stack.push(toRef(bigints.div(a, b)))
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.MOD: {
+          assertStackSize(stack, 2)
+          const b = toBigint(pop(stack))
+          const a = toBigint(pop(stack))
+          stack.push(toRef(bigints.mod(a, b)))
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.EQ: {
+          assertStackSize(stack, 2)
+          const b = toBigint(pop(stack))
+          const a = toBigint(pop(stack))
+          stack.push(bigints.eq(a, b) ? one : zero)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.LT: {
+          assertStackSize(stack, 2)
+          const b = toBigint(pop(stack))
+          const a = toBigint(pop(stack))
+          stack.push(bigints.lt(a, b) ? one : zero)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.ISZERO: {
+          assertStackSize(stack, 1)
+          const x = toBigint(pop(stack))
+          stack.push(bigints.eq(x, zeroBigint) ? one : zero)
+          ip += 1
+          break
+        }
+        case dictionary$.Opcode.LIT_CONST: {
+          const index = <i32>format$.readU32At(bytes, codeOffset, ip + 1)
+          stack.push(
+            readConstant(bytes, constOffsets, constants, loaded, index),
+          )
+          ip += 5
+          break
+        }
+        case dictionary$.Opcode.JZ: {
+          const address = <i32>format$.readU32At(bytes, codeOffset, ip + 1)
+          assertJumpAddress(address, codeLen)
+          const flag = toBigint(pop(stack))
+          ip = bigints.eq(flag, zeroBigint) ? address : ip + 5
+          break
+        }
+        case dictionary$.Opcode.JMP: {
+          const address = <i32>format$.readU32At(bytes, codeOffset, ip + 1)
+          assertJumpAddress(address, codeLen)
+          ip = address
+          break
+        }
+        case dictionary$.Opcode.CALL: {
+          const address = <i32>format$.readU32At(bytes, codeOffset, ip + 1)
+          assertJumpAddress(address, codeLen)
+          calls.push(ip + 5)
+          ip = address
+          break
+        }
+        case dictionary$.Opcode.RET: {
+          if (calls.length < 1) return panic<packref>("Empty return stack")
+          ip = calls.pop()
+          break
+        }
+        case dictionary$.Opcode.HALT:
+          return writeOutputStack(stack)
+        default:
+          return panic<packref>("Invalid opcode")
+      }
+    }
+  }
+}
+
 namespace program$ {
   const PROGRAM_BLOB_KEY = (): textref =>
     texts.fromString(`${DOMAIN}/state/program_blob`)
@@ -614,6 +1054,16 @@ namespace program$ {
     if (!found) return null
     return packs.get<textref>(found, 0)
   }
+
+  export function assertInitialized(): void {
+    if (!storage.get(PROGRAM_BLOB_KEY())) panic<void>("Program not initialized")
+  }
+
+  export function readBlob(): blobref {
+    const found = storage.get(PROGRAM_BLOB_KEY())
+    if (!found) return panic<blobref>("Program not initialized")
+    return packs.get<blobref>(found, 0)
+  }
 }
 
 namespace forth$ {
@@ -635,6 +1085,12 @@ namespace forth$ {
 
   export function blobHash(): textref {
     return program$.readBlobHash()
+  }
+
+  export function run(inputStack: packref): packref {
+    program$.assertInitialized()
+    const program = program$.readBlob()
+    return vm$.run(program, inputStack)
   }
 }
 
@@ -687,4 +1143,15 @@ export function source_hash(): textref {
  */
 export function blob_hash(): textref {
   return forth$.blobHash()
+}
+
+/**
+ * Execute the stored compiled program with an input stack.
+ *
+ * @param input_stack Input stack values as pack of BigInt references.
+ * @returns Output stack values as pack of BigInt references.
+ * @throws Error("Program not initialized") if no compiled program is stored.
+ */
+export function run(input_stack: packref): packref {
+  return forth$.run(input_stack)
 }
