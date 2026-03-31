@@ -553,6 +553,8 @@ namespace compiler$ {
       const name = sliceToLowerString(source, start, end)
       const wordAddresses = wordAddressesOf(state)
 
+      if (name === "main" && mainSeenOf(state) > 0)
+        panic<void>("Duplicate MAIN")
       if (wordAddresses.has(name)) panic<void>("Duplicate definition")
 
       const addr = codeOf(state).length
@@ -561,8 +563,6 @@ namespace compiler$ {
       patchPendingCalls(state, name, addr)
 
       if (name === "main") {
-        if (mainSeenOf(state) > 0) panic<void>("Duplicate MAIN")
-
         setMainSeen(state, 1)
         setMainAddress(state, addr)
       }
