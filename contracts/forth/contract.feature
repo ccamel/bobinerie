@@ -3,6 +3,7 @@ Feature: Forth Contract
   I want to run a forth program on chain
   So that deterministic stack-based logic can execute in a contract
 
+  @public-doc
   Scenario: Execute minimal arithmetic program
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:
@@ -13,6 +14,7 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:5"
 
+  @public-doc
   Scenario: Execute user-defined word from MAIN
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:
@@ -23,6 +25,7 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:81"
 
+  @public-doc
   Scenario: Execute case-insensitive program with parenthesized comment
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:
@@ -45,6 +48,7 @@ Feature: Forth Contract
       | text:: MAIN MYSTERYWORD ; |
     Then the execution should fail with "Unknown word"
 
+  @public-doc
   Scenario: Source and blob hashes are exposed after initialization
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:

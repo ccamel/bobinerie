@@ -14,6 +14,106 @@ This module implements a Forth interpreter that can be used to execute Forth pro
 - clone entrypoint to instantiate creator-bound module instances
 - linear Forth tokenizer/classifier (numbers vs dictionary words)
 
+## Usage Scenarios
+
+<!-- FEATURES:START -->
+
+As a user of the Bobine platform
+I want to run a forth program on chain
+So that deterministic stack-based logic can execute in a contract
+
+These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
+
+### 1. Execute minimal arithmetic program
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I deploy contract `"forth"`
+
+- **When** I call `"forth"` method `"init"` with params:
+
+  ```gherkin
+  | $forth_creator         |
+  | text:: MAIN 2 3 + ;    |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"forth"` method `"run"` with param `"pack:[]"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:5"`
+
+### 2. Execute user-defined word from MAIN
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I deploy contract `"forth"`
+
+- **When** I call `"forth"` method `"init"` with params:
+
+  ```gherkin
+  | $forth_creator                        |
+  | text:: SQUARE DUP * ; : MAIN SQUARE ; |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"forth"` method `"run"` with param `"pack:[bigint:9]"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:81"`
+
+### 3. Execute case-insensitive program with parenthesized comment
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I deploy contract `"forth"`
+
+- **When** I call `"forth"` method `"init"` with params:
+
+  ```gherkin
+  | $forth_creator                               |
+  | text:: MAIN ( comment ) 7 DUP * ;           |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"forth"` method `"run"` with param `"pack:[]"`
+
+- **Then** the execution should succeed; and the returned value should be `"bigint:49"`
+
+### 4. Source and blob hashes are exposed after initialization
+
+This scenario demonstrates a practical interaction sequence for this contract.
+
+Here are the steps of the scenario:
+
+- **Given** I deploy contract `"forth"`
+
+- **When** I call `"forth"` method `"init"` with params:
+
+  ```gherkin
+  | $forth_creator      |
+  | text:: MAIN 4 5 + ; |
+  ```
+
+- **Then** the execution should succeed
+
+- **When** I call `"forth"` method `"source_hash"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`
+
+- **When** I call `"forth"` method `"blob_hash"`
+
+- **Then** the execution should succeed; and the returned value should be a `"string"`
+
+<!-- FEATURES:END -->
+
 ## Methods
 
 <!-- METHODS:START -->
