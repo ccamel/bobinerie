@@ -18,6 +18,14 @@ This module implements a Forth interpreter that can be used to execute Forth pro
 
 <!-- METHODS:START -->
 
+### 🔹 `blob_hash()`
+
+Get the hash of the canonical compiled blob.
+
+**Returns:**
+
+Hex-encoded blob hash, or `null` if not initialized.
+
 ### 🔹 `clone(creator)`
 
 Clone this module (same code) and set `creator` as the new module creator.
@@ -33,11 +41,31 @@ The new module address/id.
 ### 🔹 `init(creator, program)`
 
 Initialize the forth module instance by checking creator-derived self address
-and validating/tokenizing the provided Forth program.
+and compiling the provided Forth program.
 
 **Parameters:**
 
 - `creator` - Creator address.
 - `program` - Forth source code.
+
+### 🔹 `run(input_stack)`
+
+Execute the stored compiled program with an input stack.
+
+**Parameters:**
+
+- `input_stack` - Input stack values as pack of BigInt references.
+
+**Returns:**
+
+Output stack values as pack of BigInt references.
+
+### 🔹 `source_hash()`
+
+Get the hash of the source program exactly as provided to `init`.
+
+**Returns:**
+
+Hex-encoded source hash, or `null` if not initialized.
 
 <!-- METHODS:END -->
