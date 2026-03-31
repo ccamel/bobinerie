@@ -285,33 +285,95 @@ namespace compiler$ {
   const ASCII_COLON: i32 = 58
   const ASCII_SEMICOLON: i32 = 59
 
-  class State {
-    source: string
-    constants: Array<string>
-    constantIndexes: Map<string, i32>
-    code: Array<u8>
-    awaitingDefinitionName: bool
-    inDefinition: bool
-    mainSeen: i32
-    mainAddress: i32
-    wordAddresses: Map<string, i32>
-    pendingCalls: Map<string, Array<i32>>
+  const SOURCE_INDEX: i32 = 0
+  const CONSTANTS_INDEX: i32 = 1
+  const CONSTANT_INDEXES_INDEX: i32 = 2
+  const CODE_INDEX: i32 = 3
+  const AWAITING_DEFINITION_NAME_INDEX: i32 = 4
+  const IN_DEFINITION_INDEX: i32 = 5
+  const MAIN_SEEN_INDEX: i32 = 6
+  const MAIN_ADDRESS_INDEX: i32 = 7
+  const WORD_ADDRESSES_INDEX: i32 = 8
+  const PENDING_CALLS_INDEX: i32 = 9
 
-    constructor(source: string) {
-      this.source = source
-      this.constants = [] as string[]
-      this.constantIndexes = new Map<string, i32>()
-      this.code = [] as u8[]
-      this.awaitingDefinitionName = false
-      this.inDefinition = false
-      this.mainSeen = 0
-      this.mainAddress = 0
-      this.wordAddresses = new Map<string, i32>()
-      this.pendingCalls = new Map<string, Array<i32>>()
-      this.code.push(<u8>dictionary$.Opcode.CALL)
-      pushU32LE(this.code, 0)
-      this.code.push(<u8>dictionary$.Opcode.HALT)
-    }
+  function sourceOf(state: Array<usize>): string {
+    return changetype<string>(state[SOURCE_INDEX])
+  }
+
+  function constantsOf(state: Array<usize>): Array<string> {
+    return changetype<Array<string>>(state[CONSTANTS_INDEX])
+  }
+
+  function constantIndexesOf(state: Array<usize>): Map<string, i32> {
+    return changetype<Map<string, i32>>(state[CONSTANT_INDEXES_INDEX])
+  }
+
+  function codeOf(state: Array<usize>): Array<u8> {
+    return changetype<Array<u8>>(state[CODE_INDEX])
+  }
+
+  function awaitingDefinitionNameOf(state: Array<usize>): bool {
+    return state[AWAITING_DEFINITION_NAME_INDEX] !== 0
+  }
+
+  function setAwaitingDefinitionName(state: Array<usize>, value: bool): void {
+    state[AWAITING_DEFINITION_NAME_INDEX] = value ? 1 : 0
+  }
+
+  function inDefinitionOf(state: Array<usize>): bool {
+    return state[IN_DEFINITION_INDEX] !== 0
+  }
+
+  function setInDefinition(state: Array<usize>, value: bool): void {
+    state[IN_DEFINITION_INDEX] = value ? 1 : 0
+  }
+
+  function mainSeenOf(state: Array<usize>): i32 {
+    return <i32>state[MAIN_SEEN_INDEX]
+  }
+
+  function setMainSeen(state: Array<usize>, value: i32): void {
+    state[MAIN_SEEN_INDEX] = <usize>value
+  }
+
+  function mainAddressOf(state: Array<usize>): i32 {
+    return <i32>state[MAIN_ADDRESS_INDEX]
+  }
+
+  function setMainAddress(state: Array<usize>, value: i32): void {
+    state[MAIN_ADDRESS_INDEX] = <usize>value
+  }
+
+  function wordAddressesOf(state: Array<usize>): Map<string, i32> {
+    return changetype<Map<string, i32>>(state[WORD_ADDRESSES_INDEX])
+  }
+
+  function pendingCallsOf(state: Array<usize>): Map<string, Array<i32>> {
+    return changetype<Map<string, Array<i32>>>(state[PENDING_CALLS_INDEX])
+  }
+
+  function createState(source: string): Array<usize> {
+    const code = [] as u8[]
+    const state = new Array<usize>(10)
+
+    code.push(<u8>dictionary$.Opcode.CALL)
+    pushU32LE(code, 0)
+    code.push(<u8>dictionary$.Opcode.HALT)
+
+    state[SOURCE_INDEX] = changetype<usize>(source)
+    state[CONSTANTS_INDEX] = changetype<usize>([] as string[])
+    state[CONSTANT_INDEXES_INDEX] = changetype<usize>(new Map<string, i32>())
+    state[CODE_INDEX] = changetype<usize>(code)
+    state[AWAITING_DEFINITION_NAME_INDEX] = 0
+    state[IN_DEFINITION_INDEX] = 0
+    state[MAIN_SEEN_INDEX] = 0
+    state[MAIN_ADDRESS_INDEX] = 0
+    state[WORD_ADDRESSES_INDEX] = changetype<usize>(new Map<string, i32>())
+    state[PENDING_CALLS_INDEX] = changetype<usize>(
+      new Map<string, Array<i32>>(),
+    )
+
+    return state
   }
 
   function pushU32LE(bytes: Array<u8>, value: u32): void {
@@ -362,34 +424,39 @@ namespace compiler$ {
     return negative ? `-${digits}` : digits
   }
 
-  function constantIndexOf(state: State, value: string): i32 {
-    if (state.constantIndexes.has(value))
-      return state.constantIndexes.get(value)
+  function constantIndexOf(state: Array<usize>, value: string): i32 {
+    const constantIndexes = constantIndexesOf(state)
 
-    const index = state.constants.length
-    state.constants.push(value)
-    state.constantIndexes.set(value, index)
+    if (constantIndexes.has(value)) return constantIndexes.get(value)
+
+    const constants = constantsOf(state)
+    const index = constants.length
+
+    constants.push(value)
+    constantIndexes.set(value, index)
 
     return index
   }
 
-  function emitLiteralSlice(state: State, start: i32, end: i32): void {
-    const canonical = canonicalIntSlice(state.source, start, end)
+  function emitLiteralSlice(state: Array<usize>, start: i32, end: i32): void {
+    const canonical = canonicalIntSlice(sourceOf(state), start, end)
 
     const parsed = bigints.fromBase10(texts.fromString(canonical))
     const normalized = texts.toString(bigints.toBase10(parsed))
 
     const index = constantIndexOf(state, normalized)
 
-    state.code.push(<u8>dictionary$.Opcode.LIT_CONST)
-    pushU32LE(state.code, <u32>index)
+    const code = codeOf(state)
+
+    code.push(<u8>dictionary$.Opcode.LIT_CONST)
+    pushU32LE(code, <u32>index)
   }
 
-  function emitWordSlice(state: State, start: i32, end: i32): bool {
-    const opcode = dictionary$.tryLookupSlice(state.source, start, end)
+  function emitWordSlice(state: Array<usize>, start: i32, end: i32): bool {
+    const opcode = dictionary$.tryLookupSlice(sourceOf(state), start, end)
     if (opcode === 0) return false
 
-    state.code.push(<u8>opcode)
+    codeOf(state).push(<u8>opcode)
     return true
   }
 
@@ -415,86 +482,103 @@ namespace compiler$ {
     return out
   }
 
-  function patchPendingCalls(state: State, name: string, addr: i32): void {
-    if (!state.pendingCalls.has(name)) return
+  function patchPendingCalls(
+    state: Array<usize>,
+    name: string,
+    addr: i32,
+  ): void {
+    const pendingCalls = pendingCallsOf(state)
 
-    const sites = state.pendingCalls.get(name)
+    if (!pendingCalls.has(name)) return
+
+    const sites = pendingCalls.get(name)
+    const code = codeOf(state)
+
     for (let i = 0; i < sites.length; i++) {
-      setU32LE(state.code, sites[i], <u32>addr)
+      setU32LE(code, sites[i], <u32>addr)
     }
 
-    state.pendingCalls.delete(name)
+    pendingCalls.delete(name)
   }
 
   function recordPendingCall(
-    state: State,
+    state: Array<usize>,
     name: string,
     patchOffset: i32,
   ): void {
-    if (!state.pendingCalls.has(name)) state.pendingCalls.set(name, [] as i32[])
-    state.pendingCalls.get(name).push(patchOffset)
+    const pendingCalls = pendingCallsOf(state)
+
+    if (!pendingCalls.has(name)) pendingCalls.set(name, [] as i32[])
+    pendingCalls.get(name).push(patchOffset)
   }
 
-  function emitCallByName(state: State, start: i32, end: i32): void {
-    const name = sliceToLowerString(state.source, start, end)
+  function emitCallByName(state: Array<usize>, start: i32, end: i32): void {
+    const name = sliceToLowerString(sourceOf(state), start, end)
+    const code = codeOf(state)
+    const wordAddresses = wordAddressesOf(state)
 
-    state.code.push(<u8>dictionary$.Opcode.CALL)
-    const patchOffset = state.code.length
-    pushU32LE(state.code, 0)
+    code.push(<u8>dictionary$.Opcode.CALL)
+    const patchOffset = code.length
+    pushU32LE(code, 0)
 
-    if (state.wordAddresses.has(name)) {
-      setU32LE(state.code, patchOffset, <u32>state.wordAddresses.get(name))
+    if (wordAddresses.has(name)) {
+      setU32LE(code, patchOffset, <u32>wordAddresses.get(name))
       return
     }
 
     recordPendingCall(state, name, patchOffset)
   }
 
-  function onWordToken(state: State, start: i32, end: i32): void {
-    if (isSingleCharToken(state.source, start, end, ASCII_COLON)) {
-      if (state.awaitingDefinitionName || state.inDefinition)
+  function onWordToken(state: Array<usize>, start: i32, end: i32): void {
+    const source = sourceOf(state)
+
+    if (isSingleCharToken(source, start, end, ASCII_COLON)) {
+      if (awaitingDefinitionNameOf(state) || inDefinitionOf(state))
         panic<void>("Unexpected :")
 
-      state.awaitingDefinitionName = true
+      setAwaitingDefinitionName(state, true)
       return
     }
 
-    if (state.awaitingDefinitionName) {
+    if (awaitingDefinitionNameOf(state)) {
       if (
-        isSingleCharToken(state.source, start, end, ASCII_COLON) ||
-        isSingleCharToken(state.source, start, end, ASCII_SEMICOLON)
+        isSingleCharToken(source, start, end, ASCII_COLON) ||
+        isSingleCharToken(source, start, end, ASCII_SEMICOLON)
       )
         panic<void>("Invalid definition name")
 
-      state.awaitingDefinitionName = false
-      state.inDefinition = true
+      setAwaitingDefinitionName(state, false)
+      setInDefinition(state, true)
 
-      const name = sliceToLowerString(state.source, start, end)
-      if (state.wordAddresses.has(name)) panic<void>("Duplicate definition")
+      const name = sliceToLowerString(source, start, end)
+      const wordAddresses = wordAddressesOf(state)
 
-      const addr = state.code.length
-      state.wordAddresses.set(name, addr)
+      if (wordAddresses.has(name)) panic<void>("Duplicate definition")
+
+      const addr = codeOf(state).length
+
+      wordAddresses.set(name, addr)
       patchPendingCalls(state, name, addr)
 
       if (name === "main") {
-        if (state.mainSeen > 0) panic<void>("Duplicate MAIN")
+        if (mainSeenOf(state) > 0) panic<void>("Duplicate MAIN")
 
-        state.mainSeen = 1
-        state.mainAddress = addr
+        setMainSeen(state, 1)
+        setMainAddress(state, addr)
       }
 
       return
     }
 
-    if (isSingleCharToken(state.source, start, end, ASCII_SEMICOLON)) {
-      if (!state.inDefinition) panic<void>("Unexpected ;")
+    if (isSingleCharToken(source, start, end, ASCII_SEMICOLON)) {
+      if (!inDefinitionOf(state)) panic<void>("Unexpected ;")
 
-      state.code.push(<u8>dictionary$.Opcode.RET)
-      state.inDefinition = false
+      codeOf(state).push(<u8>dictionary$.Opcode.RET)
+      setInDefinition(state, false)
       return
     }
 
-    if (!state.inDefinition) panic<void>("Instruction outside definition")
+    if (!inDefinitionOf(state)) panic<void>("Instruction outside definition")
 
     if (emitWordSlice(state, start, end)) return
 
@@ -503,15 +587,15 @@ namespace compiler$ {
   }
 
   function onToken(ctx: usize, kind: u8, start: i32, end: i32): void {
-    const state = changetype<State>(ctx)
+    const state = changetype<Array<usize>>(ctx)
 
     if (kind === tokenizer$.TOKEN_WORD) {
       onWordToken(state, start, end)
       return
     }
 
-    if (state.awaitingDefinitionName) panic<void>("Invalid definition name")
-    if (!state.inDefinition) panic<void>("Instruction outside definition")
+    if (awaitingDefinitionNameOf(state)) panic<void>("Invalid definition name")
+    if (!inDefinitionOf(state)) panic<void>("Instruction outside definition")
 
     if (kind === tokenizer$.TOKEN_INT) {
       emitLiteralSlice(state, start, end)
@@ -521,13 +605,13 @@ namespace compiler$ {
     panic<void>("Invalid token kind")
   }
 
-  function finalize(state: State): void {
-    if (state.awaitingDefinitionName) panic<void>("Missing definition name")
-    if (state.inDefinition) panic<void>("Unclosed definition")
-    if (state.mainSeen !== 1) panic<void>("Missing MAIN")
-    if (state.pendingCalls.size > 0) panic<void>("Unknown word")
+  function finalize(state: Array<usize>): void {
+    if (awaitingDefinitionNameOf(state)) panic<void>("Missing definition name")
+    if (inDefinitionOf(state)) panic<void>("Unclosed definition")
+    if (mainSeenOf(state) !== 1) panic<void>("Missing MAIN")
+    if (pendingCallsOf(state).size > 0) panic<void>("Unknown word")
 
-    setU32LE(state.code, 1, <u32>state.mainAddress)
+    setU32LE(codeOf(state), 1, <u32>mainAddressOf(state))
   }
 
   function buildConstantPool(constants: Array<string>): Array<u8> {
@@ -571,20 +655,22 @@ namespace compiler$ {
   }
 
   export function compile(program: textref): blobref {
-    const state = new State(texts.toString(program))
+    const state = createState(texts.toString(program))
 
-    tokenizer$.scanSource(state.source, changetype<usize>(state), onToken)
+    tokenizer$.scanSource(sourceOf(state), changetype<usize>(state), onToken)
     finalize(state)
 
-    const constBytes = buildConstantPool(state.constants)
+    const constants = constantsOf(state)
+    const code = codeOf(state)
+    const constBytes = buildConstantPool(constants)
 
     const headerBlob = buildHeader(
-      <u32>state.constants.length,
+      <u32>constants.length,
       <u32>constBytes.length,
-      <u32>state.code.length,
+      <u32>code.length,
     )
     const constBlob = bytesToBlob(constBytes)
-    const codeBlob = bytesToBlob(state.code)
+    const codeBlob = bytesToBlob(code)
 
     return blobs.concat(blobs.concat(headerBlob, constBlob), codeBlob)
   }
