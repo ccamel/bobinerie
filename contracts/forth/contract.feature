@@ -135,6 +135,20 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:3"
 
+  @public-doc
+  Scenario: Execute swap policy guard
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                                                                        |
+      | text:: SLIPPAGE-OK >= ; : FEE-OK <= ; : MAIN SLIPPAGE-OK -ROT FEE-OK AND ;           |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[bigint:30,bigint:50,bigint:1000,bigint:980]"
+    Then the execution should succeed
+    And the returned value should be "bigint:1"
+    When I call "forth" method "run" with param "pack:[bigint:60,bigint:50,bigint:1000,bigint:980]"
+    Then the execution should succeed
+    And the returned value should be "bigint:0"
+
   Scenario: Running before initialization fails
     Given I deploy contract "forth"
     When I call "forth" method "run" with param "pack:[]"
