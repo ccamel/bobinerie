@@ -270,12 +270,6 @@ namespace dictionary$ {
 
     return 0 as Opcode
   }
-
-  export function lookupSlice(source: string, start: i32, end: i32): Opcode {
-    const op = tryLookupSlice(source, start, end)
-    if (op === 0) return panic<Opcode>("Unknown word")
-    return op
-  }
 }
 
 namespace compiler$ {
@@ -295,6 +289,10 @@ namespace compiler$ {
   const MAIN_ADDRESS_INDEX: i32 = 7
   const WORD_ADDRESSES_INDEX: i32 = 8
   const PENDING_CALLS_INDEX: i32 = 9
+  const PATCH_STACK_INDEX: i32 = 10
+  const STATE_SIZE: i32 = 11
+  const PATCH_IF_TAG: i32 = 1
+  const PATCH_ELSE_TAG: i32 = 2
 
   function sourceOf(state: Array<usize>): string {
     return changetype<string>(state[SOURCE_INDEX])
@@ -352,9 +350,53 @@ namespace compiler$ {
     return changetype<Map<string, Array<i32>>>(state[PENDING_CALLS_INDEX])
   }
 
+  function patchStackOf(state: Array<usize>): Array<i32> {
+    return changetype<Array<i32>>(state[PATCH_STACK_INDEX])
+  }
+
+  function encodePatch(kind: i32, offset: i32): i32 {
+    return (offset << 2) | kind
+  }
+
+  function patchKindOf(entry: i32): i32 {
+    return entry & 3
+  }
+
+  function patchOffsetOf(entry: i32): i32 {
+    return entry >> 2
+  }
+
+  function pushIfPatch(state: Array<usize>, offset: i32): void {
+    patchStackOf(state).push(encodePatch(PATCH_IF_TAG, offset))
+  }
+
+  function popIfPatch(state: Array<usize>): i32 {
+    const patchStack = patchStackOf(state)
+
+    if (patchStack.length < 1) panic<i32>("Unexpected ELSE")
+
+    const entry = patchStack.pop()
+
+    if (patchKindOf(entry) !== PATCH_IF_TAG) panic<i32>("Unexpected ELSE")
+
+    return patchOffsetOf(entry)
+  }
+
+  function pushElsePatch(state: Array<usize>, offset: i32): void {
+    patchStackOf(state).push(encodePatch(PATCH_ELSE_TAG, offset))
+  }
+
+  function popConditionalPatch(state: Array<usize>): i32 {
+    const patchStack = patchStackOf(state)
+
+    if (patchStack.length < 1) panic<i32>("Unexpected THEN")
+
+    return patchOffsetOf(patchStack.pop())
+  }
+
   function createState(source: string): Array<usize> {
     const code = [] as u8[]
-    const state = new Array<usize>(10)
+    const state = new Array<usize>(STATE_SIZE)
 
     code.push(<u8>dictionary$.Opcode.CALL)
     pushU32LE(code, 0)
@@ -372,6 +414,7 @@ namespace compiler$ {
     state[PENDING_CALLS_INDEX] = changetype<usize>(
       new Map<string, Array<i32>>(),
     )
+    state[PATCH_STACK_INDEX] = changetype<usize>([] as i32[])
 
     return state
   }
@@ -529,6 +572,94 @@ namespace compiler$ {
     recordPendingCall(state, name, patchOffset)
   }
 
+  function isWordToken(
+    source: string,
+    start: i32,
+    end: i32,
+    literal: string,
+  ): bool {
+    return dictionary$.tokenEquals(source, start, end, literal)
+  }
+
+  function emitJumpWithPlaceholder(state: Array<usize>, opcode: u8): i32 {
+    const code = codeOf(state)
+
+    code.push(opcode)
+
+    const patchOffset = code.length
+    pushU32LE(code, 0)
+
+    return patchOffset
+  }
+
+  function assertInDefinitionWith(state: Array<usize>, message: string): void {
+    if (!inDefinitionOf(state)) panic<void>(message)
+  }
+
+  function beginDefinition(
+    state: Array<usize>,
+    source: string,
+    start: i32,
+    end: i32,
+  ): void {
+    if (
+      isSingleCharToken(source, start, end, ASCII_COLON) ||
+      isSingleCharToken(source, start, end, ASCII_SEMICOLON)
+    ) {
+      panic<void>("Invalid definition name")
+    }
+
+    setAwaitingDefinitionName(state, false)
+    setInDefinition(state, true)
+
+    const name = sliceToLowerString(source, start, end)
+    const wordAddresses = wordAddressesOf(state)
+
+    if (name === "main" && mainSeenOf(state) > 0) panic<void>("Duplicate MAIN")
+    if (wordAddresses.has(name)) panic<void>("Duplicate definition")
+
+    const addr = codeOf(state).length
+
+    wordAddresses.set(name, addr)
+    patchPendingCalls(state, name, addr)
+
+    if (name === "main") {
+      setMainSeen(state, 1)
+      setMainAddress(state, addr)
+    }
+  }
+
+  function handleIfToken(state: Array<usize>): void {
+    assertInDefinitionWith(state, "Unexpected IF")
+    pushIfPatch(
+      state,
+      emitJumpWithPlaceholder(state, <u8>dictionary$.Opcode.JZ),
+    )
+  }
+
+  function handleElseToken(state: Array<usize>): void {
+    assertInDefinitionWith(state, "Unexpected ELSE")
+
+    const ifPatchOffset = popIfPatch(state)
+    const jmpPatchOffset = emitJumpWithPlaceholder(
+      state,
+      <u8>dictionary$.Opcode.JMP,
+    )
+    const code = codeOf(state)
+
+    setU32LE(code, ifPatchOffset, <u32>code.length)
+    pushElsePatch(state, jmpPatchOffset)
+  }
+
+  function handleThenToken(state: Array<usize>): void {
+    assertInDefinitionWith(state, "Unexpected THEN")
+
+    const code = codeOf(state)
+    const patchOffset = popConditionalPatch(state)
+
+    setU32LE(code, patchOffset, <u32>code.length)
+  }
+
   function onWordToken(state: Array<usize>, start: i32, end: i32): void {
     const source = sourceOf(state)
 
@@ -541,31 +672,7 @@ namespace compiler$ {
     }
 
     if (awaitingDefinitionNameOf(state)) {
-      if (
-        isSingleCharToken(source, start, end, ASCII_COLON) ||
-        isSingleCharToken(source, start, end, ASCII_SEMICOLON)
-      )
-        panic<void>("Invalid definition name")
-
-      setAwaitingDefinitionName(state, false)
-      setInDefinition(state, true)
-
-      const name = sliceToLowerString(source, start, end)
-      const wordAddresses = wordAddressesOf(state)
-
-      if (name === "main" && mainSeenOf(state) > 0)
-        panic<void>("Duplicate MAIN")
-      if (wordAddresses.has(name)) panic<void>("Duplicate definition")
-
-      const addr = codeOf(state).length
-
-      wordAddresses.set(name, addr)
-      patchPendingCalls(state, name, addr)
-
-      if (name === "main") {
-        setMainSeen(state, 1)
-        setMainAddress(state, addr)
-      }
+      beginDefinition(state, source, start, end)
 
       return
     }
@@ -578,7 +685,22 @@ namespace compiler$ {
       return
     }
 
-    if (!inDefinitionOf(state)) panic<void>("Instruction outside definition")
+    if (isWordToken(source, start, end, "if")) {
+      handleIfToken(state)
+      return
+    }
+
+    if (isWordToken(source, start, end, "else")) {
+      handleElseToken(state)
+      return
+    }
+
+    if (isWordToken(source, start, end, "then")) {
+      handleThenToken(state)
+      return
+    }
+
+    assertInDefinitionWith(state, "Instruction outside definition")
 
     if (emitWordSlice(state, start, end)) return
 
@@ -610,6 +732,7 @@ namespace compiler$ {
     if (inDefinitionOf(state)) panic<void>("Unclosed definition")
     if (mainSeenOf(state) !== 1) panic<void>("Missing MAIN")
     if (pendingCallsOf(state).size > 0) panic<void>("Unknown word")
+    if (patchStackOf(state).length > 0) panic<void>("Unclosed IF")
 
     setU32LE(codeOf(state), 1, <u32>mainAddressOf(state))
   }
