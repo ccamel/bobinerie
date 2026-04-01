@@ -291,9 +291,11 @@ namespace compiler$ {
   const PENDING_CALLS_INDEX: i32 = 9
   const PATCH_STACK_INDEX: i32 = 10
   const STATE_SIZE: i32 = 11
+  const PATCH_TAG_BITS: i32 = 3
   const PATCH_IF_TAG: i32 = 1
   const PATCH_ELSE_TAG: i32 = 2
   const PATCH_BEGIN_TAG: i32 = 3
+  const PATCH_WHILE_TAG: i32 = 4
 
   function sourceOf(state: Array<usize>): string {
     return changetype<string>(state[SOURCE_INDEX])
@@ -356,15 +358,15 @@ namespace compiler$ {
   }
 
   function encodePatch(kind: i32, offset: i32): i32 {
-    return (offset << 2) | kind
+    return (offset << PATCH_TAG_BITS) | kind
   }
 
   function patchKindOf(entry: i32): i32 {
-    return entry & 3
+    return entry & ((1 << PATCH_TAG_BITS) - 1)
   }
 
   function patchOffsetOf(entry: i32): i32 {
-    return entry >> 2
+    return entry >> PATCH_TAG_BITS
   }
 
   function pushIfPatch(state: Array<usize>, offset: i32): void {
@@ -391,6 +393,10 @@ namespace compiler$ {
     patchStackOf(state).push(encodePatch(PATCH_BEGIN_TAG, address))
   }
 
+  function pushWhilePatch(state: Array<usize>, offset: i32): void {
+    patchStackOf(state).push(encodePatch(PATCH_WHILE_TAG, offset))
+  }
+
   function popConditionalPatch(state: Array<usize>): i32 {
     const patchStack = patchStackOf(state)
 
@@ -409,6 +415,30 @@ namespace compiler$ {
     if (patchKindOf(entry) !== PATCH_BEGIN_TAG) panic<i32>("Unexpected UNTIL")
 
     return patchOffsetOf(entry)
+  }
+
+  function assertBeginOnTop(state: Array<usize>, message: string): void {
+    const patchStack = patchStackOf(state)
+
+    if (patchStack.length < 1) panic<void>(message)
+    if (patchKindOf(patchStack[patchStack.length - 1]) !== PATCH_BEGIN_TAG)
+      panic<void>(message)
+  }
+
+  function popRepeatFrame(state: Array<usize>): Array<i32> {
+    const patchStack = patchStackOf(state)
+
+    if (patchStack.length < 2) panic<Array<i32>>("Unexpected REPEAT")
+
+    const whileEntry = patchStack.pop()
+    const beginEntry = patchStack.pop()
+
+    if (patchKindOf(whileEntry) !== PATCH_WHILE_TAG)
+      panic<Array<i32>>("Unexpected REPEAT")
+    if (patchKindOf(beginEntry) !== PATCH_BEGIN_TAG)
+      panic<Array<i32>>("Unexpected REPEAT")
+
+    return [patchOffsetOf(beginEntry), patchOffsetOf(whileEntry)] as i32[]
   }
 
   function createState(source: string): Array<usize> {
@@ -527,9 +557,11 @@ namespace compiler$ {
   ): bool {
     if (isWordToken(source, start, end, "if")) return true
     if (isWordToken(source, start, end, "begin")) return true
+    if (isWordToken(source, start, end, "while")) return true
     if (isWordToken(source, start, end, "else")) return true
     if (isWordToken(source, start, end, "then")) return true
     if (isWordToken(source, start, end, "until")) return true
+    if (isWordToken(source, start, end, "repeat")) return true
 
     return dictionary$.tryLookupSlice(source, start, end) !== 0
   }
@@ -683,6 +715,15 @@ namespace compiler$ {
     pushBeginPatch(state, codeOf(state).length)
   }
 
+  function handleWhileToken(state: Array<usize>): void {
+    assertInDefinitionWith(state, "Unexpected WHILE")
+    assertBeginOnTop(state, "Unexpected WHILE")
+    pushWhilePatch(
+      state,
+      emitJumpWithPlaceholder(state, <u8>dictionary$.Opcode.JZ),
+    )
+  }
+
   function handleElseToken(state: Array<usize>): void {
     assertInDefinitionWith(state, "Unexpected ELSE")
 
@@ -710,6 +751,17 @@ namespace compiler$ {
     assertInDefinitionWith(state, "Unexpected UNTIL")
     const beginAddress = popBeginPatch(state)
     emitJump(state, <u8>dictionary$.Opcode.JZ, beginAddress)
+  }
+
+  function handleRepeatToken(state: Array<usize>): void {
+    assertInDefinitionWith(state, "Unexpected REPEAT")
+
+    const frame = popRepeatFrame(state)
+    const beginAddress = frame[0]
+    const whilePatchOffset = frame[1]
+
+    emitJump(state, <u8>dictionary$.Opcode.JMP, beginAddress)
+    setU32LE(codeOf(state), whilePatchOffset, <u32>codeOf(state).length)
   }
 
   function onWordToken(state: Array<usize>, start: i32, end: i32): void {
@@ -747,6 +799,11 @@ namespace compiler$ {
       return
     }
 
+    if (isWordToken(source, start, end, "while")) {
+      handleWhileToken(state)
+      return
+    }
+
     if (isWordToken(source, start, end, "else")) {
       handleElseToken(state)
       return
@@ -759,6 +816,11 @@ namespace compiler$ {
 
     if (isWordToken(source, start, end, "until")) {
       handleUntilToken(state)
+      return
+    }
+
+    if (isWordToken(source, start, end, "repeat")) {
+      handleRepeatToken(state)
       return
     }
 
@@ -800,6 +862,7 @@ namespace compiler$ {
     if (patchStack.length > 0) {
       const kind = patchKindOf(patchStack[patchStack.length - 1])
 
+      if (kind === PATCH_WHILE_TAG) panic<void>("Unclosed WHILE")
       if (kind === PATCH_BEGIN_TAG) panic<void>("Unclosed BEGIN")
       panic<void>("Unclosed IF")
     }
@@ -1401,13 +1464,16 @@ export function clone(creator: textref): textref {
  * @throws Error("Unexpected :") if `:` appears while already parsing a definition.
  * @throws Error("Unexpected ;") if `;` appears outside a definition.
  * @throws Error("Unexpected BEGIN") if `BEGIN` appears outside a definition.
+ * @throws Error("Unexpected WHILE") if `WHILE` appears without a matching `BEGIN`.
  * @throws Error("Invalid definition name") if `:` is not followed by a valid word.
  * @throws Error("Reserved definition name") if a definition attempts to shadow a reserved word.
  * @throws Error("Missing definition name") if source ends right after `:`.
  * @throws Error("Instruction outside definition") if code appears outside any `: ... ;`.
  * @throws Error("Unclosed definition") if a definition does not end with `;`.
  * @throws Error("Unexpected UNTIL") if `UNTIL` appears without a matching `BEGIN`.
+ * @throws Error("Unexpected REPEAT") if `REPEAT` appears without a matching `BEGIN ... WHILE`.
  * @throws Error("Unclosed BEGIN") if a `BEGIN` loop is not closed by `UNTIL`.
+ * @throws Error("Unclosed WHILE") if a `BEGIN ... WHILE` loop is not closed by `REPEAT`.
  * @throws Error("Missing MAIN") if no `: MAIN ... ;` definition is present.
  * @throws Error("Duplicate MAIN") if `MAIN` is defined more than once.
  * @throws Error("Unknown word") if a non-integer token is not found in the dictionary.
