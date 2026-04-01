@@ -102,6 +102,17 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:10"
 
+  @public-doc
+  Scenario: Execute BEGIN WHILE REPEAT loop to sum integers
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                                                                  |
+      | text:: SUMPOS 0 SWAP BEGIN DUP 0 SWAP < WHILE SWAP OVER + SWAP 1 - REPEAT DROP ; : MAIN SUMPOS ; |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[bigint:4]"
+    Then the execution should succeed
+    And the returned value should be "bigint:10"
+
   Scenario: Running before initialization fails
     Given I deploy contract "forth"
     When I call "forth" method "run" with param "pack:[]"
@@ -170,12 +181,26 @@ Feature: Forth Contract
       | text:: MAIN THEN ;   |
     Then the execution should fail with "Unexpected THEN"
 
+  Scenario: Initializing with an unexpected WHILE fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator        |
+      | text:: MAIN WHILE ;   |
+    Then the execution should fail with "Unexpected WHILE"
+
   Scenario: Initializing with an unexpected UNTIL fails
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:
       | $forth_creator        |
       | text:: MAIN UNTIL ;   |
     Then the execution should fail with "Unexpected UNTIL"
+
+  Scenario: Initializing with an unexpected REPEAT fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator         |
+      | text:: MAIN REPEAT ;   |
+    Then the execution should fail with "Unexpected REPEAT"
 
   Scenario: Initializing with an unclosed IF fails
     Given I deploy contract "forth"
@@ -190,6 +215,13 @@ Feature: Forth Contract
       | $forth_creator             |
       | text:: MAIN BEGIN 1 0= ;   |
     Then the execution should fail with "Unclosed BEGIN"
+
+  Scenario: Initializing with an unclosed WHILE fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                     |
+      | text:: MAIN BEGIN 1 WHILE 2 ;      |
+    Then the execution should fail with "Unclosed WHILE"
 
   Scenario: Running with stack underflow fails
     Given I deploy contract "forth"
