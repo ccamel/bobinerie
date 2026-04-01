@@ -24,8 +24,6 @@ I want to maintain a per-account counter
 So that I can increment, read, and reset my own counter value
 And I can only do so through an authenticated call (capability) for my abstract account
 
-These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
-
 ### Shared Setup
 
 This setup is applied before each published scenario.

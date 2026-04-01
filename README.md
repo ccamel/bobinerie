@@ -43,7 +43,7 @@ Available now:
 <td width="50%" valign="top">
 <h3><a href="contracts/forth/README.md">Forth</a></h3>
 <p><strong>On-chain Forth interpreter contract for Bobine.</strong></p>
-<p><img alt="work-in-progress" src="https://img.shields.io/badge/status-wip-F4A261" /></p>
+<p><img alt="vm" src="https://img.shields.io/badge/vm-3A86FF" /></p>
 <p>》<a href="contracts/forth/README.md">open doc</a></p>
 </td>
 </tr>

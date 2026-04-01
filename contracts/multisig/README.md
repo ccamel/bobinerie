@@ -19,8 +19,6 @@ As a user of the Bobine platform
 I want threshold-based authorization over call execution
 So that sensitive actions are executed only after enough signer approvals
 
-These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
-
 ### Shared Setup
 
 This setup is applied before each published scenario.

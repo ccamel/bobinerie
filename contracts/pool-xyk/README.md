@@ -19,8 +19,6 @@ As a user of the Bobine platform
 I want to initialize a constant-product pool safely
 So that tokens and fees are validated and set only once
 
-These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
-
 ### Shared Setup
 
 This setup is applied before each published scenario.

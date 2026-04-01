@@ -243,7 +243,6 @@ function renderFeatureDocs(): string {
 
   let docs = "\n"
   if (feature.description.length > 0) docs += `${feature.description}\n\n`
-  docs += `These walkthroughs come from \`contract.feature\` scenarios tagged \`${publishedScenarioTag}\`.\n\n`
 
   if (publishedScenarios.length === 0) {
     docs += "No published interaction guide yet.\n\n"
