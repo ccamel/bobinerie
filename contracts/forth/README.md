@@ -4,6 +4,10 @@ On-chain Forth interpreter contract for Bobine.
 
 <!-- DEPLOYMENTS:START -->
 
+## Deployments
+
+- **garage-hazae41-bob0**: `eb0a408de3a9e762b7078321cee64510a2e0f53ae9b91ce0b821d2e364f8895f`
+
 <!-- DEPLOYMENTS:END -->
 
 ## Overview
