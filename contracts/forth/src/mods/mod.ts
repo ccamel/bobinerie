@@ -503,6 +503,18 @@ namespace compiler$ {
     return true
   }
 
+  function isReservedDefinitionName(
+    source: string,
+    start: i32,
+    end: i32,
+  ): bool {
+    if (isWordToken(source, start, end, "if")) return true
+    if (isWordToken(source, start, end, "else")) return true
+    if (isWordToken(source, start, end, "then")) return true
+
+    return dictionary$.tryLookupSlice(source, start, end) !== 0
+  }
+
   function isSingleCharToken(
     source: string,
     start: i32,
@@ -608,6 +620,9 @@ namespace compiler$ {
     ) {
       panic<void>("Invalid definition name")
     }
+
+    if (isReservedDefinitionName(source, start, end))
+      panic<void>("Reserved definition name")
 
     setAwaitingDefinitionName(state, false)
     setInDefinition(state, true)
@@ -905,6 +920,10 @@ namespace vm$ {
     if (address < 0 || address >= codeLen) panic<void>("Invalid jump address")
   }
 
+  function assertNonZero(value: bigintref, message: string): void {
+    if (bigints.eq(value, bigints.zero())) panic<void>(message)
+  }
+
   function readInputStack(inputStack: packref): Array<i32> {
     if (!inputStack) return [] as i32[]
 
@@ -1155,6 +1174,7 @@ namespace vm$ {
           assertStackSize(stack, 2)
           const b = toBigint(pop(stack))
           const a = toBigint(pop(stack))
+          assertNonZero(b, "Division by zero")
           stack.push(toRef(bigints.div(a, b)))
           ip += 1
           break
@@ -1163,6 +1183,7 @@ namespace vm$ {
           assertStackSize(stack, 2)
           const b = toBigint(pop(stack))
           const a = toBigint(pop(stack))
+          assertNonZero(b, "Modulo by zero")
           stack.push(toRef(bigints.mod(a, b)))
           ip += 1
           break
@@ -1325,6 +1346,7 @@ export function clone(creator: textref): textref {
  * @throws Error("Unexpected :") if `:` appears while already parsing a definition.
  * @throws Error("Unexpected ;") if `;` appears outside a definition.
  * @throws Error("Invalid definition name") if `:` is not followed by a valid word.
+ * @throws Error("Reserved definition name") if a definition attempts to shadow a reserved word.
  * @throws Error("Missing definition name") if source ends right after `:`.
  * @throws Error("Instruction outside definition") if code appears outside any `: ... ;`.
  * @throws Error("Unclosed definition") if a definition does not end with `;`.
@@ -1360,6 +1382,8 @@ export function blob_hash(): textref {
  * @param input_stack Input stack values as pack of BigInt references.
  * @returns Output stack values as pack of BigInt references.
  * @throws Error("Program not initialized") if no compiled program is stored.
+ * @throws Error("Division by zero") if `/` is executed with a zero divisor.
+ * @throws Error("Modulo by zero") if `MOD` is executed with a zero divisor.
  */
 export function run(input_stack: packref): packref {
   return forth$.run(input_stack)
