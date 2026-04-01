@@ -36,6 +36,28 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:49"
 
+  @public-doc
+  Scenario: Execute IF THEN conditional
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                  |
+      | text:: MAIN 0 IF 7 THEN 9 ;     |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should succeed
+    And the returned value should be "bigint:9"
+
+  @public-doc
+  Scenario: Execute IF ELSE THEN conditional
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                       |
+      | text:: MAIN 0 IF 7 ELSE 9 THEN ;    |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should succeed
+    And the returned value should be "bigint:9"
+
   Scenario: Running before initialization fails
     Given I deploy contract "forth"
     When I call "forth" method "run" with param "pack:[]"
@@ -75,6 +97,27 @@ Feature: Forth Contract
       | $forth_creator |
       | text:1         |
     Then the execution should fail with "Instruction outside definition"
+
+  Scenario: Initializing with an unexpected ELSE fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator       |
+      | text:: MAIN ELSE ;   |
+    Then the execution should fail with "Unexpected ELSE"
+
+  Scenario: Initializing with an unexpected THEN fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator       |
+      | text:: MAIN THEN ;   |
+    Then the execution should fail with "Unexpected THEN"
+
+  Scenario: Initializing with an unclosed IF fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator        |
+      | text:: MAIN 1 IF 2 ;  |
+    Then the execution should fail with "Unclosed IF"
 
   Scenario: Running with stack underflow fails
     Given I deploy contract "forth"
