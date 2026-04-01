@@ -293,6 +293,7 @@ namespace compiler$ {
   const STATE_SIZE: i32 = 11
   const PATCH_IF_TAG: i32 = 1
   const PATCH_ELSE_TAG: i32 = 2
+  const PATCH_BEGIN_TAG: i32 = 3
 
   function sourceOf(state: Array<usize>): string {
     return changetype<string>(state[SOURCE_INDEX])
@@ -386,12 +387,28 @@ namespace compiler$ {
     patchStackOf(state).push(encodePatch(PATCH_ELSE_TAG, offset))
   }
 
+  function pushBeginPatch(state: Array<usize>, address: i32): void {
+    patchStackOf(state).push(encodePatch(PATCH_BEGIN_TAG, address))
+  }
+
   function popConditionalPatch(state: Array<usize>): i32 {
     const patchStack = patchStackOf(state)
 
     if (patchStack.length < 1) panic<i32>("Unexpected THEN")
 
     return patchOffsetOf(patchStack.pop())
+  }
+
+  function popBeginPatch(state: Array<usize>): i32 {
+    const patchStack = patchStackOf(state)
+
+    if (patchStack.length < 1) panic<i32>("Unexpected UNTIL")
+
+    const entry = patchStack.pop()
+
+    if (patchKindOf(entry) !== PATCH_BEGIN_TAG) panic<i32>("Unexpected UNTIL")
+
+    return patchOffsetOf(entry)
   }
 
   function createState(source: string): Array<usize> {
@@ -509,8 +526,10 @@ namespace compiler$ {
     end: i32,
   ): bool {
     if (isWordToken(source, start, end, "if")) return true
+    if (isWordToken(source, start, end, "begin")) return true
     if (isWordToken(source, start, end, "else")) return true
     if (isWordToken(source, start, end, "then")) return true
+    if (isWordToken(source, start, end, "until")) return true
 
     return dictionary$.tryLookupSlice(source, start, end) !== 0
   }
@@ -604,6 +623,13 @@ namespace compiler$ {
     return patchOffset
   }
 
+  function emitJump(state: Array<usize>, opcode: u8, address: i32): void {
+    const code = codeOf(state)
+
+    code.push(opcode)
+    pushU32LE(code, <u32>address)
+  }
+
   function assertInDefinitionWith(state: Array<usize>, message: string): void {
     if (!inDefinitionOf(state)) panic<void>(message)
   }
@@ -652,6 +678,11 @@ namespace compiler$ {
     )
   }
 
+  function handleBeginToken(state: Array<usize>): void {
+    assertInDefinitionWith(state, "Unexpected BEGIN")
+    pushBeginPatch(state, codeOf(state).length)
+  }
+
   function handleElseToken(state: Array<usize>): void {
     assertInDefinitionWith(state, "Unexpected ELSE")
 
@@ -673,6 +704,12 @@ namespace compiler$ {
     const patchOffset = popConditionalPatch(state)
 
     setU32LE(code, patchOffset, <u32>code.length)
+  }
+
+  function handleUntilToken(state: Array<usize>): void {
+    assertInDefinitionWith(state, "Unexpected UNTIL")
+    const beginAddress = popBeginPatch(state)
+    emitJump(state, <u8>dictionary$.Opcode.JZ, beginAddress)
   }
 
   function onWordToken(state: Array<usize>, start: i32, end: i32): void {
@@ -705,6 +742,11 @@ namespace compiler$ {
       return
     }
 
+    if (isWordToken(source, start, end, "begin")) {
+      handleBeginToken(state)
+      return
+    }
+
     if (isWordToken(source, start, end, "else")) {
       handleElseToken(state)
       return
@@ -712,6 +754,11 @@ namespace compiler$ {
 
     if (isWordToken(source, start, end, "then")) {
       handleThenToken(state)
+      return
+    }
+
+    if (isWordToken(source, start, end, "until")) {
+      handleUntilToken(state)
       return
     }
 
@@ -747,7 +794,15 @@ namespace compiler$ {
     if (inDefinitionOf(state)) panic<void>("Unclosed definition")
     if (mainSeenOf(state) !== 1) panic<void>("Missing MAIN")
     if (pendingCallsOf(state).size > 0) panic<void>("Unknown word")
-    if (patchStackOf(state).length > 0) panic<void>("Unclosed IF")
+
+    const patchStack = patchStackOf(state)
+
+    if (patchStack.length > 0) {
+      const kind = patchKindOf(patchStack[patchStack.length - 1])
+
+      if (kind === PATCH_BEGIN_TAG) panic<void>("Unclosed BEGIN")
+      panic<void>("Unclosed IF")
+    }
 
     setU32LE(codeOf(state), 1, <u32>mainAddressOf(state))
   }
@@ -1345,11 +1400,14 @@ export function clone(creator: textref): textref {
  * @throws Error("Unclosed comment") if a `( ... )` comment is not closed.
  * @throws Error("Unexpected :") if `:` appears while already parsing a definition.
  * @throws Error("Unexpected ;") if `;` appears outside a definition.
+ * @throws Error("Unexpected BEGIN") if `BEGIN` appears outside a definition.
  * @throws Error("Invalid definition name") if `:` is not followed by a valid word.
  * @throws Error("Reserved definition name") if a definition attempts to shadow a reserved word.
  * @throws Error("Missing definition name") if source ends right after `:`.
  * @throws Error("Instruction outside definition") if code appears outside any `: ... ;`.
  * @throws Error("Unclosed definition") if a definition does not end with `;`.
+ * @throws Error("Unexpected UNTIL") if `UNTIL` appears without a matching `BEGIN`.
+ * @throws Error("Unclosed BEGIN") if a `BEGIN` loop is not closed by `UNTIL`.
  * @throws Error("Missing MAIN") if no `: MAIN ... ;` definition is present.
  * @throws Error("Duplicate MAIN") if `MAIN` is defined more than once.
  * @throws Error("Unknown word") if a non-integer token is not found in the dictionary.
