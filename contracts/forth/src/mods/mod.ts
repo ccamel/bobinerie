@@ -589,6 +589,39 @@ namespace compiler$ {
     return false
   }
 
+  function emitBooleanSlice(state: Array<usize>, start: i32, end: i32): bool {
+    const source = sourceOf(state)
+
+    if (isWordToken(source, start, end, "not")) {
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      return true
+    }
+
+    if (isWordToken(source, start, end, "and")) {
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.SWAP)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.MUL)
+      return true
+    }
+
+    if (isWordToken(source, start, end, "or")) {
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.SWAP)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.ADD)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      return true
+    }
+
+    return false
+  }
+
   function isReservedDefinitionName(
     source: string,
     start: i32,
@@ -605,6 +638,9 @@ namespace compiler$ {
     if (isWordToken(source, start, end, ">=")) return true
     if (isWordToken(source, start, end, "<=")) return true
     if (isWordToken(source, start, end, "<>")) return true
+    if (isWordToken(source, start, end, "not")) return true
+    if (isWordToken(source, start, end, "and")) return true
+    if (isWordToken(source, start, end, "or")) return true
 
     return dictionary$.tryLookupSlice(source, start, end) !== 0
   }
@@ -869,6 +905,7 @@ namespace compiler$ {
 
     assertInDefinitionWith(state, "Instruction outside definition")
 
+    if (emitBooleanSlice(state, start, end)) return
     if (emitComparatorSlice(state, start, end)) return
     if (emitWordSlice(state, start, end)) return
 
