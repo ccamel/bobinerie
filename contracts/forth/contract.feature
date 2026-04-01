@@ -80,6 +80,28 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:9"
 
+  @public-doc
+  Scenario: Execute MAX program on two inputs
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                                     |
+      | text:: MAX 2DUP < IF SWAP THEN DROP ; : MAIN MAX ; |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[bigint:7,bigint:9]"
+    Then the execution should succeed
+    And the returned value should be "bigint:9"
+
+  @public-doc
+  Scenario: Execute BEGIN UNTIL loop to sum integers
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                                                                  |
+      | text:: SUMDOWN 0 SWAP BEGIN SWAP OVER + SWAP 1 - DUP 0= UNTIL DROP ; : MAIN SUMDOWN ; |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[bigint:4]"
+    Then the execution should succeed
+    And the returned value should be "bigint:10"
+
   Scenario: Running before initialization fails
     Given I deploy contract "forth"
     When I call "forth" method "run" with param "pack:[]"
@@ -148,12 +170,26 @@ Feature: Forth Contract
       | text:: MAIN THEN ;   |
     Then the execution should fail with "Unexpected THEN"
 
+  Scenario: Initializing with an unexpected UNTIL fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator        |
+      | text:: MAIN UNTIL ;   |
+    Then the execution should fail with "Unexpected UNTIL"
+
   Scenario: Initializing with an unclosed IF fails
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:
       | $forth_creator        |
       | text:: MAIN 1 IF 2 ;  |
     Then the execution should fail with "Unclosed IF"
+
+  Scenario: Initializing with an unclosed BEGIN fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator             |
+      | text:: MAIN BEGIN 1 0= ;   |
+    Then the execution should fail with "Unclosed BEGIN"
 
   Scenario: Running with stack underflow fails
     Given I deploy contract "forth"
