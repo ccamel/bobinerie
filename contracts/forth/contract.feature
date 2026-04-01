@@ -124,6 +124,17 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:4"
 
+  @public-doc
+  Scenario: Execute boolean operators on truthy values
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                                       |
+      | text:: MAIN 0 NOT 7 NOT + 2 3 AND + 0 5 OR + ;       |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should succeed
+    And the returned value should be "bigint:3"
+
   Scenario: Running before initialization fails
     Given I deploy contract "forth"
     When I call "forth" method "run" with param "pack:[]"
