@@ -37,6 +37,28 @@ Feature: Forth Contract
     And the returned value should be "bigint:49"
 
   @public-doc
+  Scenario: Execute case-insensitive user-defined word
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                              |
+      | text:: SquAre DUP * ; : MAIN square ;      |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[bigint:8]"
+    Then the execution should succeed
+    And the returned value should be "bigint:64"
+
+  @public-doc
+  Scenario: Execute normalized integer literals
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                    |
+      | text:: MAIN +001 -0 + +002 + ;   |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should succeed
+    And the returned value should be "bigint:3"
+
+  @public-doc
   Scenario: Execute IF THEN conditional
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:
@@ -91,6 +113,20 @@ Feature: Forth Contract
       | text:: MAIN 1 ; : MAIN 2 ;  |
     Then the execution should fail with "Duplicate MAIN"
 
+  Scenario: Initializing with a reserved control word name fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator      |
+      | text:: IF 1 ;       |
+    Then the execution should fail with "Reserved definition name"
+
+  Scenario: Initializing with a reserved primitive name fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator      |
+      | text:: DUP 1 ;      |
+    Then the execution should fail with "Reserved definition name"
+
   Scenario: Initializing with instructions outside a definition fails
     Given I deploy contract "forth"
     When I call "forth" method "init" with params:
@@ -127,6 +163,24 @@ Feature: Forth Contract
     Then the execution should succeed
     When I call "forth" method "run" with param "pack:[]"
     Then the execution should fail with "Stack underflow"
+
+  Scenario: Running with division by zero fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator        |
+      | text:: MAIN 7 0 / ;   |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should fail with "Division by zero"
+
+  Scenario: Running with modulo by zero fails
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator          |
+      | text:: MAIN 7 0 MOD ;   |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should fail with "Modulo by zero"
 
   @public-doc
   Scenario: Source and blob hashes are exposed after initialization
