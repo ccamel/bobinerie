@@ -113,6 +113,17 @@ Feature: Forth Contract
     Then the execution should succeed
     And the returned value should be "bigint:10"
 
+  @public-doc
+  Scenario: Execute extended comparison operators
+    Given I deploy contract "forth"
+    When I call "forth" method "init" with params:
+      | $forth_creator                                   |
+      | text:: MAIN 5 3 > 5 5 >= + 3 5 <= + 4 5 <> + ;   |
+    Then the execution should succeed
+    When I call "forth" method "run" with param "pack:[]"
+    Then the execution should succeed
+    And the returned value should be "bigint:4"
+
   Scenario: Running before initialization fails
     Given I deploy contract "forth"
     When I call "forth" method "run" with param "pack:[]"
