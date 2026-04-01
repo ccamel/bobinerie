@@ -27,8 +27,6 @@ As a user of the Bobine platform
 I want to store and retrieve my name
 So that the contract remembers who I am
 
-These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
-
 ### Shared Setup
 
 This setup is applied before each published scenario.

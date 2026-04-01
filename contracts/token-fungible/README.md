@@ -26,8 +26,6 @@ As a user of the Bobine platform
 I want fungible tokens with balances and allowances
 So that I can mint, transfer, approve, and burn safely
 
-These walkthroughs come from `contract.feature` scenarios tagged `@public-doc`.
-
 ### Shared Setup
 
 This setup is applied before each published scenario.

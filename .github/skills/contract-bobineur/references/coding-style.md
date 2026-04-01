@@ -25,6 +25,7 @@ This document defines the mandatory coding style and local workflow rules for Bo
 - Keep functions small and single-purpose.
 - Avoid boolean flags when separate functions express intent better.
 - Avoid abstractions unless reused at least twice.
+- Never use `class` declarations in contract code. Use `type` + functions.
 
 ### Casing
 
