@@ -550,6 +550,45 @@ namespace compiler$ {
     return true
   }
 
+  function emitOpcode(state: Array<usize>, opcode: dictionary$.Opcode): void {
+    codeOf(state).push(<u8>opcode)
+  }
+
+  function emitComparatorSlice(
+    state: Array<usize>,
+    start: i32,
+    end: i32,
+  ): bool {
+    const source = sourceOf(state)
+
+    if (isWordToken(source, start, end, ">")) {
+      emitOpcode(state, dictionary$.Opcode.SWAP)
+      emitOpcode(state, dictionary$.Opcode.LT)
+      return true
+    }
+
+    if (isWordToken(source, start, end, ">=")) {
+      emitOpcode(state, dictionary$.Opcode.LT)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      return true
+    }
+
+    if (isWordToken(source, start, end, "<=")) {
+      emitOpcode(state, dictionary$.Opcode.SWAP)
+      emitOpcode(state, dictionary$.Opcode.LT)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      return true
+    }
+
+    if (isWordToken(source, start, end, "<>")) {
+      emitOpcode(state, dictionary$.Opcode.EQ)
+      emitOpcode(state, dictionary$.Opcode.ISZERO)
+      return true
+    }
+
+    return false
+  }
+
   function isReservedDefinitionName(
     source: string,
     start: i32,
@@ -562,6 +601,10 @@ namespace compiler$ {
     if (isWordToken(source, start, end, "then")) return true
     if (isWordToken(source, start, end, "until")) return true
     if (isWordToken(source, start, end, "repeat")) return true
+    if (isWordToken(source, start, end, ">")) return true
+    if (isWordToken(source, start, end, ">=")) return true
+    if (isWordToken(source, start, end, "<=")) return true
+    if (isWordToken(source, start, end, "<>")) return true
 
     return dictionary$.tryLookupSlice(source, start, end) !== 0
   }
@@ -826,6 +869,7 @@ namespace compiler$ {
 
     assertInDefinitionWith(state, "Instruction outside definition")
 
+    if (emitComparatorSlice(state, start, end)) return
     if (emitWordSlice(state, start, end)) return
 
     emitCallByName(state, start, end)
