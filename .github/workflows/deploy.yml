@@ -65,11 +65,11 @@ jobs:
         run: |
           BOBINE="${{ matrix.environment }}"
           for dir in contracts/*/; do
-            CONTRACT=$(basename $dir)
+            CONTRACT=$(basename "$dir")
             echo "🚀 Producing $CONTRACT..."
 
             # Capture the deployment address (script outputs the address directly)
-            ADDRESS=$(CONTRACT=$CONTRACT npm -s run contract:produce) || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
+            ADDRESS=$(CONTRACT="$CONTRACT" npm -s run contract:produce) || { echo "❌ Deployment failed for $CONTRACT"; exit 1; }
 
             # Update deployment.json
             jq --arg bobine "$BOBINE" --arg contract "$CONTRACT" --arg address "$ADDRESS" \
@@ -94,7 +94,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
           git add deployment.json
           git diff --staged --quiet || git commit -m "p"
