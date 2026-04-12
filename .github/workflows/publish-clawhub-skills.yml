@@ -25,6 +25,7 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       source_ref: ${{ steps.source-ref.outputs.source_ref }}
+      source_commit: ${{ steps.source-commit.outputs.source_commit }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -74,6 +75,10 @@ jobs:
           else
             echo "source_ref=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Resolve source commit
+        id: source-commit
+        run: echo "source_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Build publish matrix
         id: matrix
@@ -257,14 +262,14 @@ jobs:
           CLAWHUB_REGISTRY: https://clawhub.ai
           CLAWHUB_TAGS: ${{ matrix.clawhubTag }}
           SOURCE_REF: ${{ needs.prepare.outputs.source_ref }}
+          SOURCE_COMMIT: ${{ needs.prepare.outputs.source_commit }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
           SKILL_SLUG: ${{ matrix.slug }}
           SOURCE_PATH: ${{ matrix.sourcePath }}
         run: |
           clawhub package publish "./out/clawhub/${SKILL_SLUG}" \
             --tags "${CLAWHUB_TAGS}" \
             --source-repo "${GITHUB_REPOSITORY}" \
-            --source-commit "${GITHUB_SHA}" \
+            --source-commit "${SOURCE_COMMIT}" \
             --source-ref "${SOURCE_REF}" \
             --source-path "${SOURCE_PATH}"
