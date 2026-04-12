@@ -24,8 +24,6 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-      source_ref: ${{ steps.source-ref.outputs.source_ref }}
-      source_commit: ${{ steps.source-commit.outputs.source_commit }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -66,19 +64,6 @@ jobs:
         run: |
           npm run docs
           git diff --exit-code
-
-      - name: Resolve source ref
-        id: source-ref
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "source_ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "source_ref=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Resolve source commit
-        id: source-commit
-        run: echo "source_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Build publish matrix
         id: matrix
@@ -183,65 +168,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Stage publish bundle
+      - name: Smoke test skill scripts
         env:
-          SKILL_SLUG: ${{ matrix.slug }}
-          SKILL_VERSION: ${{ matrix.version }}
           SKILL_SOURCE: ${{ matrix.sourcePath }}
-          STAGE_DIR: ./out/clawhub/${{ matrix.slug }}
         run: |
-          test -d "${SKILL_SOURCE}"
-          test -f "${SKILL_SOURCE}/SKILL.md"
-          test -f "${SKILL_SOURCE}/VERSION"
-
-          rm -rf "${STAGE_DIR}"
-          mkdir -p "${STAGE_DIR}"
-          cp -R "${SKILL_SOURCE}/." "${STAGE_DIR}"
-
-          node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync } from "node:fs"
-          import { join } from "node:path"
-
-          const stageDir = process.env.STAGE_DIR
-          const skillSlug = process.env.SKILL_SLUG
-          const skillVersion = process.env.SKILL_VERSION
-          const content = readFileSync(join(stageDir, "SKILL.md"), "utf-8")
-          const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
-          const descriptionMatch = match?.[1]?.match(
-            /(?:^|\n)description:\s*>\s*\n((?:\s{2}.+\n?)*)/,
-          )
-          const description = descriptionMatch?.[1]
-            ?.split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter((line) => line.length > 0)
-            .join(" ")
-
-          writeFileSync(
-            join(stageDir, "package.json"),
-            `${JSON.stringify(
-              {
-                name: skillSlug,
-                version: skillVersion,
-                description: description || `${skillSlug} skill`,
-                license: "MIT",
-                type: "module",
-              },
-              null,
-              2,
-            )}\n`,
-            "utf-8",
-          )
-          NODE
-
-      - name: Smoke test staged scripts
-        env:
-          STAGE_DIR: ./out/clawhub/${{ matrix.slug }}
-        run: |
-          if [ -d "${STAGE_DIR}/scripts" ]; then
+          if [ -d "${SKILL_SOURCE}/scripts" ]; then
             while IFS= read -r -d '' file; do
               node --check "${file}"
-            done < <(find "${STAGE_DIR}/scripts" -type f -name '*.mjs' -print0)
+            done < <(find "${SKILL_SOURCE}/scripts" -type f -name '*.mjs' -print0)
           fi
+
       - name: Install ClawHub CLI
         run: npm install --global clawhub@0.9.0
 
@@ -261,15 +197,11 @@ jobs:
           CLAWHUB_SITE: https://clawhub.ai
           CLAWHUB_REGISTRY: https://clawhub.ai
           CLAWHUB_TAGS: ${{ matrix.clawhubTag }}
-          SOURCE_REF: ${{ needs.prepare.outputs.source_ref }}
-          SOURCE_COMMIT: ${{ needs.prepare.outputs.source_commit }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
           SKILL_SLUG: ${{ matrix.slug }}
+          SKILL_VERSION: ${{ matrix.version }}
           SOURCE_PATH: ${{ matrix.sourcePath }}
         run: |
-          clawhub package publish "./out/clawhub/${SKILL_SLUG}" \
-            --tags "${CLAWHUB_TAGS}" \
-            --source-repo "${GITHUB_REPOSITORY}" \
-            --source-commit "${SOURCE_COMMIT}" \
-            --source-ref "${SOURCE_REF}" \
-            --source-path "${SOURCE_PATH}"
+          clawhub publish "./${SOURCE_PATH}" \
+            --slug "${SKILL_SLUG}" \
+            --version "${SKILL_VERSION}" \
+            --tags "${CLAWHUB_TAGS}"
