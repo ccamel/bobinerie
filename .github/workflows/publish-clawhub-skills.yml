@@ -1,0 +1,270 @@
+name: Publish Skills to ClawHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to publish, for example main or a release tag
+        required: false
+        default: main
+        type: string
+  push:
+    tags:
+      - "skills/*/v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-clawhub-skills-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      source_ref: ${{ steps.source-ref.outputs.source_ref }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+      - name: Install skills-ref tool
+        run: uv tool install git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref
+
+      - name: Validate skills with skills-ref
+        run: |
+          for dir in skills/*/ ; do
+            skills-ref validate "$dir"
+          done
+
+      - name: Validate skills with skill-check
+        run: npx skill-check check --no-security-scan skills
+
+      - name: Check generated docs
+        run: |
+          npm run docs
+          git diff --exit-code
+
+      - name: Resolve source ref
+        id: source-ref
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "source_ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "source_ref=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build publish matrix
+        id: matrix
+        env:
+          TARGET_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
+          import { readdirSync, readFileSync, statSync } from "node:fs"
+          import { join } from "node:path"
+
+          const skillsRoot = "skills"
+          const semverPattern =
+            /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
+          const targetTag = process.env.TARGET_TAG ?? ""
+
+          function readVersion(slug) {
+            const version = readFileSync(join(skillsRoot, slug, "VERSION"), "utf-8").trim()
+
+            if (!semverPattern.test(version)) {
+              throw new Error(`Invalid VERSION "${version}" in skills/${slug}`)
+            }
+
+            return version
+          }
+
+          function discoverSkills() {
+            const skills = readdirSync(skillsRoot)
+              .filter((entry) => statSync(join(skillsRoot, entry)).isDirectory())
+              .map((slug) => {
+                const version = readVersion(slug)
+
+                return {
+                  slug,
+                  version,
+                  clawhubTag: version.includes("-") ? "beta" : "latest",
+                  sourcePath: `skills/${slug}`,
+                }
+              })
+              .sort((a, b) => a.slug.localeCompare(b.slug))
+
+            if (skills.length === 0) {
+              throw new Error("No skills found under skills/")
+            }
+
+            return skills
+          }
+
+          function fromTag(tag) {
+            const match = tag.match(/^skills\/([^/]+)\/v(.+)$/)
+
+            if (match == null || match[1] == null || match[2] == null) {
+              throw new Error(
+                `Invalid release tag "${tag}". Expected skills/<slug>/v<version>.`,
+              )
+            }
+
+            const slug = match[1]
+            const version = match[2]
+            const actual = readVersion(slug)
+
+            if (actual !== version) {
+              throw new Error(
+                `Tag version ${version} does not match skills/${slug}/VERSION (${actual})`,
+              )
+            }
+
+            return [
+              {
+                slug,
+                version,
+                clawhubTag: version.includes("-") ? "beta" : "latest",
+                sourcePath: `skills/${slug}`,
+              },
+            ]
+          }
+
+          const matrix = targetTag.length > 0 ? fromTag(targetTag) : discoverSkills()
+          process.stdout.write(`matrix=${JSON.stringify(matrix)}\n`)
+          NODE
+
+  publish:
+    needs: prepare
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Stage publish bundle
+        env:
+          SKILL_SLUG: ${{ matrix.slug }}
+          SKILL_VERSION: ${{ matrix.version }}
+          SKILL_SOURCE: ${{ matrix.sourcePath }}
+          STAGE_DIR: ./out/clawhub/${{ matrix.slug }}
+        run: |
+          test -d "${SKILL_SOURCE}"
+          test -f "${SKILL_SOURCE}/SKILL.md"
+          test -f "${SKILL_SOURCE}/VERSION"
+
+          rm -rf "${STAGE_DIR}"
+          mkdir -p "${STAGE_DIR}"
+          cp -R "${SKILL_SOURCE}/." "${STAGE_DIR}"
+
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs"
+          import { join } from "node:path"
+
+          const stageDir = process.env.STAGE_DIR
+          const skillSlug = process.env.SKILL_SLUG
+          const skillVersion = process.env.SKILL_VERSION
+          const content = readFileSync(join(stageDir, "SKILL.md"), "utf-8")
+          const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+          const descriptionMatch = match?.[1]?.match(
+            /(?:^|\n)description:\s*>\s*\n((?:\s{2}.+\n?)*)/,
+          )
+          const description = descriptionMatch?.[1]
+            ?.split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0)
+            .join(" ")
+
+          writeFileSync(
+            join(stageDir, "package.json"),
+            `${JSON.stringify(
+              {
+                name: skillSlug,
+                version: skillVersion,
+                description: description || `${skillSlug} skill`,
+                license: "MIT",
+                type: "module",
+              },
+              null,
+              2,
+            )}\n`,
+            "utf-8",
+          )
+          NODE
+
+      - name: Smoke test staged scripts
+        env:
+          STAGE_DIR: ./out/clawhub/${{ matrix.slug }}
+        run: |
+          if [ -d "${STAGE_DIR}/scripts" ]; then
+            while IFS= read -r -d '' file; do
+              node --check "${file}"
+            done < <(find "${STAGE_DIR}/scripts" -type f -name '*.mjs' -print0)
+          fi
+      - name: Install ClawHub CLI
+        run: npm install --global clawhub@0.9.0
+
+      - name: Authenticate ClawHub CLI
+        env:
+          CLAWHUB_CONFIG_PATH: ${{ runner.temp }}/clawhub-config.json
+          CLAWHUB_SITE: https://clawhub.ai
+          CLAWHUB_REGISTRY: https://clawhub.ai
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          test -n "${CLAWHUB_TOKEN:-}"
+          clawhub auth login --token "${CLAWHUB_TOKEN}" --no-browser
+
+      - name: Publish skill to ClawHub
+        env:
+          CLAWHUB_CONFIG_PATH: ${{ runner.temp }}/clawhub-config.json
+          CLAWHUB_SITE: https://clawhub.ai
+          CLAWHUB_REGISTRY: https://clawhub.ai
+          CLAWHUB_TAGS: ${{ matrix.clawhubTag }}
+          SOURCE_REF: ${{ needs.prepare.outputs.source_ref }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          SKILL_SLUG: ${{ matrix.slug }}
+          SOURCE_PATH: ${{ matrix.sourcePath }}
+        run: |
+          clawhub package publish "./out/clawhub/${SKILL_SLUG}" \
+            --tags "${CLAWHUB_TAGS}" \
+            --source-repo "${GITHUB_REPOSITORY}" \
+            --source-commit "${GITHUB_SHA}" \
+            --source-ref "${SOURCE_REF}" \
+            --source-path "${SOURCE_PATH}"
