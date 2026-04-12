@@ -14,6 +14,7 @@ Examples:
 
 ```bash
 text:Alice
+text:"Alice, Bob]"
 bigint:42
 number:3.14
 blob:deadbeef
@@ -33,14 +34,16 @@ Examples:
 
 ```bash
 'pack:[text:bobine.multisig/call,bigint:1,text:target]'
+'pack:[text:"a,b]",bigint:1]'
 'array:[text:hello,bigint:1,null]'
 'pack:[text:outer,pack:[text:inner,bigint:2]]'
 ```
 
 ## Shell guidance
 
-- Quote params containing `[` `]` `,` or spaces
+- Quote the whole param when it contains `[` `]` `,` or spaces
 - Keep the type prefix inside the quoted string
+- Quote the `text:` payload itself when it contains `,` or `]`, for example `text:"a,b]"`
 - Use hex without `0x` for `blob:`
 
 ## Unsupported values in v1

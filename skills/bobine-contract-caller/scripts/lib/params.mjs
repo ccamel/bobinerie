@@ -28,6 +28,53 @@ function readUntilDelimiter(state) {
   return state.text.slice(start, state.index).trim()
 }
 
+function readQuoted(state) {
+  const quote = state.text[state.index]
+  let value = ""
+  state.index += 1
+
+  while (state.index < state.text.length) {
+    const char = state.text[state.index]
+
+    if (char === "\\") {
+      state.index += 1
+
+      if (state.index >= state.text.length) {
+        throw new Error("Unterminated escape sequence in quoted text")
+      }
+
+      const escaped = state.text[state.index]
+      if (escaped === "n") value += "\n"
+      else if (escaped === "r") value += "\r"
+      else if (escaped === "t") value += "\t"
+      else value += escaped
+
+      state.index += 1
+      continue
+    }
+
+    if (char === quote) {
+      state.index += 1
+      return value
+    }
+
+    value += char
+    state.index += 1
+  }
+
+  throw new Error("Unterminated quoted text value")
+}
+
+function readTextValue(state) {
+  const next = state.text[state.index]
+
+  if (next === '"' || next === "'") {
+    return readQuoted(state)
+  }
+
+  return readUntilDelimiter(state)
+}
+
 function parseArray(state) {
   const values = []
   expect(state, "[")
@@ -89,7 +136,7 @@ function parseValue(state) {
 
   if (state.text.startsWith("text:", state.index)) {
     state.index += "text:".length
-    return readUntilDelimiter(state)
+    return readTextValue(state)
   }
 
   if (state.text.startsWith("pack:[", state.index)) {

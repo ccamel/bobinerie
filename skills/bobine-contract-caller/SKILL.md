@@ -86,7 +86,8 @@ Call deployed Bobine modules from a portable skill.
   - `pack:[...]`
   - `array:[...]`
 - Nesting is allowed
-- Quote shell arguments that contain brackets, commas, or spaces
+- Quote the whole shell argument when it contains brackets, commas, or spaces
+- Quote the `text:` payload itself when it contains `,` or `]`, for example `text:"a,b]"`
 
 ## Signed call behavior
 
