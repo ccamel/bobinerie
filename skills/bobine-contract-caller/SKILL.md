@@ -1,65 +1,69 @@
 ---
 name: bobine-contract-caller
 description: >
-  Interact with Bobine smart contracts from an AI agent. Use when you need to
-  call a deployed Bobine module, prepare typed Bobine params, or perform an
-  Ed25519-signed call through an auth module.
+  Use when you need to call deployed Bobine modules with typed params or
+  perform a signed Ed25519 call through an auth module.
+metadata:
+  openclaw:
+    requires:
+      bins:
+        - node
+    emoji: "🧵"
+    homepage: https://github.com/hazae41/bobine
+    os:
+      - linux
+      - darwin
+      - win32
 ---
 
 # Bobine Contract Caller
 
-Call deployed Bobine modules from a portable skill.
+Default entrypoint: `scripts/call_bobine.mjs`.
 
-## Useful references
+## Upstream references
 
 - Concept overview: <https://www.bobine.tech/>
 - Bobine project: <https://github.com/hazae41/bobine>
 - Standard libraries for Bobine WebAssembly VM: <https://github.com/hazae41/stdbob>
 
-## Use this skill for
+## Scope
 
 - Calling a Bobine module through `/api/execute`
 - Preparing typed Bobine params for contract methods
 - Generating Ed25519 keys for Bobine auth sessions
 - Performing an authenticated `ed25519` call with nonce handling and signature
 
-## Do not use this skill for
-
-- Authoring or refactoring Bobine contracts
-- Explaining the internals of a specific contract when the contract sources are available elsewhere
-- Managing non-Ed25519 auth flows in v1
-
 ## Runtime requirements
 
 - Node.js 20+
 - Network access to a Bobine server
 
-## Files in this skill
+## Load on demand
 
-- `scripts/keygen.mjs` generates a JSON object with `sigkey` and `pubkey`
-- `scripts/call_bobine.mjs` performs unsigned or signed Bobine calls from explicit arguments
-- `references/params.md` documents the param grammar
-- `references/runtime.md` documents env vars, outputs, and failure modes
+- Read `references/params.md` only when params use packed arrays or quoted `text:` payloads
+- Read `references/runtime.md` only when spark handling, outputs, or failure modes are unclear
+- Use `scripts/keygen.mjs` only when the call needs `ed25519` auth
+- Use `scripts/call_bobine.mjs` for all unsigned and signed calls
 
 ## Quick workflow
 
-1. Inspect `references/params.md` if the user gives nested or packed params.
-2. Inspect `references/runtime.md` if env vars or outputs are unclear.
+1. Use `scripts/call_bobine.mjs` as the default entrypoint for Bobine interactions.
+2. Read `references/params.md` only if params are nested, packed, or need quoted `text:`.
 3. Generate keys if the call needs `ed25519` auth:
 
-    ```bash
-    node ./scripts/keygen.mjs
-    ```
+   ```bash
+   node ./scripts/keygen.mjs
+   ```
 
 4. Call the target contract with explicit arguments:
 
-    ```bash
-    node ./scripts/call_bobine.mjs \
-      --server http://localhost:8080 \
-      --module <target-module> \
-      --method <target-method> \
-      --param text:Alice
-    ```
+   ```bash
+   node ./scripts/call_bobine.mjs \
+     --server http://localhost:8080 \
+     --module <target-module> \
+     --method <target-method> \
+     --param text:Alice
+   ```
 
 ## Inputs
 
@@ -88,6 +92,14 @@ Call deployed Bobine modules from a portable skill.
 - Nesting is allowed
 - Quote the whole shell argument when it contains brackets, commas, or spaces
 - Quote the `text:` payload itself when it contains `,` or `]`, for example `text:"a,b]"`
+
+## Gotchas
+
+- `--param` is one top-level Bobine param per flag; nested arrays stay inside a single typed param string
+- `text:` values containing `,` or `]` must quote the payload itself, for example `text:"a,b]"`
+- Signed calls require all of `--auth-module`, `--sigkey`, and `--pubkey`
+- `--spark-hex` is a one-off override for a specific call; prefer `--spark-effort` when you want a fresh spark
+- `keygen.mjs` prints secret material, so do not paste its output back to the user unless they explicitly ask for it
 
 ## Signed call behavior
 
