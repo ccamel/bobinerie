@@ -57,7 +57,7 @@ jobs:
           else
             next=$((latest + 1))
           fi
-          echo "next=$next" >> $GITHUB_OUTPUT
+          echo "next=$next" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
         env:

@@ -1,0 +1,124 @@
+name: Release Skill
+
+on:
+  workflow_dispatch:
+    inputs:
+      skill:
+        description: Skill slug under skills/, for example bobine-contract-caller
+        required: true
+        type: string
+      version:
+        description: Semver version to release, for example 0.2.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-skill-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+      - name: Install skills-ref tool
+        run: uv tool install git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref
+
+      - name: Validate skills with skills-ref
+        run: |
+          for dir in skills/*/ ; do
+            skills-ref validate "$dir"
+          done
+
+      - name: Validate skills with skill-check
+        run: npx skill-check check --no-security-scan skills
+
+      - name: Check generated docs
+        run: |
+          npm run docs
+          git diff --exit-code
+
+      - name: Validate release inputs
+        env:
+          SKILL: ${{ inputs.skill }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          test -n "${SKILL}"
+          test -d "skills/${SKILL}"
+          test -f "skills/${SKILL}/SKILL.md"
+          test -f "skills/${SKILL}/VERSION"
+
+          echo "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+
+          CURRENT_VERSION=$(tr -d '\n' < "skills/${SKILL}/VERSION")
+          test "${CURRENT_VERSION}" != "${VERSION}"
+
+          git fetch origin --tags
+          ! git rev-parse "skills/${SKILL}/v${VERSION}" >/dev/null 2>&1
+
+      - name: Configure authenticated remote
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          test -n "${GH_TOKEN:-}"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+      - name: Update skill version
+        env:
+          SKILL: ${{ inputs.skill }}
+          VERSION: ${{ inputs.version }}
+        run: printf '%s\n' "${VERSION}" > "skills/${SKILL}/VERSION"
+
+      - name: Commit version bump
+        env:
+          SKILL: ${{ inputs.skill }}
+        run: |
+          git add "skills/${SKILL}/VERSION"
+          git commit -m "v"
+
+      - name: Create skill release tag
+        env:
+          SKILL: ${{ inputs.skill }}
+          VERSION: ${{ inputs.version }}
+        run: git tag "skills/${SKILL}/v${VERSION}"
+
+      - name: Push commit and tag
+        env:
+          SKILL: ${{ inputs.skill }}
+          VERSION: ${{ inputs.version }}
+        run: git push --atomic origin HEAD:main "refs/tags/skills/${SKILL}/v${VERSION}:refs/tags/skills/${SKILL}/v${VERSION}"

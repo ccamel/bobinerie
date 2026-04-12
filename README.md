@@ -30,6 +30,8 @@
 
 Available now:
 
+### Contracts
+
 <!-- CONTRACTS:START -->
 
 <table>
@@ -88,6 +90,24 @@ Available now:
 
 <!-- CONTRACTS:END -->
 
+### Agent Skills
+
+<!-- SKILLS:START -->
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<h3><a href="skills/bobine-contract-caller/SKILL.md">Bobine Contract Caller</a></h3>
+<p><strong>Use when you need to call deployed Bobine modules with typed params or perform a signed Ed25519 call through an auth module.</strong></p>
+<p><img alt="portable skill" src="https://img.shields.io/badge/portable-skill-1D3557" /></p>
+<p>》<a href="skills/bobine-contract-caller/SKILL.md">open doc</a></p>
+</td>
+<td width="50%" valign="top"></td>
+</tr>
+</table>
+
+<!-- SKILLS:END -->
+
 ## Le Manuel de l’Artisan
 
 ### Project Structure
@@ -104,6 +124,12 @@ bobinerie/
 │       │   └── mods
 │       │       └── mod.ts
 │       └── tsconfig.json
+├── skills/                  # Public portable agent skills
+│   └── bobine-contract-caller
+│       ├── SKILL.md
+│       ├── VERSION
+│       ├── references
+│       └── scripts
 ├── run/                     # Deployment & execution scripts
 └── package.json             # Build scripts
 ```
@@ -151,12 +177,25 @@ npm run execute 3ca2c27f... sayMyName text:"Alice"
 
 ## Avis aux artisans
 
-Got a useful contract? An intriguing experiment? Put it on the shelves.
+Got a useful contract, skill, or intriguing experiment? Put it on the shelves.
+
+### Publishing a contract
 
 1. Create your contract in `contracts/your-contract-name/`
 2. Write comprehensive [cucumber BDD](https://cucumber.io/) tests in `contracts/your-contract-name/contract.feature`
 3. Add [JSDoc](https://jsdoc.app/) documentation to all public API functions
-4. Run `npm run docs` to generate the READMEs
+4. Run `npm run docs` to refresh the catalog and contract docs
 5. Submit a PR
 
-All contributions welcome, from serious primitives to silly meme contracts.
+### Publishing a skill
+
+1. Create your skill in `skills/your-skill-name/`
+2. Add a portable `SKILL.md` and a semver `VERSION` file
+3. Add `scripts/` and `references/` only when they materially help the agent
+4. Validate the skill with `skills-ref validate skills/your-skill-name`
+5. Run `npm run docs` to refresh the catalog, then submit a PR
+6. Publish a released skill with a dedicated Git tag: `skills/your-skill-name/vX.Y.Z`
+
+`.agents/skills/` remains private to the repo workflow and is not part of the public shelf.
+
+All contributions welcome, from serious primitives to silly meme contracts and tools.
