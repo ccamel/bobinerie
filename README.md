@@ -126,8 +126,7 @@ bobinerie/
 │       └── tsconfig.json
 ├── skills/                  # Public portable agent skills
 │   └── bobine-contract-caller
-│       ├── SKILL.md
-│       ├── VERSION
+│       ├── SKILL.md         # Skill definition with version in frontmatter
 │       ├── references
 │       └── scripts
 ├── run/                     # Deployment & execution scripts
@@ -190,12 +189,9 @@ Got a useful contract, skill, or intriguing experiment? Put it on the shelves.
 ### Publishing a skill
 
 1. Create your skill in `skills/your-skill-name/`
-2. Add a portable `SKILL.md` and a semver `VERSION` file
+2. Add a portable `SKILL.md` with semver `version` in the frontmatter
 3. Add `scripts/` and `references/` only when they materially help the agent
 4. Validate the skill with `skills-ref validate skills/your-skill-name`
 5. Run `npm run docs` to refresh the catalog, then submit a PR
-6. Publish a released skill with a dedicated Git tag: `skills/your-skill-name/vX.Y.Z`
-
-`.agents/skills/` remains private to the repo workflow and is not part of the public shelf.
 
 All contributions welcome, from serious primitives to silly meme contracts and tools.

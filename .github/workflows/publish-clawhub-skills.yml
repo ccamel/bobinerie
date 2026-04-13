@@ -80,10 +80,23 @@ jobs:
           const targetTag = process.env.TARGET_TAG ?? ""
 
           function readVersion(slug) {
-            const version = readFileSync(join(skillsRoot, slug, "VERSION"), "utf-8").trim()
+            const skillContent = readFileSync(join(skillsRoot, slug, "SKILL.md"), "utf-8")
+            const frontmatterMatch = skillContent.match(/^---\n([\s\S]*?)\n---/)
+            
+            if (!frontmatterMatch) {
+              throw new Error(`No frontmatter found in skills/${slug}/SKILL.md`)
+            }
+
+            const versionMatch = frontmatterMatch[1].match(/^version:\s*(.+)$/m)
+            
+            if (!versionMatch) {
+              throw new Error(`No version field in skills/${slug}/SKILL.md frontmatter`)
+            }
+
+            const version = versionMatch[1].trim()
 
             if (!semverPattern.test(version)) {
-              throw new Error(`Invalid VERSION "${version}" in skills/${slug}`)
+              throw new Error(`Invalid version "${version}" in skills/${slug}/SKILL.md`)
             }
 
             return version
@@ -126,7 +139,7 @@ jobs:
 
             if (actual !== version) {
               throw new Error(
-                `Tag version ${version} does not match skills/${slug}/VERSION (${actual})`,
+                `Tag version ${version} does not match skills/${slug}/SKILL.md version (${actual})`,
               )
             }
 

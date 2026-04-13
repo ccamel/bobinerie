@@ -81,11 +81,10 @@ jobs:
           test -n "${SKILL}"
           test -d "skills/${SKILL}"
           test -f "skills/${SKILL}/SKILL.md"
-          test -f "skills/${SKILL}/VERSION"
 
           echo "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
 
-          CURRENT_VERSION=$(tr -d '\n' < "skills/${SKILL}/VERSION")
+          CURRENT_VERSION=$(grep -E '^version:' "skills/${SKILL}/SKILL.md" | head -1 | sed 's/version:[[:space:]]*//')
           test "${CURRENT_VERSION}" != "${VERSION}"
 
           git fetch origin --tags
@@ -102,13 +101,14 @@ jobs:
         env:
           SKILL: ${{ inputs.skill }}
           VERSION: ${{ inputs.version }}
-        run: printf '%s\n' "${VERSION}" > "skills/${SKILL}/VERSION"
+        run: |
+          sed -i "s/^version: .*/version: ${VERSION}/" "skills/${SKILL}/SKILL.md"
 
       - name: Commit version bump
         env:
           SKILL: ${{ inputs.skill }}
         run: |
-          git add "skills/${SKILL}/VERSION"
+          git add "skills/${SKILL}/SKILL.md"
           git commit -m "v"
 
       - name: Create skill release tag

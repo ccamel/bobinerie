@@ -1,5 +1,7 @@
 ---
 name: bobine-contract-caller
+version: 0.1.0
+license: MIT
 description: >
   Use when you need to call deployed Bobine modules with typed params or
   perform a signed Ed25519 call through an auth module.
