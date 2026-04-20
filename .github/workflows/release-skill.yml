@@ -185,7 +185,7 @@ jobs:
         env:
           SKILL: ${{ inputs.skill }}
           VERSION: ${{ inputs.version }}
-        run: git tag "skills/${SKILL}/v${VERSION}"
+        run: git tag -m "Release ${SKILL} ${VERSION}" "skills/${SKILL}/v${VERSION}"
 
       - name: Push commit and tag
         if: steps.validate.outputs.bump_required == 'true'
