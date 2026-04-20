@@ -82,13 +82,13 @@ jobs:
           function readVersion(slug) {
             const skillContent = readFileSync(join(skillsRoot, slug, "SKILL.md"), "utf-8")
             const frontmatterMatch = skillContent.match(/^---\n([\s\S]*?)\n---/)
-            
+
             if (!frontmatterMatch) {
               throw new Error(`No frontmatter found in skills/${slug}/SKILL.md`)
             }
 
             const versionMatch = frontmatterMatch[1].match(/^version:\s*(.+)$/m)
-            
+
             if (!versionMatch) {
               throw new Error(`No version field in skills/${slug}/SKILL.md frontmatter`)
             }
