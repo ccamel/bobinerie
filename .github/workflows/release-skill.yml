@@ -23,6 +23,8 @@ jobs:
   release:
     runs-on: ubuntu-22.04
     if: github.ref == 'refs/heads/main'
+    outputs:
+      bump_required: ${{ steps.validate.outputs.bump_required }}
     steps:
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7
@@ -74,6 +76,7 @@ jobs:
           git diff --exit-code
 
       - name: Validate release inputs
+        id: validate
         env:
           SKILL: ${{ inputs.skill }}
           VERSION: ${{ inputs.version }}
@@ -106,10 +109,28 @@ jobs:
           process.stdout.write(versionMatch[1].trim())
           NODE
           )
-          test "${CURRENT_VERSION}" != "${VERSION}"
 
           git fetch origin --tags
-          ! git rev-parse "skills/${SKILL}/v${VERSION}" >/dev/null 2>&1
+          HAS_RELEASE_TAGS=false
+          if git tag --list "skills/${SKILL}/v*" | grep -q .; then
+            HAS_RELEASE_TAGS=true
+          fi
+
+          if git rev-parse "skills/${SKILL}/v${VERSION}" >/dev/null 2>&1; then
+            echo "Release tag skills/${SKILL}/v${VERSION} already exists" >&2
+            exit 1
+          fi
+
+          if [ "${CURRENT_VERSION}" = "${VERSION}" ]; then
+            if [ "${HAS_RELEASE_TAGS}" = "true" ]; then
+              echo "Version ${VERSION} is already current in skills/${SKILL}/SKILL.md and this skill already has release tags" >&2
+              exit 1
+            fi
+
+            echo "bump_required=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "bump_required=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Configure authenticated remote
         env:
@@ -119,6 +140,7 @@ jobs:
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
       - name: Update skill version
+        if: steps.validate.outputs.bump_required == 'true'
         env:
           SKILL: ${{ inputs.skill }}
           VERSION: ${{ inputs.version }}
@@ -152,6 +174,7 @@ jobs:
           NODE
 
       - name: Commit version bump
+        if: steps.validate.outputs.bump_required == 'true'
         env:
           SKILL: ${{ inputs.skill }}
         run: |
@@ -165,7 +188,15 @@ jobs:
         run: git tag "skills/${SKILL}/v${VERSION}"
 
       - name: Push commit and tag
+        if: steps.validate.outputs.bump_required == 'true'
         env:
           SKILL: ${{ inputs.skill }}
           VERSION: ${{ inputs.version }}
         run: git push --atomic origin HEAD:main "refs/tags/skills/${SKILL}/v${VERSION}:refs/tags/skills/${SKILL}/v${VERSION}"
+
+      - name: Push tag only
+        if: steps.validate.outputs.bump_required != 'true'
+        env:
+          SKILL: ${{ inputs.skill }}
+          VERSION: ${{ inputs.version }}
+        run: git push origin "refs/tags/skills/${SKILL}/v${VERSION}:refs/tags/skills/${SKILL}/v${VERSION}"
