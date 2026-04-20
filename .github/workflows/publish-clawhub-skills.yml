@@ -1,12 +1,11 @@
-name: Publish Skills to ClawHub
+name: Publish Skill to ClawHub
 
 on:
   workflow_dispatch:
     inputs:
       ref:
-        description: Git ref to publish, for example main or a release tag
-        required: false
-        default: main
+        description: Release tag to publish, for example skills/bobine-contract-caller/v0.1.0
+        required: true
         type: string
   push:
     tags:
@@ -16,20 +15,115 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-clawhub-skills-${{ github.ref }}
+  group: publish-clawhub-skill-${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
-  prepare:
+  publish:
     runs-on: ubuntu-22.04
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
+    timeout-minutes: 20
+    env:
+      CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+      INPUT_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+          ref: ${{ env.INPUT_REF }}
           fetch-depth: 0
+
+      - name: Verify tag and resolve publish metadata
+        id: publish
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          raw_ref="${INPUT_REF}"
+
+          if [[ "${raw_ref}" =~ ^refs/tags/ ]]; then
+            tag="${raw_ref#refs/tags/}"
+          else
+            tag="${raw_ref}"
+          fi
+
+          if [[ ! "${tag}" =~ ^skills/([^/]+)/v(.+)$ ]]; then
+            echo "Ref '${raw_ref}' must be a release tag in the form skills/<slug>/v<version>" >&2
+            exit 1
+          fi
+
+          skill="${BASH_REMATCH[1]}"
+          version="${BASH_REMATCH[2]}"
+          skill_path="skills/${skill}"
+          skill_file="${skill_path}/SKILL.md"
+
+          test -n "${skill}"
+          test -d "${skill_path}"
+          test -f "${skill_file}"
+
+          resolved_version="$(node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs"
+
+          const tagRef = process.env.INPUT_REF ?? ""
+          const tag = tagRef.startsWith("refs/tags/") ? tagRef.slice("refs/tags/".length) : tagRef
+          const match = tag.match(/^skills\/([^/]+)\/v(.+)$/)
+
+          if (match == null || match[1] == null) {
+            throw new Error(`Ref '${tagRef}' must be a release tag in the form skills/<slug>/v<version>`)
+          }
+
+          const path = `skills/${match[1]}/SKILL.md`
+          const content = readFileSync(path, "utf-8")
+          const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+
+          if (frontmatterMatch == null) {
+            throw new Error(`No frontmatter found in ${path}`)
+          }
+
+          const versionMatch = frontmatterMatch[1].match(
+            /^metadata:\s*\n(?:\s+\S+:.*\n)*?\s+version:\s*(.+)$/m,
+          )
+
+          if (versionMatch == null || versionMatch[1] == null) {
+            throw new Error(`No metadata.version field found in ${path}`)
+          }
+
+          process.stdout.write(versionMatch[1].trim())
+          NODE
+          )"
+
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?([+][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Version '${version}' is not a valid semver value" >&2
+            exit 1
+          fi
+
+          if [[ "${version}" != "${resolved_version}" ]]; then
+            echo "Tag version ${version} does not match ${skill_file} metadata.version (${resolved_version})" >&2
+            exit 1
+          fi
+
+          if [[ "${version}" == *"-"* ]]; then
+            clawhub_tags="beta"
+          else
+            clawhub_tags="latest"
+          fi
+
+          {
+            echo "skill=${skill}"
+            echo "skill_path=${skill_path}"
+            echo "skill_file=${skill_file}"
+            echo "tag=${tag}"
+            echo "version=${version}"
+            echo "clawhub_tags=${clawhub_tags}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Verify token is configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLAWHUB_TOKEN}" ]]; then
+            echo "Missing CLAWHUB_TOKEN secret" >&2
+            exit 1
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
@@ -51,11 +145,8 @@ jobs:
       - name: Install skills-ref tool
         run: uv tool install git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref
 
-      - name: Validate skills with skills-ref
-        run: |
-          for dir in skills/*/ ; do
-            skills-ref validate "$dir"
-          done
+      - name: Validate skill with skills-ref
+        run: skills-ref validate "${{ steps.publish.outputs.skill_path }}"
 
       - name: Validate skills with skill-check
         run: npx skill-check check --no-security-scan skills
@@ -65,171 +156,38 @@ jobs:
           npm run docs
           git diff --exit-code
 
-      - name: Build publish matrix
-        id: matrix
-        env:
-          INPUT_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || '' }}
-          TARGET_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
-        run: |
-          node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
-          import { readdirSync, readFileSync, statSync } from "node:fs"
-          import { join } from "node:path"
-
-          const skillsRoot = "skills"
-          const semverPattern =
-            /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
-          const pushTag = process.env.TARGET_TAG ?? ""
-          const inputRef = process.env.INPUT_REF ?? ""
-
-          function normalizeTag(ref) {
-            if (ref.startsWith("refs/tags/")) {
-              return ref.slice("refs/tags/".length)
-            }
-
-            if (/^skills\/[^/]+\/v.+$/.test(ref)) {
-              return ref
-            }
-
-            return ""
-          }
-
-          function readVersion(slug) {
-            const skillContent = readFileSync(join(skillsRoot, slug, "SKILL.md"), "utf-8")
-            const frontmatterMatch = skillContent.match(/^---\n([\s\S]*?)\n---/)
-
-            if (!frontmatterMatch) {
-              throw new Error(`No frontmatter found in skills/${slug}/SKILL.md`)
-            }
-
-            const versionMatch = frontmatterMatch[1].match(/^metadata:\s*\n(?:\s+\S+:.*\n)*?\s+version:\s*(.+)$/m)
-
-            if (!versionMatch) {
-              throw new Error(`No metadata.version field in skills/${slug}/SKILL.md frontmatter`)
-            }
-
-            const version = versionMatch[1].trim()
-
-            if (!semverPattern.test(version)) {
-              throw new Error(`Invalid version "${version}" in skills/${slug}/SKILL.md`)
-            }
-
-            return version
-          }
-
-          function discoverSkills() {
-            const skills = readdirSync(skillsRoot)
-              .filter((entry) => statSync(join(skillsRoot, entry)).isDirectory())
-              .map((slug) => {
-                const version = readVersion(slug)
-
-                return {
-                  slug,
-                  version,
-                  clawhubTag: version.includes("-") ? "beta" : "latest",
-                  sourcePath: `skills/${slug}`,
-                }
-              })
-              .sort((a, b) => a.slug.localeCompare(b.slug))
-
-            if (skills.length === 0) {
-              throw new Error("No skills found under skills/")
-            }
-
-            return skills
-          }
-
-          function fromTag(tag) {
-            const match = tag.match(/^skills\/([^/]+)\/v(.+)$/)
-
-            if (match == null || match[1] == null || match[2] == null) {
-              throw new Error(
-                `Invalid release tag "${tag}". Expected skills/<slug>/v<version>.`,
-              )
-            }
-
-            const slug = match[1]
-            const version = match[2]
-            const actual = readVersion(slug)
-
-            if (actual !== version) {
-              throw new Error(
-                `Tag version ${version} does not match skills/${slug}/SKILL.md version (${actual})`,
-              )
-            }
-
-            return [
-              {
-                slug,
-                version,
-                clawhubTag: version.includes("-") ? "beta" : "latest",
-                sourcePath: `skills/${slug}`,
-              },
-            ]
-          }
-
-          const targetTag = pushTag || normalizeTag(inputRef)
-          const matrix = targetTag.length > 0 ? fromTag(targetTag) : discoverSkills()
-          process.stdout.write(`matrix=${JSON.stringify(matrix)}\n`)
-          NODE
-
-  publish:
-    needs: prepare
-    runs-on: ubuntu-22.04
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
       - name: Smoke test skill scripts
-        env:
-          SKILL_SOURCE: ${{ matrix.sourcePath }}
+        shell: bash
         run: |
-          if [ -d "${SKILL_SOURCE}/scripts" ]; then
+          set -euo pipefail
+          skill_source="${{ steps.publish.outputs.skill_path }}"
+
+          if [ -d "${skill_source}/scripts" ]; then
             while IFS= read -r -d '' file; do
               node --check "${file}"
-            done < <(find "${SKILL_SOURCE}/scripts" -type f -name '*.mjs' -print0)
+            done < <(find "${skill_source}/scripts" -type f -name '*.mjs' -print0)
           fi
 
       - name: Install ClawHub CLI
         run: npm install --global clawhub@0.9.0
 
-      - name: Authenticate ClawHub CLI
+      - name: Authenticate with ClawHub
         env:
           CLAWHUB_CONFIG_PATH: ${{ runner.temp }}/clawhub-config.json
           CLAWHUB_SITE: https://clawhub.ai
           CLAWHUB_REGISTRY: https://clawhub.ai
-          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
-        run: |
-          test -n "${CLAWHUB_TOKEN:-}"
-          clawhub auth login --token "${CLAWHUB_TOKEN}" --no-browser
+        run: clawhub login --token "${CLAWHUB_TOKEN}" --no-input
 
       - name: Publish skill to ClawHub
         env:
           CLAWHUB_CONFIG_PATH: ${{ runner.temp }}/clawhub-config.json
           CLAWHUB_SITE: https://clawhub.ai
           CLAWHUB_REGISTRY: https://clawhub.ai
-          CLAWHUB_TAGS: ${{ matrix.clawhubTag }}
-          SKILL_SLUG: ${{ matrix.slug }}
-          SKILL_VERSION: ${{ matrix.version }}
-          SOURCE_PATH: ${{ matrix.sourcePath }}
+          CLAWHUB_TAGS: ${{ steps.publish.outputs.clawhub_tags }}
+          SKILL_PATH: ${{ steps.publish.outputs.skill_path }}
+          SKILL_VERSION: ${{ steps.publish.outputs.version }}
         run: |
-          clawhub publish "./${SOURCE_PATH}" \
-            --slug "${SKILL_SLUG}" \
+          clawhub publish "${SKILL_PATH}" \
             --version "${SKILL_VERSION}" \
-            --tags "${CLAWHUB_TAGS}"
+            --tags "${CLAWHUB_TAGS}" \
+            --no-input
