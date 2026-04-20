@@ -68,6 +68,7 @@ jobs:
       - name: Build publish matrix
         id: matrix
         env:
+          INPUT_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || '' }}
           TARGET_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
         run: |
           node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
@@ -77,7 +78,20 @@ jobs:
           const skillsRoot = "skills"
           const semverPattern =
             /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
-          const targetTag = process.env.TARGET_TAG ?? ""
+          const pushTag = process.env.TARGET_TAG ?? ""
+          const inputRef = process.env.INPUT_REF ?? ""
+
+          function normalizeTag(ref) {
+            if (ref.startsWith("refs/tags/")) {
+              return ref.slice("refs/tags/".length)
+            }
+
+            if (/^skills\/[^/]+\/v.+$/.test(ref)) {
+              return ref
+            }
+
+            return ""
+          }
 
           function readVersion(slug) {
             const skillContent = readFileSync(join(skillsRoot, slug, "SKILL.md"), "utf-8")
@@ -87,10 +101,10 @@ jobs:
               throw new Error(`No frontmatter found in skills/${slug}/SKILL.md`)
             }
 
-            const versionMatch = frontmatterMatch[1].match(/^version:\s*(.+)$/m)
+            const versionMatch = frontmatterMatch[1].match(/^metadata:\s*\n(?:\s+\S+:.*\n)*?\s+version:\s*(.+)$/m)
 
             if (!versionMatch) {
-              throw new Error(`No version field in skills/${slug}/SKILL.md frontmatter`)
+              throw new Error(`No metadata.version field in skills/${slug}/SKILL.md frontmatter`)
             }
 
             const version = versionMatch[1].trim()
@@ -153,6 +167,7 @@ jobs:
             ]
           }
 
+          const targetTag = pushTag || normalizeTag(inputRef)
           const matrix = targetTag.length > 0 ? fromTag(targetTag) : discoverSkills()
           process.stdout.write(`matrix=${JSON.stringify(matrix)}\n`)
           NODE

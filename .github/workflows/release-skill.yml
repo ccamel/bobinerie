@@ -84,7 +84,28 @@ jobs:
 
           echo "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
 
-          CURRENT_VERSION=$(grep -E '^version:' "skills/${SKILL}/SKILL.md" | head -1 | sed 's/version:[[:space:]]*//')
+          CURRENT_VERSION=$(node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs"
+
+          const path = `skills/${process.env.SKILL}/SKILL.md`
+          const content = readFileSync(path, "utf-8")
+          const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+
+          if (frontmatterMatch == null) {
+            throw new Error(`No frontmatter found in ${path}`)
+          }
+
+          const versionMatch = frontmatterMatch[1].match(
+            /^metadata:\s*\n(?:\s+\S+:.*\n)*?\s+version:\s*(.+)$/m,
+          )
+
+          if (versionMatch == null || versionMatch[1] == null) {
+            throw new Error(`No metadata.version field found in ${path}`)
+          }
+
+          process.stdout.write(versionMatch[1].trim())
+          NODE
+          )
           test "${CURRENT_VERSION}" != "${VERSION}"
 
           git fetch origin --tags
@@ -102,7 +123,33 @@ jobs:
           SKILL: ${{ inputs.skill }}
           VERSION: ${{ inputs.version }}
         run: |
-          sed -i "s/^version: .*/version: ${VERSION}/" "skills/${SKILL}/SKILL.md"
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs"
+
+          const path = `skills/${process.env.SKILL}/SKILL.md`
+          const content = readFileSync(path, "utf-8")
+          const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+
+          if (frontmatterMatch == null) {
+            throw new Error(`No frontmatter found in ${path}`)
+          }
+
+          const currentFrontmatter = frontmatterMatch[1]
+          const nextFrontmatter = currentFrontmatter.replace(
+            /^(\s+version:\s*).+$/m,
+            `$1${process.env.VERSION}`,
+          )
+
+          if (nextFrontmatter === currentFrontmatter) {
+            throw new Error(`Failed to update metadata.version in ${path}`)
+          }
+
+          writeFileSync(
+            path,
+            content.replace(frontmatterMatch[1], nextFrontmatter),
+            "utf-8",
+          )
+          NODE
 
       - name: Commit version bump
         env:
