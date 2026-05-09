@@ -187,7 +187,27 @@ jobs:
           SKILL_PATH: ${{ steps.publish.outputs.skill_path }}
           SKILL_VERSION: ${{ steps.publish.outputs.version }}
         run: |
-          clawhub publish "${SKILL_PATH}" \
-            --version "${SKILL_VERSION}" \
-            --tags "${CLAWHUB_TAGS}" \
-            --no-input
+          for attempt in 1 2 3 4; do
+            output_file="$(mktemp)"
+
+            if clawhub publish "${SKILL_PATH}" \
+              --version "${SKILL_VERSION}" \
+              --tags "${CLAWHUB_TAGS}" \
+              --no-input >"${output_file}" 2>&1; then
+              cat "${output_file}"
+              rm -f "${output_file}"
+              exit 0
+            fi
+
+            cat "${output_file}"
+
+            if ! grep -qi "GitHub API rate limit exceeded" "${output_file}" || [[ "${attempt}" -eq 4 ]]; then
+              rm -f "${output_file}"
+              exit 1
+            fi
+
+            rm -f "${output_file}"
+            sleep_for="$((attempt * 30))"
+            echo "ClawHub reported a transient GitHub API rate limit. Retrying in ${sleep_for}s..."
+            sleep "${sleep_for}"
+          done
