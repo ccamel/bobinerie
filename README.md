@@ -12,6 +12,7 @@
 
 <p align="center">
   <a href="https://www.assemblyscript.org/"><img src="https://img.shields.io/badge/Pure-AssemblyScript-007ACC?style=for-the-badge&logo=assemblyscript&logoColor=white" alt="AssemblyScript"></a>
+  <a href="https://nixos.org/"><img src="https://img.shields.io/badge/Built_With-Nix-5277C3.svg?style=for-the-badge&logo=nixos&logoColor=white" alt="Built with Nix"></a>
   <a href="https://x.com/hazae41/status/2001986156834267231"><img src="https://img.shields.io/badge/Commit_Convention-Daft-orange?style=for-the-badge" alt="Commit Convention: DAFT"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT"></a>
 </p>
