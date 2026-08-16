@@ -1,8 +1,23 @@
 {
-  "extends": "assemblyscript/std/assembly.json",
   "compilerOptions": {
+    "strict": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noEmitOnError": true,
+    "strictNullChecks": true,
+    "experimentalDecorators": true,
+    "preserveConstEnums": false,
+    "target": "esnext",
     "module": "preserve",
     "moduleResolution": "bundler",
-    "ignoreDeprecations": "6.0"
+    "noLib": true,
+    "allowJs": false,
+    "typeRoots": ["./node_modules/assemblyscript/std/types"],
+    "types": ["assembly"],
+    "paths": {
+      "*": ["./node_modules/assemblyscript/std/*"]
+    }
   }
 }
