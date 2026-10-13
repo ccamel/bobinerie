@@ -60,6 +60,15 @@ namespace owner$ {
   }
 }
 
+namespace amount$ {
+  export function assertNonNegative(amount: bigintref): void {
+    if (bigints.lt(amount, bigints.zero())) {
+      env.panic<void>(texts.fromString("Invalid amount"))
+      return
+    }
+  }
+}
+
 namespace balance$ {
   const BALANCE_KEY = (): textref => texts.fromString(`${DOMAIN}/state/balance`)
 
@@ -76,10 +85,12 @@ namespace balance$ {
   }
 
   export function credit(address: textref, amount: bigintref): void {
+    amount$.assertNonNegative(amount)
     set(address, bigints.add(get(address), amount))
   }
 
   export function debit(address: textref, amount: bigintref): void {
+    amount$.assertNonNegative(amount)
     const current = get(address)
 
     if (bigints.lt(current, amount)) {
@@ -116,6 +127,7 @@ namespace allowance$ {
     spender: textref,
     amount: bigintref,
   ): void {
+    amount$.assertNonNegative(amount)
     const current = get(owner, spender)
 
     if (
@@ -136,6 +148,7 @@ namespace allowance$ {
     spender: textref,
     amount: bigintref,
   ): void {
+    amount$.assertNonNegative(amount)
     const current = get(owner, spender)
 
     if (bigints.lt(current, amount)) {
@@ -161,10 +174,12 @@ namespace supply$ {
   }
 
   export function inc(delta: bigintref): void {
+    amount$.assertNonNegative(delta)
     set(bigints.add(get(), delta))
   }
 
   export function dec(delta: bigintref): void {
+    amount$.assertNonNegative(delta)
     const current = get()
     if (bigints.lt(current, delta)) {
       env.panic<void>(texts.fromString("Insufficient supply"))
@@ -297,7 +312,7 @@ export function balance(target: textref): bigintref {
  *
  * @param session A valid session whose verified identity is the caller.
  * @param target Recipient address.
- * @param amount Amount to mint.
+ * @param amount Non-negative amount to mint.
  * @throws Error("Invalid session") if the session is not verified.
  * @throws Error("Unauthorized") if the caller is not the owner.
  */
@@ -339,7 +354,7 @@ export function allowance(owner: textref, spender: textref): bigintref {
  *
  * @param session A valid session whose verified identity is the caller (owner).
  * @param spender Address allowed to spend.
- * @param amount New allowance amount.
+ * @param amount New non-negative allowance amount.
  * @throws Error("Invalid session") if the session is not verified.
  * @throws Error("Must reset allowance to 0 before changing") if the safety rule is violated.
  */
@@ -361,7 +376,7 @@ export function approve(
  * @param session A valid session whose verified identity is the spender.
  * @param owner Address whose funds are moved.
  * @param target Recipient address.
- * @param amount Amount to transfer.
+ * @param amount Non-negative amount to transfer.
  * @throws Error("Invalid session") if the session is not verified.
  * @throws Error("Insufficient allowance") if allowance is smaller than amount.
  * @throws Error("Insufficient balance") if owner's balance is smaller than amount.
@@ -383,7 +398,7 @@ export function transfer_from(
  * This decreases both the caller balance and the total supply.
  *
  * @param session A valid session whose verified identity is the caller.
- * @param amount Amount to burn.
+ * @param amount Non-negative amount to burn.
  * @throws Error("Invalid session") if the session is not verified.
  * @throws Error("Insufficient balance") if balance is smaller than amount.
  */
@@ -400,7 +415,7 @@ export function burn(session: packref, amount: bigintref): void {
  *
  * @param session A valid session whose verified identity is the caller.
  * @param target Recipient address.
- * @param amount Amount to transfer.
+ * @param amount Non-negative amount to transfer.
  * @throws Error("Invalid session") if the session is not verified.
  * @throws Error("Insufficient balance") if caller balance is smaller than amount.
  */

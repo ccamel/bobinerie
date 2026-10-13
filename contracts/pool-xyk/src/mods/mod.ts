@@ -94,6 +94,15 @@ namespace math$ {
   }
 }
 
+namespace amount$ {
+  export function assertNonNegative(amount: bigintref): void {
+    if (bigints.lt(amount, bigints.zero())) {
+      env.panic<void>(texts.fromString("Invalid amount"))
+      return
+    }
+  }
+}
+
 namespace pool$ {
   const prefix = (): textref => texts.fromString("pool:")
 
@@ -332,6 +341,11 @@ namespace liquidity$ {
     to: textref,
   ): packref {
     pool$.assertInitialized()
+    amount$.assertNonNegative(amount0_desired)
+    amount$.assertNonNegative(amount1_desired)
+    amount$.assertNonNegative(amount0_min)
+    amount$.assertNonNegative(amount1_min)
+    amount$.assertNonNegative(lp_min)
 
     if (bigints.eq(amount0_desired, bigints.zero()))
       return env.panic<packref>(texts.fromString("Invalid amount0_desired"))
@@ -430,6 +444,9 @@ namespace liquidity$ {
     to: textref,
   ): packref {
     pool$.assertInitialized()
+    amount$.assertNonNegative(liquidity)
+    amount$.assertNonNegative(amount0_min)
+    amount$.assertNonNegative(amount1_min)
 
     if (bigints.eq(liquidity, bigints.zero()))
       return env.panic<packref>(texts.fromString("Invalid liquidity"))
@@ -497,6 +514,7 @@ namespace swap$ {
     amount_in: bigintref,
   ): packref {
     pool$.assertInitialized()
+    amount$.assertNonNegative(amount_in)
 
     const tokens = pool$.tokens()
     const token0 = packs.get<textref>(tokens, 0)
@@ -555,6 +573,8 @@ namespace swap$ {
     to: textref,
   ): packref {
     pool$.assertInitialized()
+    amount$.assertNonNegative(amount_in)
+    amount$.assertNonNegative(min_out)
 
     if (bigints.eq(amount_in, bigints.zero()))
       return env.panic<packref>(texts.fromString("Invalid amount_in"))
@@ -748,7 +768,7 @@ export function balance_of(owner: textref): bigintref {
  * Applies the pool's trading fee to the input amount.
  *
  * @param token_in Address of the token to swap in (must be token0 or token1)
- * @param amount_in Amount of input token to swap
+ * @param amount_in Non-negative amount of input token to swap.
  * @returns Pack containing [token_out_address, amount_out]
  * @throws "Pool is not initialized" if pool hasn't been initialized yet
  * @throws "Invalid token_in" if token_in is not one of the pool's tokens
@@ -772,11 +792,11 @@ export function quote_swap_exact_in(
  * The actual amounts may differ from desired amounts to maintain the pool's ratio.
  *
  * @param session Authenticated session of the liquidity provider
- * @param amount0_desired Desired amount of token0 to add
- * @param amount1_desired Desired amount of token1 to add
- * @param amount0_min Minimum amount of token0 (slippage protection)
- * @param amount1_min Minimum amount of token1 (slippage protection)
- * @param lp_min Minimum LP tokens to receive (slippage protection)
+ * @param amount0_desired Non-negative desired amount of token0 to add.
+ * @param amount1_desired Non-negative desired amount of token1 to add.
+ * @param amount0_min Non-negative minimum amount of token0 (slippage protection).
+ * @param amount1_min Non-negative minimum amount of token1 (slippage protection).
+ * @param lp_min Non-negative minimum LP tokens to receive (slippage protection).
  * @param to Address to receive the LP tokens
  * @returns Pack containing [amount0_added, amount1_added, liquidity_minted]
  * @throws "Pool is not initialized" if pool hasn't been initialized yet
@@ -817,9 +837,9 @@ export function add_liquidity(
  * LP tokens are burned and both underlying tokens are returned proportionally.
  *
  * @param session Authenticated session of the liquidity provider
- * @param liquidity Amount of LP tokens to burn
- * @param amount0_min Minimum amount of token0 to receive (slippage protection)
- * @param amount1_min Minimum amount of token1 to receive (slippage protection)
+ * @param liquidity Non-negative amount of LP tokens to burn.
+ * @param amount0_min Non-negative minimum amount of token0 to receive (slippage protection).
+ * @param amount1_min Non-negative minimum amount of token1 to receive (slippage protection).
  * @param to Address to receive the tokens
  * @returns Pack containing [amount0_received, amount1_received]
  * @throws "Pool is not initialized" if pool hasn't been initialized yet
@@ -857,8 +877,8 @@ export function remove_liquidity(
  *
  * @param session Authenticated session of the trader
  * @param token_in Address of the token to swap in (must be token0 or token1)
- * @param amount_in Exact amount of input token to swap
- * @param min_out Minimum amount of output token to receive (slippage protection)
+ * @param amount_in Non-negative exact amount of input token to swap.
+ * @param min_out Non-negative minimum amount of output token to receive (slippage protection).
  * @param to Address to receive the output tokens
  * @returns Pack containing [token_out_address, amount_out]
  * @throws "Pool is not initialized" if pool hasn't been initialized yet
