@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { Given } from "@cucumber/cucumber"
 import { Writable } from "@hazae41/binary"
 import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
-import { BobineWorld } from "../world"
+import { BobineWorld } from "../world.ts"
 
 function getProjectContractSourcePath(contractName: string): string {
   return `./contracts/${contractName}/src/mod.ts`
@@ -49,7 +49,9 @@ async function produceWasmModule(
     })
 
     if (!response.ok) {
-      throw new Error(`Produce failed with status ${response.status}`)
+      throw new Error(
+        `Produce failed with status ${response.status}: ${await response.text()}`,
+      )
     }
 
     const result = await response.json()

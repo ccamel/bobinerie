@@ -4,7 +4,7 @@ import { existsSync } from "node:fs"
 import { mkdir, rm } from "node:fs/promises"
 import { resolve } from "node:path"
 import { After, Before, Status } from "@cucumber/cucumber"
-import { BOBINE_PORT, BobineWorld } from "./world"
+import { BOBINE_PORT, BobineWorld } from "./world.ts"
 
 const BOBINE_FOLDER = "./out/bobine_test_instance"
 const BOBINE_ED25519_PRIVATE_KEY_HEX =
@@ -33,7 +33,10 @@ function resolveBobineCommand(): { command: string; args: string[] } {
       args: ["run", "-A", BOBINE_ENTRY_PATH, ...baseArgs],
     }
   }
-  return { command: "bobine", args: baseArgs }
+  return {
+    command: "deno",
+    args: ["run", "-A", "npm:@hazae41/bobine@0.0.22", ...baseArgs],
+  }
 }
 
 /**

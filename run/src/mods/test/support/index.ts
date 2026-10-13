@@ -22,8 +22,8 @@ if (!Uint8Array.fromBase64) {
     new Uint8Array(Buffer.from(base64, "base64"))
 }
 
-import "./world"
-import "./hooks"
-import "./steps/setup.steps"
-import "./steps/execute.steps"
-import "./steps/assertions.steps"
+import "./world.ts"
+import "./hooks.ts"
+import "./steps/setup.steps.ts"
+import "./steps/execute.steps.ts"
+import "./steps/assertions.steps.ts"

@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert"
 import { DataTable, Then } from "@cucumber/cucumber"
-import { parseValueWithCommon } from "../parsing"
-import { BobineWorld } from "../world"
+import { parseValueWithCommon } from "../parsing.ts"
+import { BobineWorld } from "../world.ts"
 
 function formatValue(value: unknown): string {
   return JSON.stringify(value, (_key, val) =>

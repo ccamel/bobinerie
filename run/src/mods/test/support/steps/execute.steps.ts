@@ -1,8 +1,8 @@
 import { DataTable, When } from "@cucumber/cucumber"
 import { Readable, Writable } from "@hazae41/binary"
 import { type Packable, Packed } from "../../../../libs/packed/mod.ts"
-import { parseValueWithCommon, resolveVariableToken } from "../parsing"
-import { BobineWorld } from "../world"
+import { parseValueWithCommon, resolveVariableToken } from "../parsing.ts"
+import { BobineWorld } from "../world.ts"
 
 const AUTH_DOMAIN_ID = "17fa1cb5-c5af-4cfd-9bea-1a36590b890d"
 

@@ -1,4 +1,4 @@
-import type { BobineWorld } from "./world"
+import type { BobineWorld } from "./world.ts"
 
 function reconstructUint8Array(value: unknown): unknown {
   if (value === null || value === undefined) return value
