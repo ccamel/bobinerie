@@ -395,11 +395,11 @@ The actual amounts may differ from desired amounts to maintain the pool's ratio.
 **Parameters:**
 
 - `session` - Authenticated session of the liquidity provider
-- `amount0_desired` - Desired amount of token0 to add
-- `amount1_desired` - Desired amount of token1 to add
-- `amount0_min` - Minimum amount of token0 (slippage protection)
-- `amount1_min` - Minimum amount of token1 (slippage protection)
-- `lp_min` - Minimum LP tokens to receive (slippage protection)
+- `amount0_desired` - Non-negative desired amount of token0 to add.
+- `amount1_desired` - Non-negative desired amount of token1 to add.
+- `amount0_min` - Non-negative minimum amount of token0 (slippage protection).
+- `amount1_min` - Non-negative minimum amount of token1 (slippage protection).
+- `lp_min` - Non-negative minimum LP tokens to receive (slippage protection).
 - `to` - Address to receive the LP tokens
 
 **Returns:**
@@ -460,7 +460,7 @@ Applies the pool's trading fee to the input amount.
 **Parameters:**
 
 - `token_in` - Address of the token to swap in (must be token0 or token1)
-- `amount_in` - Amount of input token to swap
+- `amount_in` - Non-negative amount of input token to swap.
 
 **Returns:**
 
@@ -474,9 +474,9 @@ LP tokens are burned and both underlying tokens are returned proportionally.
 **Parameters:**
 
 - `session` - Authenticated session of the liquidity provider
-- `liquidity` - Amount of LP tokens to burn
-- `amount0_min` - Minimum amount of token0 to receive (slippage protection)
-- `amount1_min` - Minimum amount of token1 to receive (slippage protection)
+- `liquidity` - Non-negative amount of LP tokens to burn.
+- `amount0_min` - Non-negative minimum amount of token0 to receive (slippage protection).
+- `amount1_min` - Non-negative minimum amount of token1 to receive (slippage protection).
 - `to` - Address to receive the tokens
 
 **Returns:**
@@ -502,8 +502,8 @@ Input tokens are transferred from caller, output tokens sent to recipient.
 
 - `session` - Authenticated session of the trader
 - `token_in` - Address of the token to swap in (must be token0 or token1)
-- `amount_in` - Exact amount of input token to swap
-- `min_out` - Minimum amount of output token to receive (slippage protection)
+- `amount_in` - Non-negative exact amount of input token to swap.
+- `min_out` - Non-negative minimum amount of output token to receive (slippage protection).
 - `to` - Address to receive the output tokens
 
 **Returns:**

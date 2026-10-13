@@ -258,7 +258,7 @@ non-zero value is rejected. Set it to 0 first, then set the new value.
 
 - `session` - A valid session whose verified identity is the caller (owner).
 - `spender` - Address allowed to spend.
-- `amount` - New allowance amount.
+- `amount` - New non-negative allowance amount.
 
 ### 🔹 `balance(target)`
 
@@ -282,7 +282,7 @@ This decreases both the caller balance and the total supply.
 **Parameters:**
 
 - `session` - A valid session whose verified identity is the caller.
-- `amount` - Amount to burn.
+- `amount` - Non-negative amount to burn.
 
 ### 🔹 `clone(creator)`
 
@@ -321,7 +321,7 @@ This increases both the recipient balance and the total supply.
 
 - `session` - A valid session whose verified identity is the caller.
 - `target` - Recipient address.
-- `amount` - Amount to mint.
+- `amount` - Non-negative amount to mint.
 
 ### 🔹 `total_supply()`
 
@@ -342,7 +342,7 @@ This moves balance from caller to target.
 
 - `session` - A valid session whose verified identity is the caller.
 - `target` - Recipient address.
-- `amount` - Amount to transfer.
+- `amount` - Non-negative amount to transfer.
 
 ### 🔹 `transfer_from(session, owner, target, amount)`
 
@@ -356,6 +356,6 @@ This decreases the allowance (owner -> spender) and moves balance from owner to 
 - `session` - A valid session whose verified identity is the spender.
 - `owner` - Address whose funds are moved.
 - `target` - Recipient address.
-- `amount` - Amount to transfer.
+- `amount` - Non-negative amount to transfer.
 
 <!-- METHODS:END -->
