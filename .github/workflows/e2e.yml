@@ -29,12 +29,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Bobine CLI
-        run: |
-          deno install -Ag -n bobine npm:@hazae41/bobine@0.0.22
-          echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
-
       - name: Run E2E tests
         run: npm run test:coverage
 
