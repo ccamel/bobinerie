@@ -130,6 +130,66 @@ Feature: Pool XYK Contract
     Then the execution should succeed
     And the returned value should be "bigint:10000"
 
+  Scenario: Negative pool amounts are rejected
+    Given I have keys for "Alice"
+    When I call "$pool-xyk" method "init" with params:
+      | $pool-xyk_creator |
+      | text:TokenA |
+      | text:TokenB |
+      | bigint:30 |
+    Then the execution should succeed
+    When I call "$pool-xyk" method "quote_swap_exact_in" with params:
+      | text:TokenA |
+      | bigint:-1 |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$pool-xyk" method "add_liquidity" through auth with params:
+      | bigint:-1 |
+      | bigint:1 |
+      | bigint:0 |
+      | bigint:0 |
+      | bigint:0 |
+      | address:Alice |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$pool-xyk" method "add_liquidity" through auth with params:
+      | bigint:1 |
+      | bigint:1 |
+      | bigint:-1 |
+      | bigint:0 |
+      | bigint:0 |
+      | address:Alice |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$pool-xyk" method "remove_liquidity" through auth with params:
+      | bigint:-1 |
+      | bigint:0 |
+      | bigint:0 |
+      | address:Alice |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$pool-xyk" method "remove_liquidity" through auth with params:
+      | bigint:1 |
+      | bigint:-1 |
+      | bigint:0 |
+      | address:Alice |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$pool-xyk" method "swap_exact_in" through auth with params:
+      | text:TokenA |
+      | bigint:-1 |
+      | bigint:0 |
+      | address:Alice |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$pool-xyk" method "swap_exact_in" through auth with params:
+      | text:TokenA |
+      | bigint:1 |
+      | bigint:-1 |
+      | address:Alice |
+    Then the execution should fail with "Invalid amount"
+    When I call "$pool-xyk" method "reserves"
+    Then the execution should succeed
+    And the returned value should be:
+      | text:bobine.pool-xyk/reserves_view |
+      | bigint:1 |
+      | bigint:0 |
+      | bigint:0 |
+
   @public-doc
   Scenario: Add liquidity mints LP and updates reserves
     Given I have keys for "Alice"

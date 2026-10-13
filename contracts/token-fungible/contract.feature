@@ -207,3 +207,32 @@ Feature: Token Fungible Contract
   Scenario: Burn fails with insufficient balance
     When I invoke "$token-fungible" method "burn" through auth with param "bigint:1"
     Then the execution should fail with "Insufficient balance"
+
+  Scenario: Negative token amounts are rejected
+    Given I have keys for "Bob"
+    And I have keys for "Alice"
+    When I invoke "$token-fungible" method "mint" through auth with params:
+      | address:Alice |
+      | bigint:-1 |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$token-fungible" method "approve" through auth with params:
+      | address:Bob |
+      | bigint:-1 |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$token-fungible" method "transfer" through auth with params:
+      | address:Bob |
+      | bigint:-1 |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$token-fungible" method "transfer_from" through auth with params:
+      | address:Alice |
+      | address:Bob |
+      | bigint:-1 |
+    Then the execution should fail with "Invalid amount"
+    When I invoke "$token-fungible" method "burn" through auth with param "bigint:-1"
+    Then the execution should fail with "Invalid amount"
+    When I call "$token-fungible" method "balance" with param "address:Alice"
+    Then the execution should succeed
+    And the returned value should be "bigint:0"
+    When I call "$token-fungible" method "total_supply"
+    Then the execution should succeed
+    And the returned value should be "bigint:0"
