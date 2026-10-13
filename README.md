@@ -136,8 +136,11 @@ bobinerie/
 
 ### Setup
 
+Enter the pinned Nix toolchain, then install the lockfile:
+
 ```bash
-npm install
+nix develop
+npm ci
 ```
 
 Configure your Bobine server in `.env.local` (optional):
@@ -166,7 +169,7 @@ Other common tasks:
 - Build a single contract: `CONTRACT=say-my-name npm run contract:build`
 - Produce all contracts: `npm run produce`
 - Generate docs: `npm run docs`
-- Run tests: `npm run test`
+- Run local E2E tests: `npm run test` (starts a temporary Bobine instance automatically)
 - Run tests with coverage: `npm run test:coverage` (measures test infrastructure, not WASM contract code)
 
 Execute a contract method:
